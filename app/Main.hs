@@ -1,7 +1,8 @@
 module Main where
 
 import System.Environment (getArgs)
-import Data.Time (getCurrentTime, formatTime, defaultTimeLocale)
+import Data.Time (getCurrentTime, formatTime, defaultTimeLocale, diffUTCTime)
+
 import ImageGenerator as IG
 
 main :: IO ()
@@ -14,7 +15,12 @@ main = do
     let timestamp = formatTime defaultTimeLocale "%Y%m%d-%H%M%S" currentTime
     let filename = "out/" ++ timestamp ++ ".ppm"
 
+    startFileCreation <- getCurrentTime
     IG.createAndWriteFile filename $ IG.ppmToStr $ IG.createPPM width height
+    endFileCreation <- getCurrentTime
+
+    let timeToCreate = diffUTCTime endFileCreation startFileCreation
+    putStrLn $ "Time taken for create and write file: " ++ show timeToCreate
     putStrLn $ "File written to: " ++ filename
 
 -- Parse the command-line arguments
