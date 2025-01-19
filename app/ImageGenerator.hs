@@ -22,7 +22,7 @@ createPPM width height =
 
 ppmToStr :: Image -> String
 ppmToStr image =
-        let height = if null image then 0 else length image
+        let height = length image
             width = if null image then 0 else length (head image)
             header = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n"
             pixelData = unlines $ map (unwords . map showPixel) image
