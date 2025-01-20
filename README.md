@@ -1,8 +1,24 @@
 # Raytracer
 
-A simple raytracer built with haskell
+A simple raytracer built with haskell.
 
-## Current Progress
+🔴 NOT WORKING YET!
+
+## Usage
+
+Use the raytracer like this:
+
+```
+cabal run raytracer res_width res_height
+```
+
+So for example (for a 1920x1080 image):
+
+```
+cabal run raytracer 1920 1080
+```
+
+## Progress
 
 In this chapter, I will track the progress of the raytracer everytime I continue the work on it. I will explain why certain things are done and the technical/mathematical explanations (oversimplified) too.
 
@@ -56,3 +72,4 @@ main = do
     ...
     IG.createAndWriteFile filename $ IG.ppmToStr $ IG.createPPM width height
 ```
+
