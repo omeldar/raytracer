@@ -14,8 +14,8 @@ createPPM :: Int -> Int -> Image
 createPPM width height =
     [[(r, g, b) | x <- [0..width-1],
                   let r = scale x width,
-                  let g = scale y height,
-                  let b = 0]
+                  let g = 0,
+                  let b = scale y height]
                 | y <- [0..height-1]]
     where
         scale val maxVal = round (((255.999 :: Double) * fromIntegral val) / fromIntegral (maxVal - 1))
