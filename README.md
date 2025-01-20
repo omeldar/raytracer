@@ -11,7 +11,7 @@ In this chapter, I will track the progress of the raytracer everytime I continue
 When we want to build a raytracer, the first thing we need is to create an image. A simple image format to create is the [ppm image format](https://de.wikipedia.org/wiki/Portable_Anymap).
 
 <div style="text-align: center;">
-    <img src="docs/ppm_example.png" alt="PPM Image Example" style="width: 50%" />
+    <img src="docs/ppm_example.png" alt="PPM Image Example" style="width: 70%" />
 </div>
 
 
@@ -36,7 +36,7 @@ createPPM width height =
 This functions creates a picture based on a given width and height, creating a gradient from bottom left (blue) to top right (red), which looks like this:
 
 <div style="text-align: center;">
-    <img src="docs/first_generated_images.png" alt="First generated image in the PPM format" style="width: 50%" />
+    <img src="docs/first_generated_images.png" alt="First generated image in the PPM format" style="width: 70%" />
 </div>
 
 This image has been created 1920x1080. I allow the user to choose a resolution by providing arguments to the raytracer:
