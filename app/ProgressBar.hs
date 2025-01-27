@@ -6,12 +6,10 @@ module ProgressBar (
     renderProgressBar
 ) where
 
-import Control.Monad (when)
 import Data.IORef (IORef, newIORef, readIORef, writeIORef)
 import System.IO (hFlush, stdout)
 import System.Console.ANSI (setSGR, SGR(..), ConsoleLayer(..), Color(..), ColorIntensity(..), setTitle)
 import GHC.Clock (getMonotonicTime)
-import Data.Time.Clock(diffUTCTime, getCurrentTime)
 
 progressBarWidth :: Int
 progressBarWidth = 50
@@ -47,16 +45,16 @@ updateMessage pb newMessage = do
 
 renderProgressBar :: ProgressBar -> IO ()
 renderProgressBar pb = do
-    currentProgress <- readIORef (progress pb)
-    currentMessage  <- readIORef (message pb)
-    currentSteps    <- readIORef (currentSteps pb)
-    totalSteps      <- readIORef (totalSteps pb)
-    startTime       <- readIORef (startTime pb)
-    currentTime     <- getMonotonicTime
+    currentProgressVal <- readIORef (progress pb)
+    currentMessageVal  <- readIORef (message pb)
+    currentStepsVal    <- readIORef (currentSteps pb)
+    totalStepsVal      <- readIORef (totalSteps pb)
+    startTimeVal       <- readIORef (startTime pb)
+    currentTime        <- getMonotonicTime
 
-    let elapsedTime     = currentTime - startTime
-        stepsPerSecond  = fromIntegral currentSteps / elapsedTime
-        filledWidth     = round (currentProgress * fromIntegral progressBarWidth)
+    let elapsedTime     = currentTime - startTimeVal
+        stepsPerSecond  = fromIntegral currentStepsVal / elapsedTime
+        filledWidth     = round (currentProgressVal * fromIntegral progressBarWidth)
         filled          = replicate filledWidth '▓'
         empty           = replicate (progressBarWidth - filledWidth) '░'
     
@@ -64,14 +62,14 @@ renderProgressBar pb = do
     setSGR [SetColor Foreground Vivid Blue]
     putStr $ "\r[" ++ filled ++ empty ++ "] "
 
-    let progressPercent = (floor (currentProgress * 10000) :: Int) `div` 100
+    let progressPercent = (floor (currentProgressVal * 10000) :: Int) `div` 100
         stepsPerSec     = (round (stepsPerSecond * 100) :: Int) `div` 100
 
     setSGR [SetColor Foreground Vivid Green]
     putStr $ show (progressPercent :: Int) ++ "% "
 
     setSGR [SetColor Foreground Vivid Yellow]
-    putStr $ show (currentSteps :: Int) ++ "/" ++ show (totalSteps :: Int) ++ " "
+    putStr $ show (currentStepsVal :: Int) ++ "/" ++ show (totalStepsVal :: Int) ++ " "
 
     setSGR [SetColor Foreground Vivid Red]
     putStr $ show (stepsPerSec :: Int) ++ "/s "
@@ -80,15 +78,18 @@ renderProgressBar pb = do
     putStr $ formatTime elapsedTime ++ " "
 
     setSGR [SetColor Foreground Vivid Black]
-    putStr currentMessage
+    putStr currentMessageVal
     setSGR [Reset]
 
     hFlush stdout
 
 formatTime :: Double -> String
 formatTime seconds =
-    let hours = floor (seconds / 3600)
+    let hours :: Int
+        hours = floor (seconds / 3600)
+        minutes :: Int
         minutes = floor ((seconds - fromIntegral hours * 3600) / 60)
+        secs :: Int
         secs = floor (seconds - fromIntegral hours * 3600 - fromIntegral minutes * 60)
     in show hours ++ ":" ++ show minutes ++ ":" ++ show secs
 

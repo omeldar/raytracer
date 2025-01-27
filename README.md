@@ -73,3 +73,64 @@ main = do
     IG.createAndWriteFile filename $ IG.ppmToStr $ IG.createPPM width height
 ```
 
+### Creating the Progress Bar
+
+When building a computationally intense application like a raytracer, we excpect longer computation times. It can take forever to render complex scenes. That's why we're adding a progress bar. It gives us a clear sense that things are moving along, helps you catch if something's stuck and shows performance stats so you can see the effect of optimizations.
+
+#### Setting Up the Progress Bar
+
+```haskell
+newProgressBar :: Int -> IO ProgressBar
+newProgressBar total = do
+    progressRef     <- newIORef 0.0
+    messageRef      <- newIORef ""
+    startTimeRef    <- newIORef =<< getMonotonicTime
+    currentStepsRef <- newIORef 0
+    totalStepsRef   <- newIORef total
+    return $ ProgressBar progressRef messageRef startTimeRef currentStepsRef totalStepsRef
+```
+
+We need this function to set up everything for the progress bar. It tracks:
+
+- How much progress we've made
+- The total number of steps (e.g. how many rays or pixels we're calculating)
+- The time we started, so we know how long we're computing.
+
+#### Updating Progress
+
+```haskell
+updateProgress :: ProgressBar -> Int -> IO ()
+updateProgress pb steps = do
+    writeIORef (currentSteps pb) steps
+    total <- readIORef (totalSteps pb)
+    writeIORef (progress pb) (fromIntegral steps / fromIntegral total)
+    renderProgressBar pb
+```
+
+Updating the progress as the raytracer does its thing. Every time certain number of steps are completed, we update how many steps are done, we calculate how for along we are (percentage) and we refresh the progress bar on the screen.
+
+#### Rendering the bar
+
+```haskell
+renderProgressBar :: ProgressBar -> IO ()
+renderProgressBar pb = do
+    ... -- Read IORefs to grab progress, message, etc.
+    let filled = replicate (progressPercent * 50 `div` 100) '▓'
+    let empty = replicate (50 - length filled) '░'
+    putStr $ "\r[" ++ filled ++ empty ++ "] " ++ show progressPercent ++ "% ..."
+    hFlush stdout
+```
+
+This is where the magic happens: it takes all the data - like how for along we are, how fast it's going and how long it's been running - and renders it as a nice progress bar. We use `▓` for the filled part and `░` for the empty part, so it looks slick.
+
+Here is a screenshot of what the bar looks like when we start the raytracer:
+
+![Starting Progress Bar](./docs/starting_pb.png)
+
+Here is a screenshot of what the bar looks like when we're in about the middle:
+
+![Middle Progress Bar](./docs/pb_middle.png)
+
+And here is what it looks when the program stops:
+
+![End Progress Bar](./docs/pb_end.png)
