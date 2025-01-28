@@ -127,10 +127,11 @@ Here is a screenshot of what the bar looks like when we start the raytracer:
 
 ![Starting Progress Bar](./docs/starting_pb.png)
 
-Here is a screenshot of what the bar looks like when we're in about the middle:
+Here is a screenshot of what the bar looks like when it's about 3/4 done.:
 
 ![Middle Progress Bar](./docs/pb_middle.png)
 
-And here is what it looks when the program stops:
+And here is what it looks when the program ended:
 
 ![End Progress Bar](./docs/pb_end.png)
+
