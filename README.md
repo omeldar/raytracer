@@ -135,6 +135,30 @@ And here is what it looks when the program ended:
 
 ![End Progress Bar](./docs/pb_end.png)
 
-### Vectors
+### Vectors - The Vec3 module
 
-Ongoing
+The `Vec3` module is the backbone of all the 3D math we'll need in our ray tracer. It handles everything from points in space to directions, colors, and even lighting calculations.
+
+A `Vec3` is a 3D vector with three components: `x`, `y` and `z`. It's used for points, directions and colors (RGB values for pixels). We need a bunch of vector math for a ray tracer which include:
+
+- Addition, subtraction, scaling, dot product, cross product
+- Turning any vector into a unit vector (length = 1)
+- Multiplying or dividing vectors component by component (useful for colors).
+
+Example usage of `Vec3`:
+
+```haskell
+origin :: Vec3
+origin = Vec3 0 0 0
+
+direction :: Vec3
+direction = Vec3 1 2 3
+
+rayAt :: Vec3 -> Vec3 -> Double -> Vec3
+rayAt origin direction t = add origin (scale t direction)
+
+pixelColor :: Vec3
+pixelColor = normalize (Vec3 0.5 0.7 1.0)
+```
+
+You can check out the `Vec3` implementation [here](./app/Vec3.hs).
