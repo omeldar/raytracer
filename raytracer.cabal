@@ -28,7 +28,8 @@ executable raytracer
     main-is:          Main.hs
     other-modules:
         ImageGenerator,
-        ProgressBar
+        ProgressBar,
+        Vec3
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,
