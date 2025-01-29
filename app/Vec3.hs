@@ -16,11 +16,7 @@ module Vec3
     , nearZero          -- Check if vector is near zero
     , reflect           -- Reflect a vector
     , refract           -- Refract a vector
-    , randomVec3        -- Generate a random vector
-    , randomVec3InRange -- Generate a random vector within a range
     ) where
-
-import System.Random (Random, randomRIO)
 
 data Vec3 = Vec3 Double Double Double deriving (Show, Eq)
 
@@ -66,20 +62,6 @@ refract uv n etaiOverEtat =
         rOutPerp = scale etaiOverEtat (add uv (scale cosTheta n))
         rOutParallel = scale (-sqrt (abs (1.0 - vLength rOutPerp ** 2))) n
     in add rOutPerp rOutParallel
-
-randomVec3 :: IO Vec3
-randomVec3 = do
-    x <- randomRIO (0, 1)
-    y <- randomRIO (0, 1)
-    z <- randomRIO (0, 1)
-    return $ Vec3 x y z
-
-randomInRange :: Double -> Double -> IO Vec3
-randomInRange minVal maxVal = do
-    x <- randomRIO (minVal, maxVal)
-    y <- randomRIO (minVal, maxVal)
-    z <- randomRIO (minVal, maxVal)
-    return $ Vec3 x y z
 
 x :: Vec3 -> Double
 x (Vec3 x _ _) = x
