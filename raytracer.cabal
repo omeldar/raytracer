@@ -29,7 +29,8 @@ executable raytracer
     other-modules:
         ImageGenerator,
         ProgressBar,
-        Vec3
+        Vec3,
+        Color
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,

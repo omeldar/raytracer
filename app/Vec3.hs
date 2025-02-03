@@ -33,7 +33,7 @@ cross :: Vec3 -> Vec3 -> Vec3
 cross (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) = Vec3 (y1 * z2 - z1 * y2) (z1 * x2 - x1 * z2) (x1 * y2 - y1 * x2)
 
 scale :: Double -> Vec3 -> Vec3
-scale s (Vec3 x y z) = Vec3 (s * x) (s * y) (s * z)
+scale s (Vec3 xV yV zV) = Vec3 (s * xV) (s * yV) (s * zV)
 
 vLength :: Vec3 -> Double
 vLength v = sqrt (dot v v)
@@ -42,7 +42,7 @@ normalize :: Vec3 -> Vec3
 normalize v = scale (1 / vLength v) v
 
 negateV :: Vec3 -> Vec3
-negateV (Vec3 x y z) = Vec3 (-x) (-y) (-z)
+negateV (Vec3 xV yV zV) = Vec3 (-xV) (-yV) (-zV)
 
 mul :: Vec3 -> Vec3 -> Vec3
 mul (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) = Vec3 (x1 * x2) (y1 * y2) (z1 * z2)
@@ -51,7 +51,7 @@ divV :: Vec3 -> Vec3 -> Vec3
 divV (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) = Vec3 (x1 / x2) (y1 / y2) (z1 / z2)
 
 nearZero :: Vec3 -> Bool
-nearZero (Vec3 x y z) = abs x < 1e-8 && abs y < 1e-8 && abs z < 1e-8
+nearZero (Vec3 xV yV zV) = abs xV < 1e-8 && abs yV < 1e-8 && abs zV < 1e-8
 
 reflect :: Vec3 -> Vec3 -> Vec3
 reflect v n = sub v (scale (2 * dot v n) n)
@@ -64,10 +64,10 @@ refract uv n etaiOverEtat =
     in add rOutPerp rOutParallel
 
 x :: Vec3 -> Double
-x (Vec3 x _ _) = x
+x (Vec3 xV _ _) = xV
 
 y :: Vec3 -> Double
-y (Vec3 _ y _) = y
+y (Vec3 _ yV _) = yV
 
 z :: Vec3 -> Double
-z (Vec3 _ _ z) = z
+z (Vec3 _ _ zV) = zV
