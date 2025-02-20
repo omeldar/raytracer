@@ -162,3 +162,61 @@ pixelColor = normalize (Vec3 0.5 0.7 1.0)
 ```
 
 You can check out the `Vec3` implementation [here](./app/Vec3.hs).
+
+### ImageGenerator Module - Drawing circles
+
+Later we will want to create a sphere. So lets start by doing it in 2D by changing the `createPPM`
+to not do a fade, but draw a circle:
+
+```haskell
+createPPM :: Int -> Int -> Image
+createPPM width height =
+    [[pixelColor i j | i <- [0..width-1]] | j <- [0..height-1]]
+    where
+        cx = width `div` 2
+        cy = height `div` 2
+        radius = min cx cy `div` 2
+        pixelColor i j =
+            if (i - cx) ^ (2 :: Integer) + (j - cy) ^ (2 :: Integer) <= radius ^ (2 :: Integer)
+                then Vec3 1.0 0.0 0.0 -- Red
+                else Vec3 1.0 1.0 1.0 -- White
+```
+
+As you see, we here already use `Vec3` for the colors. Colors often require operations like addition, scaling and blending.
+Since `Vec3` already supports these operations, and colors can be represented by three components, it simplifies the implementation.
+
+With that, we can create this image with a red circle:
+
+![Red Circle](./docs/red_circle.png)
+
+### The Ray Module
+
+The `Ray` module defines a `Ray` type and provides utility functions for working with rays.
+
+A `Ray` type is defined by its origin (a point in 3D space) and its direction (a 3D vector). Both are represented using the `Vec3` type.
+
+```haskell
+data Ray = Ray
+    { origin :: Vec3
+    , direction :: Vec3
+    } deriving (Show)
+```
+
+The `at` function computes the point at parameter `t` along the ray.
+
+```haskell
+at :: Ray -> Double -> Vec3
+at (Ray orig dir) t = orig `add` scale t dir
+```
+
+We can us it infix to improve readability. Example Usage:
+
+```haskell
+-- Define a ray
+let rayOrigin = Vec3 1.0 2.0 3.0
+let rayDirection = Vec3 0.0 1.0 0.0
+let ray = Ray rayOrigin rayDirection
+
+-- Compute the point at t = 2.0 using infix notation
+let pointAtT = ray `at` 2.0
+```

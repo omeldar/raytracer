@@ -20,9 +20,7 @@ createPPM width height =
     where
         cx = width `div` 2
         cy = height `div` 2
-
         radius = min cx cy `div` 2
-
         pixelColor i j =
             if (i - cx) ^ (2 :: Integer) + (j - cy) ^ (2 :: Integer) <= radius ^ (2 :: Integer)
                 then Vec3 1.0 0.0 0.0 -- Red
