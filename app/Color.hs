@@ -1,22 +1,9 @@
-module Color
-    ( Color
-    , toColor
-    , colorToString
-    ) where
+module Color where
 
-import Vec3 ( Vec3(..), x, y, z )
+import Vec3 ( Vec3(..) )
 
-type Color = Vec3
-
-toColor :: Double -> Double -> Double -> Color
-toColor = Vec3
-
-colorToString :: Color -> String
-colorToString color =
-    let rByte = toByte $ x color
-        gByte = toByte $ y color
-        bByte = toByte $ z color
-    in unwords $ map show [rByte, gByte, bByte]
-
-toByte :: Double -> Int
-toByte component = floor $ 255.999 * component
+writeColor :: Vec3 -> String
+writeColor (Vec3 r g b) =
+    unwords [show (truncate (255.999 * r) :: Int),
+             show (truncate (255.999 * g) :: Int),
+             show (truncate (255.999 * b) :: Int)]

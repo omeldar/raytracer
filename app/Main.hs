@@ -34,15 +34,15 @@ simTask :: ProgressBar -> IO()
 simTask pb = do
     updateMessage pb "Starting tasks..."
 
-    threadDelay 2000000
+    threadDelay 100000
     updateMessage pb "Running..."
     updateProgress pb 313
 
-    threadDelay 1700000
+    threadDelay 100000
     updateMessage pb "Finalizing"
     updateProgress pb 32417
 
-    threadDelay 3000000
+    threadDelay 100000
     updateMessage pb "Task complete!"
     updateProgress pb 32418
 
