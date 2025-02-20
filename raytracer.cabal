@@ -30,7 +30,8 @@ executable raytracer
         ImageGenerator,
         ProgressBar,
         Vec3,
-        Color
+        Color,
+        Ray
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,
