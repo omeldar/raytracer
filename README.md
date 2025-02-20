@@ -220,3 +220,21 @@ let ray = Ray rayOrigin rayDirection
 -- Compute the point at t = 2.0 using infix notation
 let pointAtT = ray `at` 2.0
 ```
+
+### Start the Raytracing
+
+A ray tracer sends rays through pixels and computes the color seen in the direction of those rays. The steps are:
+
+1. Calculate the ray from the "eye" through the pixel
+2. Determine which objects the ray hits
+3. Compute a color for the closest intersection point.
+
+To start that, we need a camera in the scene.
+
+The camera is defined by:
+
+- Origin: The position of the camera in 3D space.
+- Viewport: A virtual rectangle that represents the image plane.
+    - Lower Left Corner: The bottom-left corner of the viewport
+    - Horizontal Axis: The width of the viewport
+    - Vertical Axis: The height of the viewport

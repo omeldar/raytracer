@@ -6,25 +6,33 @@ module ImageGenerator (
     createPPM, ppmToStr, createAndWriteFile
 ) where
 
-import Vec3 -- Import your Vec3 module
+import qualified Vec3 as V
+import qualified Ray as R
+import qualified Camera as Cam
+import qualified Color as Col
 
 -- Define Pixel as Vec3 (representing RGB color)
-type Pixel = Vec3
+type Pixel = V.Vec3
 type Row = [Pixel]
 type Image = [Row]
 
--- Create a PPM image with a gradient or other pattern
+-- Create a PPM image with a red circle using ray tracing
 createPPM :: Int -> Int -> Image
 createPPM width height =
-    [[pixelColor i j | i <- [0..width-1]] | j <- [0..height-1]]
+    [[pixelColor i (height - 1 - j) | i <- [0..width-1]] | j <- [0..height-1]]
     where
-        cx = width `div` 2
-        cy = height `div` 2
-        radius = min cx cy `div` 2
+        camera = Cam.defaultCamera width height
         pixelColor i j =
-            if (i - cx) ^ (2 :: Integer) + (j - cy) ^ (2 :: Integer) <= radius ^ (2 :: Integer)
-                then Vec3 1.0 0.0 0.0 -- Red
-                else Vec3 1.0 1.0 1.0 -- White
+            let ray = Cam.generateRay camera i j width height
+            in traceRay ray
+
+traceRay :: R.Ray -> Col.Color
+traceRay ray =
+    let V.Vec3 _ y _ = V.normalize (R.direction ray)  -- Normalize direction
+        t = 0.5 * (y + 1.0)
+        white = V.Vec3 1.0 1.0 1.0
+        blue  = V.Vec3 0.5 0.7 1.0
+    in Col.lerp t white blue  -- Use Color.lerp instead of Vec3 functions
 
 -- Convert an Image to a PPM string
 ppmToStr :: Image -> String
@@ -37,7 +45,7 @@ ppmToStr image =
     where
         -- Convert a Vec3 (Pixel) to a PPM format string
         showPixel :: Pixel -> String
-        showPixel (Vec3 r g b) =
+        showPixel (V.Vec3 r g b) =
             unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
 
 -- Write the PPM image to a file

@@ -50,7 +50,17 @@ simTask pb = do
 
 -- Parse the command-line arguments
 parseArgs :: [String] -> (Int, Int)
-parseArgs [] = (250, 250)  -- assign default
-parseArgs [a] = let val = read a in (val, val)  -- if only one value: img becomes square with size of that value
-parseArgs [a, b] = (read a, read b)  -- image size fixed on both sides by args
+parseArgs [] = (640, 360)  -- assign default with aspect ratio 16:9
+parseArgs [a] = 
+    let width = read a
+        height = (width * 9) `div` 16 -- Calculate height based on 16:9 aspect ratio
+    in (width, height)
+parseArgs [a, b] =
+    let width = read a
+        height = read b
+        -- Ensure the aspect ratio is 16:9
+        expectedHeight = (width * 9) `div` 16
+    in if height == expectedHeight
+        then (width, height)
+        else error $ "Invalid aspect ratio. For width " ++ show width ++ ", height must be " ++ show expectedHeight
 parseArgs _ = error "Too many arguments. Provide at most two arguments."

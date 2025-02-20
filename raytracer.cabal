@@ -31,7 +31,8 @@ executable raytracer
         ProgressBar,
         Vec3,
         Color,
-        Ray
+        Ray,
+        Camera
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,
