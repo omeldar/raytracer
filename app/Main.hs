@@ -24,8 +24,6 @@ main = do
     IG.createAndWriteFile filename $ IG.ppmToStr $ IG.createPPM width height
     endFileCreation <- getCurrentTime
     
-    pb <- newProgressBar 32418
-    simTask pb
 
     let timeToCreate = diffUTCTime endFileCreation startFileCreation
     putStrLn ""
@@ -39,27 +37,6 @@ simTask pb = do
     threadDelay 2000000
     updateMessage pb "Running..."
     updateProgress pb 313
-
-    threadDelay 2000000
-    updateProgress pb 518
-
-    threadDelay 2000000
-    updateProgress pb 738
-
-    threadDelay 1300000
-    updateProgress pb 4594
-    
-    threadDelay 500000
-    updateProgress pb 11532
-
-    threadDelay 500000
-    updateProgress pb 17477
-
-    threadDelay 500000
-    updateProgress pb 24867
-
-    threadDelay 1300000
-    updateProgress pb 30786
 
     threadDelay 1700000
     updateMessage pb "Finalizing"

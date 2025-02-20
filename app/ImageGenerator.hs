@@ -12,13 +12,16 @@ type Image = [Row]
 
 createPPM :: Int -> Int -> Image
 createPPM width height =
-    [[(r, g, b) | x <- [0..width-1],
-                  let r = scale x width,
-                  let g = 0,
-                  let b = scale y height]
-                | y <- [0..height-1]]
+    [[pixelColor x y | x <- [0..width-1]] | y <- [0..height-1]]
     where
         scale val maxVal = round (((255.999 :: Double) * fromIntegral val) / fromIntegral (maxVal - 1))
+
+        radius = min (width `div` 2) (height `div` 2) `div` 2
+
+        pixelColor x y =
+            if (x - cx) ** 2  + (y - cy) ** 2 <= radius ** 2
+                then (255, 0, 0)
+                else (255, 255, 255)
 
 ppmToStr :: Image -> String
 ppmToStr image =
