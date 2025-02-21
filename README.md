@@ -30,7 +30,6 @@ When we want to build a raytracer, the first thing we need is to create an image
     <img src="docs/ppm_example.png" alt="PPM Image Example" style="width: 70%" />
 </div>
 
-
 We can use that to create a simple picture using some code:
 
 ```haskell
@@ -231,7 +230,8 @@ A ray tracer sends rays through pixels and computes the color seen in the direct
 
 To start that, we need a camera in the scene.
 
-We'll define a standard camera which works with an aspect ratio of 16:9
+We'll define a standard camera which is positioned at $(0, 0, 0)$. Later, we will try to move that camera
+and observe what effect it has on our scene.
 
 ```haskell
 defaultCamera :: Int -> Int -> Camera
@@ -251,72 +251,77 @@ defaultCamera width height =
     in Camera origin lowerLeftCorner horizontal vertical
 ```
 
-This camera is set to the center (0/0/0).
+Now before adding a sphere, we'll change the background and get rid of the circle. For that
+we change our `traceRay` function.
 
-We're here creating a background for the scene later by changing the image generation again:
+```haskell
+traceRay :: R.Ray -> Col.Color
+traceRay ray =
+    let V.Vec3 _ y _ = V.normalize (R.direction ray)  -- Normalize direction
+        t = 0.5 * (y + 1.0)
+        white = V.Vec3 1.0 1.0 1.0
+        blue  = V.Vec3 0.5 0.7 1.0
+    in Col.lerp t white blue  -- Use lerp for smooth background
+```
+
+This then creates a scene background like this:
 
 ![Scene Background Fade](docs/scene_background_fade.png)
 
 ### Adding a Sphere
 
-The equation for a sphere of radius r that is centered at the origin is:
+A sphere with a given radius $r$ centered at the origin can be described by the equation:
 
 $$
 x^2 + y^2 + z^2 = r^2
 $$
 
-If we allow the sphere to be at an arbitrary point ($C_x,C_y,C_z$), then the equation looks like this:
+If the sphere is instead centered at an arbitrary point $(C_x, C_y, C_z)$, we adjust the equation accordingly:
 
 $$
 (C_x - x)^2 + (C_y - y)^2 + (C_z - z)^2 = r^2
 $$
 
-In graphics, you want your formulas to be in terms of vectors, so that we can simply represent coordinates
-using `Vec3`.
-
-If we rewrite the equation of the sphere in vector form, we get:
+For graphics applications, it's convenient to express this equation using vectors. If we define the center
+as $C$ and any point in space as $P$, then the equation of the sphere becomes:
 
 $$
 (C - P) \cdot (C - P) = r^2
 $$
 
-We can read this as "any point P that satisfies this equation is on the sphere". We want to know
-if our ray $P(t) = Q + td$ ever hits the sphere anywhere. If it does hit the sphere, there is some
-$t$ for which $P(t)$ satisfies the sphere equation. So we are looking for any $t$ where this is true:
+This means that any point $P$ satisfying this equation lies on the sphere's surface.
+
+A ray defined by an origin point $Q$ and a direction $d$, parameterized by $t$:
 
 $$
-(C-P(t)) \cdot (C-P(t)) = r^2
+P(t) = Q + td
 $$
 
-which can be found by replacing $P(t)$ with its expanded form:
+To find where the ray intersecets the sphere, we substitute $P(t)$ into the sphere equation:
 
 $$
 (C - (Q + td)) \cdot (C - (Q + td)) = r^2
 $$
 
-We have three vectors on the left dotted by three vectors on the right. If we solved for the full dot product
-we would get nine vectors. You can definitely go through and write everything out, but we don't need to work
-that hard. If you remember, we want to solve for t, so we'll separate the terms based on whether there is
-a t or not:
+Expanding the expression inside the parantheses:
 
 $$
 (-td + (C - Q)) \cdot (-td + (C - Q)) = r^2
 $$
 
-And now we follow the rules of vector algebra to distribute the dot product:
+Using the distributive property of the dot product:
 
 $$
 t^2d \cdot d - 2td \cdot (C - Q) + (C - Q) \cdot (C - Q) = r^2
 $$
 
-Now we move the radius squared to the left side:
+Rearranging everything to one side:
 
 $$
 t^2d \cdot d - 2td \cdot (C - Q) + (C - Q) \cdot (C - Q) - r^2 = 0
 $$
 
-The vectors and $r$ in that equation are all constant and known. Furthermore, the only vectors that we
-have are reduced to scalars by dot product. The only unknown is t, and we have $t^2$, which means that
+The vectors and $r$ in that equation are all constant and known. The only unknown is t, and we have $t^2$, which means that
 this equation is quadratic. You can solve for a quadratic equation $ax^2 + bx + c = 0$ by using the
 quadratic formula:
 
@@ -332,9 +337,15 @@ b = -2d \cdot (C - Q) \\
 c = (C - Q) \cdot (C - Q) - r^2
 $$
 
-Using all of the above you can solve for t, but there is a square root part that can be either positive
-(meaning two real solutions), negative (meaning no real solutions), or zero (meaning one real solution).
-In graphics, the algebra almost always relates very directly to the geometry.
+Using all of the above you can solve for $t$. The term inside the square root, $b^2 - 4ac$, determines the number
+of solutions:
+
+- If it is positive, there are two solutions, meaning the ray intersects the sphere at two points.
+- If it is zero, there is one solution, meaning the ray just grazes the sphere (a tangent intersection).
+- If it is negative, there are no real solutions, meaning the ray misses the sphere completely.
+
+This formulation directly translates algebraic results into geometric insights, making it extremely useful
+in computer graphics for rendering, collision detection and shading calculations. All which we will need later.
 
 ![Roots](docs/roots_raytracing.png)
 
@@ -351,7 +362,7 @@ hitSphere center radius ray =
     in discriminant > 0
 ```
 
-We then have to update our `traceRay` function:
+We then have to update our `traceRay` function to include checking for collisions with our sphere:
 
 ```haskell
 import qualified Vec3 as V
@@ -362,7 +373,7 @@ traceRay :: R.Ray -> Col.Color
 traceRay ray =
     if S.hitSphere (V.Vec3 0 0 (-1)) 0.5 ray
     then V.Vec3 1.0 0.0 0.0     -- Red color for hit
-    else 
+    else
         let V.Vec3 _ y _ = V.normalize (R.direction ray)  -- Normalize direction
             t = 0.5 * (y + 1.0)
             white = V.Vec3 1.0 1.0 1.0
@@ -373,6 +384,3 @@ traceRay ray =
 This then generates following image showing a sphere in 2D, which here just looks like the circle from before:
 
 ![First Sphere Rendered](docs/first_sphere_rendered.png)
-
-
-
