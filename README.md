@@ -231,10 +231,112 @@ A ray tracer sends rays through pixels and computes the color seen in the direct
 
 To start that, we need a camera in the scene.
 
-The camera is defined by:
+We'll define a standard camera which works with an aspect ratio of 16:9
 
-- Origin: The position of the camera in 3D space.
-- Viewport: A virtual rectangle that represents the image plane.
-    - Lower Left Corner: The bottom-left corner of the viewport
-    - Horizontal Axis: The width of the viewport
-    - Vertical Axis: The height of the viewport
+```haskell
+defaultCamera :: Int -> Int -> Camera
+defaultCamera width height =
+    let aspectRatio = fromIntegral width / fromIntegral height
+        viewportHeight = 2.0
+        viewportWidth = viewportHeight * aspectRatio
+
+        focalLength = 1.0
+
+        origin = V.Vec3 0.0 0.0 0.0
+        horizontal = V.Vec3 viewportWidth 0.0 0.0
+        vertical = V.Vec3 0.0 viewportHeight 0.0
+        lowerLeftCorner = origin `V.sub` V.scale 0.5 horizontal
+                                `V.sub` V.scale 0.5 vertical
+                                `V.sub` V.Vec3 0.0 0.0 focalLength
+    in Camera origin lowerLeftCorner horizontal vertical
+```
+
+This camera is set to the center (0/0/0).
+
+We're here creating a background for the scene later by changing the image generation again:
+
+![Scene Background Fade](docs/scene_background_fade.png)
+
+### Adding a Sphere
+
+The equation for a sphere of radius r that is centered at the origin is:
+
+$$
+x^2 + y^2 + z^2 = r^2
+$$
+
+If we allow the sphere to be at an arbitrary point ($C_x,C_y,C_z$), then the equation looks like this:
+
+$$
+(C_x - x)^2 + (C_y - y)^2 + (C_z - z)^2 = r^2
+$$
+
+In graphics, you want your formulas to be in terms of vectors, so that we can simply represent coordinates
+using `Vec3`.
+
+If we rewrite the equation of the sphere in vector form, we get:
+
+$$
+(C - P) \cdot (C - P) = r^2
+$$
+
+We can read this as "any point P that satisfies this equation is on the sphere". We want to know
+if our ray $P(t) = Q + td$ ever hits the sphere anywhere. If it does hit the sphere, there is some
+$t$ for which $P(t)$ satisfies the sphere equation. So we are looking for any $t$ where this is true:
+
+$$
+(C-P(t)) \cdot (C-P(t)) = r^2
+$$
+
+which can be found by replacing $P(t)$ with its expanded form:
+
+$$
+(C - (Q + td)) \cdot (C - (Q + td)) = r^2
+$$
+
+We have three vectors on the left dotted by three vectors on the right. If we solved for the full dot product
+we would get nine vectors. You can definitely go through and write everything out, but we don't need to work
+that hard. If you remember, we want to solve for t, so we'll separate the terms based on whether there is
+a t or not:
+
+$$
+(-td + (C - Q)) \cdot (-td + (C - Q)) = r^2
+$$
+
+And now we follow the rules of vector algebra to distribute the dot product:
+
+$$
+t^2d \cdot d - 2td \cdot (C - Q) + (C - Q) \cdot (C - Q) = r^2
+$$
+
+Now we move the radius squared to the left side:
+
+$$
+t^2d \cdot d - 2td \cdot (C - Q) + (C - Q) \cdot (C - Q) - r^2 = 0
+$$
+
+The vectors and $r$ in that equation are all constant and known. Furthermore, the only vectors that we
+have are reduced to scalars by dot product. The only unknown is t, and we have $t^2$, which means that
+this equation is quadratic. You can solve for a quadratic equation $ax^2 + bx + c = 0$ by using the
+quadratic formula:
+
+$$
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+
+Solving for t in the ray-sphere intersection equation gives us these values for a, b and c:
+
+$$
+a = d \cdot d \\
+b = -2d \cdot (C - Q) \\
+c = (C - Q) \cdot (C - Q) - r^2
+$$
+
+Using all of the above you can solve for t, but there is a square root part that can be either positive
+(meaning two real solutions), negative (meaning no real solutions), or zero (meaning one real solution).
+In graphics, the algebra almost always relates very directly to the geometry.
+
+![Roots](docs/roots_raytracing.png)
+
+If we use that we can hardcore detection for a sphere into our raytracer:
+

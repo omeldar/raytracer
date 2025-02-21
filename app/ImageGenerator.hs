@@ -32,7 +32,7 @@ traceRay ray =
         t = 0.5 * (y + 1.0)
         white = V.Vec3 1.0 1.0 1.0
         blue  = V.Vec3 0.5 0.7 1.0
-    in Col.lerp t white blue  -- Use Color.lerp instead of Vec3 functions
+    in Col.lerp t white blue  -- Use lerp for smooth background
 
 -- Convert an Image to a PPM string
 ppmToStr :: Image -> String
