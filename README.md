@@ -332,8 +332,14 @@ $$
 Solving for t in the ray-sphere intersection equation gives us these values for a, b and c:
 
 $$
-a = d \cdot d \\
+a = d \cdot d
+$$
+
+$$
 b = -2d \cdot (C - Q) \\
+$$
+
+$$
 c = (C - Q) \cdot (C - Q) - r^2
 $$
 
