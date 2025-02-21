@@ -10,6 +10,7 @@ import qualified Vec3 as V
 import qualified Ray as R
 import qualified Camera as Cam
 import qualified Color as Col
+import qualified Sphere as S
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
@@ -28,11 +29,14 @@ createPPM width height =
 
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
-    let V.Vec3 _ y _ = V.normalize (R.direction ray)  -- Normalize direction
-        t = 0.5 * (y + 1.0)
-        white = V.Vec3 1.0 1.0 1.0
-        blue  = V.Vec3 0.5 0.7 1.0
-    in Col.lerp t white blue  -- Use lerp for smooth background
+    if S.hitSphere (V.Vec3 0 0 (-1)) 0.5 ray
+    then V.Vec3 1.0 0.0 0.0     -- Red color for hit
+    else 
+        let V.Vec3 _ y _ = V.normalize (R.direction ray)  -- Normalize direction
+            t = 0.5 * (y + 1.0)
+            white = V.Vec3 1.0 1.0 1.0
+            blue  = V.Vec3 0.5 0.7 1.0
+        in Col.lerp t white blue  -- Use lerp for smooth background
 
 -- Convert an Image to a PPM string
 ppmToStr :: Image -> String

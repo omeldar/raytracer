@@ -340,3 +340,39 @@ In graphics, the algebra almost always relates very directly to the geometry.
 
 If we use that we can hardcore detection for a sphere into our raytracer:
 
+```haskell
+hitSphere :: V.Vec3 -> Double -> R.Ray -> Bool
+hitSphere center radius ray =
+    let oc = R.origin ray `V.sub` center
+        a = V.dot (R.direction ray) (R.direction ray)
+        b = 2.0 * V.dot oc (R.direction ray)
+        c = V.dot oc oc - radius * radius
+        discriminant = b * b - 4 * a * c
+    in discriminant > 0
+```
+
+We then have to update our `traceRay` function:
+
+```haskell
+import qualified Vec3 as V
+import qualified Ray as R
+import qualified Sphere as S
+
+traceRay :: R.Ray -> Col.Color
+traceRay ray =
+    if S.hitSphere (V.Vec3 0 0 (-1)) 0.5 ray
+    then V.Vec3 1.0 0.0 0.0     -- Red color for hit
+    else 
+        let V.Vec3 _ y _ = V.normalize (R.direction ray)  -- Normalize direction
+            t = 0.5 * (y + 1.0)
+            white = V.Vec3 1.0 1.0 1.0
+            blue  = V.Vec3 0.5 0.7 1.0
+        in Col.lerp t white blue  -- Use lerp for smooth background
+```
+
+This then generates following image showing a sphere in 2D, which here just looks like the circle from before:
+
+![First Sphere Rendered](docs/first_sphere_rendered.png)
+
+
+
