@@ -395,6 +395,28 @@ This procedure on our screen then generates following image showing a sphere in 
 
 ### Surface Normals and Multiple Objects
 
+A surface normal is a vector that sticks straight out from the surface of an object at a specific point.
+Imagine you standing on earth: The surface normal would point exactly upwards from your position. The normal is important because it helps us figure out how light interacts with the surface, which is crucial for shading and making objects look realistic.
+
+**There are a few decisions to make with normals:**
+
+A unit-length vector is a vector that has a length of exactly 1. We need to decide whether our normal vectors
+should always be unit length or if they can have any length. Here's why unit-length normals are a good idea:
+
+1. Efficiency: If we need a unit-length normal later (and we often do), it's better to normalize it once upfront rather than doing it repeatedly every time it's needed.
+2. Common Use Case: Many calculations in graphics (like lighting) require unit-length normals. If we make them unit length from the start, we avoid extra work later.
+3. Geometry-Specific Optimization: For some shapes (like spheres), we can calculate unit-length normals very efficiently without doing expensive math like square roots.
+
+So the decision is: all normal vectors in our code will be unit length. We can see this here in the code:
+
+```haskell
+let normal = V.normalize (V.sub (R.at ray t) (V.Vec3 0 0 (-1))) -- normal is normalized (to unit length)
+```
+
+
+
+**Using surface normals to color map our sphere:**
+
 So while trying to start with the shading of objects, I tried to generate a color map of the
 surface normals on the sphere. While doing that, I accidentally created the following (left image).
 
@@ -405,6 +427,6 @@ First blooper (whole screen color mapped) |  Second blooper (inverted)
 :-------------------------:|:-------------------------:
 ![](docs/blooper.png)  |  ![](docs/blooper2.png)
 
-After correcting the mistake, I got following image:
+After correcting the mistakes, I got following image:
 
 ![Surface Normals as Color Map](docs/colormap.png)
