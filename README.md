@@ -401,16 +401,9 @@ surface normals on the sphere. While doing that, I accidentally created the foll
 Because I documented this after correcting it I'm not sure anymore what I did wrong 
 to generate such images, but it was minor issues I had with some existing code. 
 
-<div style="display: flex; justify-content: space-between;">
-  <div style="flex: 1; padding: 10px;">
-    <img src="docs/blooper.png" alt="Blooper Image" style="width: 100%;">
-    <p style="text-align: center;">Blooper Image with check of t > 0.0</p>
-  </div>
-  <div style="flex: 1; padding: 10px;">
-    <img src="docs/blooper2.png" alt="Wanted Image" style="width: 100%;">
-    <p style="text-align: center;">Second Blooper with check of t >= -1.0</p>
-  </div>
-</div>
+First blooper (whole screen color mapped) |  Second blooper (inverted)
+:-------------------------:|:-------------------------:
+![](docs/blooper.png)  |  ![](docs/blooper2.png)
 
 After correcting the mistake, I got following image:
 
