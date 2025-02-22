@@ -398,14 +398,16 @@ This procedure on our screen then generates following image showing a sphere in 
 A surface normal is a vector that sticks straight out from the surface of an object at a specific point.
 Imagine you standing on earth: The surface normal would point exactly upwards from your position. The normal is important because it helps us figure out how light interacts with the surface, which is crucial for shading and making objects look realistic.
 
+![Surface Normals on a sphere](docs/sphere%20surface-normals.png)
+
 **There are a few decisions to make with normals:**
 
 A unit-length vector is a vector that has a length of exactly 1. We need to decide whether our normal vectors
 should always be unit length or if they can have any length. Here's why unit-length normals are a good idea:
 
-1. Efficiency: If we need a unit-length normal later (and we often do), it's better to normalize it once upfront rather than doing it repeatedly every time it's needed.
-2. Common Use Case: Many calculations in graphics (like lighting) require unit-length normals. If we make them unit length from the start, we avoid extra work later.
-3. Geometry-Specific Optimization: For some shapes (like spheres), we can calculate unit-length normals very efficiently without doing expensive math like square roots.
+1. **Efficiency**: If we need a unit-length normal later (and we often do), it's better to normalize it once upfront rather than doing it repeatedly every time it's needed.
+2. **Common Use Case**: Many calculations in graphics (like lighting) require unit-length normals. If we make them unit length from the start, we avoid extra work later.
+3. **Geometry-Specific Optimization**: For some shapes (like spheres), we can calculate unit-length normals very efficiently without doing expensive math like square roots.
 
 So the decision is: all normal vectors in our code will be unit length. We can see this here in the code:
 
@@ -413,17 +415,42 @@ So the decision is: all normal vectors in our code will be unit length. We can s
 let normal = V.normalize (V.sub (R.at ray t) (V.Vec3 0 0 (-1))) -- normal is normalized (to unit length)
 ```
 
+**Visualizing Normals with Colors**
 
+Since we don't have lights or shading yet, we can visualize the normals by turning them into colors. Here's how it works:
+
+- A normal vector has three components: x, y, z. Each component is a number beteween -1 and 1 (because the vector is unit length).
+- We can map these components to colors: x = red, y = green, z = blue
+- Since colors are usually represented as values between 0 and 1, we adjust the normal component to fit this range. For example if the normal is $(0.5, -0.5, 1)$, we map it to $(0.75, 0.25, 1)$ for the color.
+
+This gives us a colorful representation of the normals, which helps us see how they change across the surface of an object.
+
+**Sphere normals**
+
+For a sphere centered at the origin with radius $r$, the normal at a hit point **P** is simply:
+
+$$
+\text{normal} = \frac{P - \text{center}}{r}
+$$
+
+Since the center is at the origin, this simplifies to:
+
+$$
+\text{normal} = \frac{\text{P}}{r}
+$$
+
+This avoids the need for a square root, making it efficient.
+
+**Why we do this**
+
+By visualizing normals, we can debug our code and ensure that the normals are being calculated correctly. Once we add lights and shading, these normals will determine how the surface will light, making the object look realistic.
 
 **Using surface normals to color map our sphere:**
 
 So while trying to start with the shading of objects, I tried to generate a color map of the
-surface normals on the sphere. While doing that, I accidentally created the following (left image).
+surface normals on the sphere. While doing that, I accidentally created the following two images.
 
-Because I documented this after correcting it I'm not sure anymore what I did wrong 
-to generate such images, but it was minor issues I had with some existing code. 
-
-First blooper (whole screen color mapped) |  Second blooper (inverted)
+Generation with multiple issues |  Generation (inverted)
 :-------------------------:|:-------------------------:
 ![](docs/blooper.png)  |  ![](docs/blooper2.png)
 
