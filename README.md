@@ -392,3 +392,26 @@ You can watch the full rendered video [here](docs/ScreenView.mp4).
 This procedure on our screen then generates following image showing a sphere in 2D, which here just looks like the circle from before:
 
 ![First Sphere Rendered](docs/first_sphere_rendered.png)
+
+### Surface Normals and Multiple Objects
+
+So while trying to start with the shading of objects, I tried to generate a color map of the
+surface normals on the sphere. While doing that, I accidentally created the following (left image).
+
+Because I documented this after correcting it I'm not sure anymore what I did wrong 
+to generate such images, but it was minor issues I had with some existing code. 
+
+<div style="display: flex; justify-content: space-between;">
+  <div style="flex: 1; padding: 10px;">
+    <img src="docs/blooper.png" alt="Blooper Image" style="width: 100%;">
+    <p style="text-align: center;">Blooper Image with check of t > 0.0</p>
+  </div>
+  <div style="flex: 1; padding: 10px;">
+    <img src="docs/blooper2.png" alt="Wanted Image" style="width: 100%;">
+    <p style="text-align: center;">Second Blooper with check of t >= -1.0</p>
+  </div>
+</div>
+
+After correcting the mistake, I got following image:
+
+![Surface Normals as Color Map](docs/colormap.png)

@@ -37,7 +37,8 @@ generateRay :: Camera -> Int -> Int -> Int -> Int -> R.Ray
 generateRay camera i j width height =
     let u = fromIntegral i / fromIntegral (width - 1)
         v = fromIntegral j / fromIntegral (height - 1)
-        direction = lowerLeftCorner camera `V.add`
-                    V.scale u (horizontal camera) `V.add`
-                    V.scale v (vertical camera)
-    in R.Ray (origin camera) direction
+        direction = (lowerLeftCorner camera `V.add`
+                     V.scale u (horizontal camera) `V.add`
+                     V.scale v (vertical camera))
+                    `V.sub` origin camera
+    in R.Ray (origin camera) (V.normalize direction)

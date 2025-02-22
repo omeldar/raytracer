@@ -6,6 +6,8 @@ module ImageGenerator (
     createPPM, ppmToStr, createAndWriteFile
 ) where
 
+import Debug.Trace (trace)
+
 import qualified Vec3 as V
 import qualified Ray as R
 import qualified Camera as Cam
@@ -29,14 +31,17 @@ createPPM width height =
 
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
-    if S.hitSphere (V.Vec3 0 0 (-1)) 0.5 ray
-    then V.Vec3 1.0 0.0 0.0     -- Red color for hit
-    else 
-        let V.Vec3 _ y _ = V.normalize (R.direction ray)  -- Normalize direction
-            t = 0.5 * (y + 1.0)
-            white = V.Vec3 1.0 1.0 1.0
-            blue  = V.Vec3 0.5 0.7 1.0
-        in Col.lerp t white blue  -- Use lerp for smooth background
+    let hit = S.hitSphere (V.Vec3 0 0 (-1)) 0.5 ray
+    in case hit of
+        t | t > 0.0 ->
+            let normal = V.normalize (V.sub (R.at ray t) (V.Vec3 0 0 (-1)))
+            in 0.5 `V.scale` (normal `V.add` V.Vec3 1 1 1)
+
+        _ ->  -- Background gradient
+            Col.lerp (0.5 * (V.y (V.normalize (R.direction ray)) + 1.0))
+                     (V.Vec3 1 1 1)
+                     (V.Vec3 0.5 0.7 1.0)
+
 
 -- Convert an Image to a PPM string
 ppmToStr :: Image -> String
