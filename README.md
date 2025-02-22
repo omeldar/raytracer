@@ -387,6 +387,11 @@ traceRay ray =
         in Col.lerp t white blue  -- Use lerp for smooth background
 ```
 
+<video autoplay loop muted playsinline width="600">
+  <source src="docs/ScreenView.mp4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>
+
 This then generates following image showing a sphere in 2D, which here just looks like the circle from before:
 
 ![First Sphere Rendered](docs/first_sphere_rendered.png)
