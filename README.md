@@ -1,22 +1,20 @@
 # Raytracer
 
-A simple raytracer built with haskell.
-
-🔴 NOT WORKING YET!
+A simple raytracer built with haskell (still working on it).
 
 ## Usage
 
 Use the raytracer like this:
 
 ```
-cabal run raytracer res_width res_height
+cabal run raytracer <args>
 ```
 
-So for example (for a 1920x1080 image):
+You have following options for the arguments:
 
-```
-cabal run raytracer 1920 1080
-```
+- **No arguments**: Resolution will be set to 640x360
+- **One argument `A`**: Resolution will be set to AxB, where A is your argument, and B is a value to match the 16:9 aspect ratio.
+- **Two arguments `A` and `B`**: Resolution will be set to AxB, if your resolution matches the 16:9 aspect ratio. Otherwise it will cause an error.
 
 ## Progress
 
