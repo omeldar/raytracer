@@ -509,3 +509,9 @@ After correcting the mistakes, I got following image:
 **Move Sphere further away**: Using the implemented perspective projection we can move the sphere further back to $(0,0,-5)$. Which then would look like this:
 
 ![Sphere Further Back](docs/push_sphere_back.png)
+
+But for now, we'll keep it at $(0,0,-1)$.
+
+### Simplifying the Ray-Sphere Intersection Code
+
+next up.
