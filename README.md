@@ -514,4 +514,81 @@ But for now, we'll keep it at $(0,0,-1)$.
 
 ### Simplifying the Ray-Sphere Intersection Code
 
+Lets simplify the ray-sphere function:
+
+```haskell
+hitSphere :: V.Vec3 -> Double -> R.Ray -> Double
+hitSphere center radius ray
+    | discriminant < 0 = -1.0
+    | t1 > 0.0 = t1
+    | t2 > 0.0 = t2
+    | otherwise = -1.0
+    where 
+        oc = R.origin ray `V.sub` center
+        a = V.dot (R.direction ray) (R.direction ray)
+        b = 2.0 * V.dot (R.direction ray) oc
+        c = V.dot oc oc - radius * radius
+        discriminant = b * b - 4 * a * c
+        sqrtD = sqrt discriminant
+        t1 = (-b - sqrtD) / (2.0 * a)  -- Closer intersection
+        t2 = (-b + sqrtD) / (2.0 * a)  -- Farther intersection
+```
+
+A vector dotted with itself is equal to the squared length of that vector. The equation for $b$ has a factor of negative two in it. Consider what happens to the quadratic equation if $b = -2h$:
+
+$$
+\frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+$$
+
+$$
+= \frac{-(-2h) \pm \sqrt{(-2h)^2 - 4ac}}{2a}
+$$
+
+$$
+= \frac{2h \pm 2 \sqrt{h^2 - ac}}{2a}
+$$
+
+$$
+= \frac{h \pm \sqrt{h^2 - ac}}{a}
+$$
+
+Solving for h, we get:
+
+$$
+h = \frac{b}{-2} = d \cdot (C - Q)
+$$
+
+Which turns into this new implementation for the `hitSphere` function:
+
+```haskell
+hitSphere :: V.Vec3 -> Double -> R.Ray -> Double
+hitSphere center radius ray
+    | discriminant < 0 = -1.0
+    | otherwise = (-h - sqrt discriminant) / a
+    where 
+        oc = R.origin ray `V.sub` center
+        a = V.lengthSquared $ R.direction ray
+        h = V.dot oc $ R.direction ray
+        discriminant = h * h - a * (V.lengthSquared oc - radius * radius)
+```
+
+In this implementation, the `hitSphere` function has been optimized to improve performance:
+
+1. Substitution of `h`:
+    Instead of calculating `b = 2.0 * V.dot oc $ R.direction ray`, we compute `h = V.dot oc $ R.direction ray`, which is equivalent to `b / 2`. This simplifies the discriminant calculation to:
+    ```haskell
+    discriminant = h * h - a * c
+    ```
+2. Simplified Intersection Calculation:
+    The intersection parameter `t` is now calculated as:
+    ```haskell
+    t = (-h - sqrt discriminant) / a
+    ```
+    This voids the division by `2.0 * a`, further reducing the number of operations.
+
+
+By reducing the number of multiplications and divisions, this version is more efficient. This is critical for ray tracing, where the `hitSphere` function can be called millions of times depending on the scene.
+
+### An Abstraction for Hittable Objects
+
 next up.

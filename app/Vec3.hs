@@ -16,6 +16,7 @@ module Vec3
     , nearZero          -- Check if vector is near zero
     , reflect           -- Reflect a vector
     , refract           -- Refract a vector
+    , lengthSquared     -- Dot product of the same vector squaring its length
     ) where
 
 data Vec3 = Vec3 Double Double Double deriving (Show, Eq)
@@ -62,6 +63,9 @@ refract uv n etaiOverEtat =
         rOutPerp = scale etaiOverEtat (add uv (scale cosTheta n))
         rOutParallel = scale (-sqrt (abs (1.0 - vLength rOutPerp ** 2))) n
     in add rOutPerp rOutParallel
+
+lengthSquared :: Vec3 -> Double
+lengthSquared v = dot v v
 
 x :: Vec3 -> Double
 x (Vec3 xV _ _) = xV

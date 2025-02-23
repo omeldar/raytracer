@@ -32,7 +32,8 @@ executable raytracer
         Vec3,
         Color,
         Ray,
-        Camera
+        Camera,
+        Sphere
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,
