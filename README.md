@@ -393,6 +393,54 @@ This procedure on our screen then generates following image showing a sphere in 
 
 ![First Sphere Rendered](docs/first_sphere_rendered.png)
 
+**Perspective Projection**
+
+If we shoot out rays parallel to each other straight into the scene, we do not get correct perspective projection for the objects within the scene. Meaning two identical objects, one close to the camera and one further away, will look the exact same size.
+
+The key idea for solving that: Rays Diverge from the Camera Origin.
+
+So in our code, we'll have to make our rays not parallel, but spread out from the camera's origin.
+
+1. The camera defines a viewport
+
+    ```haskell
+    lowerLeftCorner = origin `V.sub` V.scale 0.5 horizontal
+                            `V.sub` V.scale 0.5 vertical
+                            `V.sub` V.Vec3 0.0 0.0 focalLength
+    ```
+
+    This sets up the bottom-left of a 2D screen in front of the camera. The viewport is centered at `z = -focalLength`, meaning it's in front of the camera. `horizontal` and `vertical` define the size of this screen.
+
+2. Each Ray Points at a Different Pixel
+
+    In `generateRay`:
+
+    ```haskell
+    let u = fromIntegral i / fromIntegral (width - 1)
+    v = fromIntegral j / fromIntegral (height - 1)
+    ```
+
+    `u` and `v` define the position of the pixel in the viewport, where
+
+    - `u = 0` is the leftmost pixel, `u = 1` is the rightmost.
+    - `v = 0` is the bottom pixel, `v = 1` is the top.
+
+    Then the ray's direction is computed:
+
+    ```haskell
+    direction = (lowerLeftCorner camera `V.add`
+             V.scale u (horizontal camera) `V.add`
+             V.scale v (vertical camera))
+            `V.sub` origin camera
+    ```
+
+    This means the ray's direction is from the camera origin to a specific pixel on the viewport. Since the viewport is in front of the camera at `z = -1.0`, the farther pixels are at larger `z` values.
+
+**Why this causes objects to look smaller in distance**: Rays spread out from a single point (the camera origin). Unlike orthographic projection, these rays fan out from $(0,0,0)$. Distant objects get fewer rays per unit of their surface, meaning less pixels are covered by them.
+
+![](docs/perspective_projection_wb.png)
+_[Source: stackoverflow.com](https://stackoverflow.com/questions/36573283/from-perspective-picture-to-orthographic-picture)_
+
 ### Surface Normals and Multiple Objects
 
 A surface normal is a vector that sticks straight out from the surface of an object at a specific point.
@@ -450,10 +498,14 @@ By visualizing normals, we can debug our code and ensure that the normals are be
 So while trying to start with the shading of objects, I tried to generate a color map of the
 surface normals on the sphere. While doing that, I accidentally created the following two images.
 
-Generation with multiple issues |  Generation (inverted)
+Generation with multiple issues |  Generation (inverted hit detection)
 :-------------------------:|:-------------------------:
 ![](docs/blooper.png)  |  ![](docs/blooper2.png)
 
 After correcting the mistakes, I got following image:
 
 ![Surface Normals as Color Map](docs/colormap.png)
+
+**Move Sphere further away**: Using the implemented perspective projection we can move the sphere further back to $(0,0,-5)$. Which then would look like this:
+
+![Sphere Further Back](docs/push_sphere_back.png)
