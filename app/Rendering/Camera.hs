@@ -24,13 +24,13 @@ defaultCamera width height =
 
         focalLength = 1.0
 
-        origin = V.Vec3 0.0 0.0 0.0
-        horizontal = V.Vec3 viewportWidth 0.0 0.0
-        vertical = V.Vec3 0.0 viewportHeight 0.0
-        lowerLeftCorner = origin `V.sub` V.scale 0.5 horizontal
-                                `V.sub` V.scale 0.5 vertical
+        cOrigin = V.Vec3 0.0 0.0 0.0
+        cHorizontal = V.Vec3 viewportWidth 0.0 0.0
+        cVertical = V.Vec3 0.0 viewportHeight 0.0
+        cLowerLeftCorner = cOrigin `V.sub` V.scale 0.5 cHorizontal
+                                `V.sub` V.scale 0.5 cVertical
                                 `V.sub` V.Vec3 0.0 0.0 focalLength
-    in Camera origin lowerLeftCorner horizontal vertical
+    in Camera cOrigin cLowerLeftCorner cHorizontal cVertical
 
 -- Generate a ray for pixel (i, j)
 generateRay :: Camera -> Int -> Int -> Int -> Int -> R.Ray
