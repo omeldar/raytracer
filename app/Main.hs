@@ -13,8 +13,8 @@ main :: IO ()
 main = do
     args <- getArgs -- Retrieve command-line args
     let (width, height) = parseArgs args
+    putStrLn "-----------------------------------"
     putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height
-    putStrLn ""
 
     currentTime <- getCurrentTime
     let timestamp = formatTime defaultTimeLocale "%Y%m%d-%H%M%S" currentTime
