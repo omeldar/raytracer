@@ -2,7 +2,7 @@ module Ray (
     Ray(..),
     at
 ) where
-
+    
 import Vec3
 
 -- A ray is defined by its origin (a point) and its direction (a vector)

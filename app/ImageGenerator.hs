@@ -13,6 +13,8 @@ import qualified Ray as R
 import qualified Camera as Cam
 import qualified Color as Col
 import qualified Sphere as S
+import qualified Hittable as H
+import qualified HittableList as HL
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
@@ -31,13 +33,13 @@ createPPM width height =
 
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
-    let hit = S.hitSphere (V.Vec3 0 0 (-1)) 0.5 ray
-    in case hit of
-        t | t > 0.0 ->
-            let normal = V.normalize (V.sub (R.at ray t) (V.Vec3 0 0 (-1)))
-            in 0.5 `V.scale` (normal `V.add` V.Vec3 1 1 1)
+    let sphere = S.Sphere (V.Vec3 0 0 (-1)) 0.5
+        tMin = 0.0
+        tMax = 100
+    in case H.hit sphere ray tMin tMax of
+        Just hitRec -> 0.5 `V.scale` (H.normal hitRec `V.add` V.Vec3 1 1 1)
 
-        _ ->  -- Background gradient
+        Nothing ->  -- Background gradient
             Col.lerp (0.5 * (V.y (V.normalize (R.direction ray)) + 1.0))
                      (V.Vec3 1 1 1)
                      (V.Vec3 0.5 0.7 1.0)
