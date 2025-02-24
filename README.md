@@ -592,6 +592,22 @@ By reducing the number of multiplications and divisions, this version is more ef
 
 ### Profiling
 
+cabal.project.local file:
+
+```
+package *
+  profiling: True
+```
+then
+
+`cabal clean`
+
+then 
+
+`cabal build --enable-profiling`
+
+then `cabal run profraytracer 1920 1080 -- +RTS -p`
+
 coming.
 
 ```
