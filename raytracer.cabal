@@ -39,7 +39,28 @@ executable raytracer
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,
-        
         ansi-terminal
     hs-source-dirs:   app
     default-language: Haskell2010
+
+-- executable with profiling enabled
+executable profraytracer
+    import:           warnings
+    main-is:          Main.hs
+    other-modules:
+        Rendering.ImageGenerator,
+        Utils.ProgressBar,
+        Core.Vec3,
+        Rendering.Color,
+        Core.Ray,
+        Rendering.Camera,
+        Hittable.Objects.Sphere,
+        Hittable.Class,
+        Hittable.HittableList
+    build-depends:
+        base ^>=4.17.2.1,
+        time >=1.12 && <1.13,
+        ansi-terminal
+    hs-source-dirs:   app
+    default-language: Haskell2010
+    ghc-options: -O2 -prof -fprof-auto -rtsopts -fprof-cafs

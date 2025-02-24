@@ -14,7 +14,6 @@ import Rendering.Color as Col
 
 import Hittable.Objects.Sphere as S
 import Hittable.Class as H
-import Hittable.HittableList as HL
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3

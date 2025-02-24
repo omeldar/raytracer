@@ -589,6 +589,36 @@ In this implementation, the `hitSphere` function has been optimized to improve p
 
 By reducing the number of multiplications and divisions, this version is more efficient. This is critical for ray tracing, where the `hitSphere` function can be called millions of times depending on the scene.
 
+
+### Profiling
+
+coming.
+
+```
+	Mon Feb 24 23:23 2025 Time and Allocation Profiling Report  (Final)
+
+	   profraytracer +RTS -p -RTS 1920 1080
+
+	total time  =        2.15 secs   (2152 ticks @ 1000 us, 1 processor)
+	total alloc = 7,983,032,104 bytes  (excludes profiling overheads)
+
+COST CENTRE                     MODULE                   SRC                                             %time %alloc
+
+ppmToStr.pixelData              Rendering.ImageGenerator app/Rendering/ImageGenerator.hs:53:9-65          28.6   36.7
+ppmToStr.showPixel              Rendering.ImageGenerator app/Rendering/ImageGenerator.hs:(58,9)-(59,86)   14.7   24.9
+generateRay                     Rendering.Camera         app/Rendering/Camera.hs:(37,1)-(44,52)            9.6   12.7
+createAndWriteFile              Rendering.ImageGenerator app/Rendering/ImageGenerator.hs:63:1-30           9.4    0.1
+generateRay.direction           Rendering.Camera         app/Rendering/Camera.hs:(40,9)-(43,41)            7.3    1.2
+traceRay                        Rendering.ImageGenerator app/Rendering/ImageGenerator.hs:(34,1)-(44,41)    6.9    7.5
+hit                             Hittable.Objects.Sphere  app/Hittable/Objects/Sphere.hs:(13,5)-(29,47)     5.9    0.5
+lerp                            Rendering.Color          app/Rendering/Color.hs:14:1-58                    4.4    4.8
+hit.oc                          Hittable.Objects.Sphere  app/Hittable/Objects/Sphere.hs:19:13-47           3.1    2.5
+createPPM                       Rendering.ImageGenerator app/Rendering/ImageGenerator.hs:(25,1)-(31,27)    1.7    3.5
+createPPM.pixelColor.ray        Rendering.ImageGenerator app/Rendering/ImageGenerator.hs:30:17-61          1.4    2.1
+hit.discriminant                Hittable.Objects.Sphere  app/Hittable/Objects/Sphere.hs:22:13-89           1.2    0.4
+hit.makeHitRecord.outwardNormal Hittable.Objects.Sphere  app/Hittable/Objects/Sphere.hs:28:21-89           1.1    0.8
+```
+
 ### An Abstraction for Hittable Objects
 
 next up.
