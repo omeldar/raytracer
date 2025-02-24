@@ -1,7 +1,6 @@
 module Hittable.HittableList where
 
 import Hittable.Objects.Sphere
-import Core.Ray as R
 import Hittable.Class
 
 newtype HittableList = HittableList [Sphere]
