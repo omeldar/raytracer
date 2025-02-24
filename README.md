@@ -635,6 +635,10 @@ hit.discriminant                Hittable.Objects.Sphere  app/Hittable/Objects/Sp
 hit.makeHitRecord.outwardNormal Hittable.Objects.Sphere  app/Hittable/Objects/Sphere.hs:28:21-89           1.1    0.8
 ```
 
+To run without profiling again, set `profiling: False` within the `cabal.project.local`. And after that just build normally: `cabal build`. You'll maybe get some exception, but you can ignore that. Just run `cabal run raytracer` again and it should run without profiling normally again.
+
+Running it with profiling enabled will cause it to take longer to compute.
+
 ### An Abstraction for Hittable Objects
 
 next up.
