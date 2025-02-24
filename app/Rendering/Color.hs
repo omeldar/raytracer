@@ -1,6 +1,6 @@
-module Color where
+module Rendering.Color where
 
-import Vec3 ( Vec3(..), scale, add)
+import Core.Vec3 ( Vec3(..), scale, add)
 
 type Color = Vec3  -- Define Color as an alias for Vec3
 

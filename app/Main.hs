@@ -3,10 +3,10 @@ module Main where
 import System.Environment (getArgs)
 import Data.Time (getCurrentTime, formatTime, defaultTimeLocale, diffUTCTime)
 
-import ProgressBar
+import Utils.ProgressBar
 import Control.Concurrent (threadDelay)
 
-import ImageGenerator as IG
+import Rendering.ImageGenerator as IG
     ( createPPM, ppmToStr, createAndWriteFile )
 
 main :: IO ()

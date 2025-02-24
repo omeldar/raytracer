@@ -27,14 +27,15 @@ executable raytracer
     import:           warnings
     main-is:          Main.hs
     other-modules:
-        ImageGenerator,
-        ProgressBar,
-        Vec3,
-        Color,
-        Ray,
-        Camera,
-        Sphere,
-        Hittable
+        Rendering.ImageGenerator,
+        Utils.ProgressBar,
+        Core.Vec3,
+        Rendering.Color,
+        Core.Ray,
+        Rendering.Camera,
+        Hittable.Objects.Sphere,
+        Hittable.Class,
+        Hittable.HittableList
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,

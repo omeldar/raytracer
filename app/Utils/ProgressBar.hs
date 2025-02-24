@@ -1,4 +1,4 @@
-module ProgressBar (
+module Utils.ProgressBar (
     ProgressBar,
     newProgressBar,
     updateProgress,

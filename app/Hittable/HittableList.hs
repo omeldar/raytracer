@@ -1,8 +1,8 @@
-module HittableList where
+module Hittable.HittableList where
 
-import Sphere
-import Ray as R
-import Hittable
+import Hittable.Objects.Sphere
+import Core.Ray as R
+import Hittable.Class
 
 newtype HittableList = HittableList [Sphere]
 

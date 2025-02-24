@@ -1,8 +1,8 @@
-module Sphere where
+module Hittable.Objects.Sphere where
 
-import Vec3
-import Ray
-import Hittable
+import Core.Vec3
+import Core.Ray
+import Hittable.Class
 
 data Sphere = Sphere
     { center :: Vec3

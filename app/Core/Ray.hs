@@ -1,9 +1,9 @@
-module Ray (
+module Core.Ray (
     Ray(..),
     at
 ) where
     
-import Vec3
+import Core.Vec3
 
 -- A ray is defined by its origin (a point) and its direction (a vector)
 -- both represented as a Vec3

@@ -1,4 +1,4 @@
-module ImageGenerator (
+module Rendering.ImageGenerator (
     -- types
     Pixel, Row, Image,
 
@@ -6,15 +6,15 @@ module ImageGenerator (
     createPPM, ppmToStr, createAndWriteFile
 ) where
 
-import Debug.Trace (trace)
+import Core.Vec3 as V
 
-import qualified Vec3 as V
-import qualified Ray as R
-import qualified Camera as Cam
-import qualified Color as Col
-import qualified Sphere as S
-import qualified Hittable as H
-import qualified HittableList as HL
+import Core.Ray as R
+import Rendering.Camera as Cam
+import Rendering.Color as Col
+
+import Hittable.Objects.Sphere as S
+import Hittable.Class as H
+import Hittable.HittableList as HL
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3

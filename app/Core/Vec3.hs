@@ -1,4 +1,4 @@
-module Vec3
+module Core.Vec3
     ( Vec3 (..)         -- Export types and constructors
     , x                 -- Extractor for x    
     , y                 -- Extractor for y

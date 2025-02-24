@@ -1,11 +1,11 @@
-module Camera (
+module Rendering.Camera (
     Camera(..),
     defaultCamera,
     generateRay
 ) where
 
-import qualified Vec3 as V
-import qualified Ray as R
+import qualified Core.Vec3 as V
+import qualified Core.Ray as R
 
 -- Define the Camera type
 data Camera = Camera

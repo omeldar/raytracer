@@ -1,7 +1,7 @@
-module Hittable where
+module Hittable.Class where
 
-import Vec3
-import Ray
+import Core.Vec3
+import Core.Ray
 
 data HitRecord = HitRecord
     { point :: Vec3
