@@ -592,23 +592,37 @@ By reducing the number of multiplications and divisions, this version is more ef
 
 ### Profiling
 
-cabal.project.local file:
+To enable profiling for your Haskell project, follow these steps:
 
-```
-package *
-  profiling: True
-```
-then
+1. **Create/Update** `cabal.project.local`
+    Add the following lines to your `cabal.project.local` file to enable profiling:
 
-`cabal clean`
+    ```
+    package *
+      profiling: True
+    ```
 
-then 
+2. **Clean the project**
+    Run the following command to clean the project and ensure a fresh build:
+    ```
+    cabal clean
+    ```
 
-`cabal build --enable-profiling`
+3. **Build with Profiling**
+    Execute the project with profiling enabled:
 
-then `cabal run profraytracer 1920 1080 -- +RTS -p`
+    ```
+    cabal build --enable-profiling
+    ```
 
-coming.
+4. **Run with Profiling**
+    Execute the program with profiling enabled. For example:
+
+    ```
+    cabal run profraytracer 1920 1080 -- +RTS -p
+    ```
+
+    This will generate a profiling report, which provides insights into time and memory allocation. Below is an example of the output:
 
 ```
 	Mon Feb 24 23:23 2025 Time and Allocation Profiling Report  (Final)
@@ -635,9 +649,28 @@ hit.discriminant                Hittable.Objects.Sphere  app/Hittable/Objects/Sp
 hit.makeHitRecord.outwardNormal Hittable.Objects.Sphere  app/Hittable/Objects/Sphere.hs:28:21-89           1.1    0.8
 ```
 
-To run without profiling again, set `profiling: False` within the `cabal.project.local`. And after that just build normally: `cabal build`. You'll maybe get some exception, but you can ignore that. Just run `cabal run raytracer` again and it should run without profiling normally again.
+5. **Disable Profiling**
+    To run the program without profiling, update the `cabal.project.local` file to disable profiling:
 
-Running it with profiling enabled will cause it to take longer to compute.
+    ```
+    package *
+      profiling: False
+    ```
+
+6. **Rebuild and Run**
+    Rebuild the project normally:
+
+    ```
+    cabal build
+    ```
+
+    You may encounter an exception during the build, but it can be ignored. Run the program as usual:
+
+    ```
+    cabal run raytracer <x> <y>
+    ```
+
+**Note**: Enabling profiling increases computation time due to the additional overhead of collecting profiling data. Use it only when necessary for performance analysis.
 
 ### An Abstraction for Hittable Objects
 
