@@ -672,6 +672,6 @@ hit.makeHitRecord.outwardNormal Hittable.Objects.Sphere  app/Hittable/Objects/Sp
 
 **Note**: Enabling profiling increases computation time due to the additional overhead of collecting profiling data. Use it only when necessary for performance analysis.
 
-### An Abstraction for Hittable Objects
+### Splitting computation into threads.
 
 next up.

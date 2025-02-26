@@ -6,6 +6,11 @@ module Rendering.ImageGenerator (
     createPPM, ppmToStr, createAndWriteFile
 ) where
 
+import Control.Parallel (par, pseq)
+import Control.Concurrent (forkIO, newEmptyMVar, putMVar, takeMVar)
+import Control.Concurrent.STM (TVar, atomically, modifyTVar', newTVarIO, readTVar, writeTVar)
+import Control.Monad(forM_, replicateM_)
+
 import Core.Vec3 as V
 
 import Core.Ray as R
@@ -20,15 +25,36 @@ type Pixel = V.Vec3
 type Row = [Pixel]
 type Image = [Row]
 
--- Create a PPM image with a red circle using ray tracing
-createPPM :: Int -> Int -> Image
-createPPM width height =
-    [[pixelColor i (height - 1 - j) | i <- [0..width-1]] | j <- [0..height-1]]
-    where
-        camera = Cam.defaultCamera width height
-        pixelColor i j =
-            let ray = Cam.generateRay camera i j width height
-            in traceRay ray
+createPPM :: Int -> Int -> Int -> (Int -> IO ()) -> IO Image
+createPPM width height threadCount updateProgress = do
+    let rowsPerThread = height `div` threadCount
+        rowRanges = zip [0..] [(i * rowsPerThread, min height ((i+1) * rowsPerThread)) | i <- [0..threadCount-1]]
+
+    results <- newTVarIO (replicate threadCount [])
+    doneSignal <- newEmptyMVar
+
+    forM_ rowRanges $ \(index, (startY, endY)) -> forkIO $ do
+        rows <- generateRows width height (startY, endY) updateProgress
+        atomically $ modifyTVar' results (\xs -> take index xs ++ [rows] ++ drop (index+1) xs)
+        putMVar doneSignal ()
+
+    replicateM_ threadCount (takeMVar doneSignal)
+
+    orderedRows <- atomically $ readTVar results
+    return (concat orderedRows)
+
+generateRows :: Int -> Int -> (Int, Int) -> (Int -> IO ()) -> IO [Row]
+generateRows width height (startY, endY) updateProgress =
+    mapM (\j -> do
+        row <- mapM (\i -> return (pixelColor i (height - 1 - j))) [0 .. width - 1]
+        updateProgress 1
+        return row  
+    ) [startY .. endY - 1]
+  where
+    camera = Cam.defaultCamera width height
+    pixelColor i j = 
+        let ray = Cam.generateRay camera i j width height 
+        in traceRay ray
 
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
