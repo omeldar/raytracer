@@ -13,6 +13,7 @@ import Rendering.Camera as Cam
 import Rendering.Color as Col
 
 import Hittable.Objects.Sphere as S
+import Hittable.HittableList as HL
 import Hittable.Class as H
 
 -- Define Pixel as Vec3 (representing RGB color)
@@ -32,12 +33,15 @@ createPPM width height =
 
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
-    let sphere = S.Sphere (V.Vec3 0 0 (-1)) 0.5
+    let spheres = HittableList [ 
+            S.Sphere (V.Vec3 0 0 (-1)) 0.5,  -- Sphere 1
+            S.Sphere (V.Vec3 1.5 0 (-1)) 0.5,  -- Sphere 2
+            S.Sphere (V.Vec3 (-1.5) 0 (-1)) 0.5 -- Sphere 3
+            ]
         tMin = 0.0
         tMax = 100
-    in case H.hit sphere ray tMin tMax of
+    in case H.hit spheres ray tMin tMax of
         Just hitRec -> 0.5 `V.scale` (H.normal hitRec `V.add` V.Vec3 1 1 1)
-
         Nothing ->  -- Background gradient
             Col.lerp (0.5 * (V.y (V.normalize (R.direction ray)) + 1.0))
                      (V.Vec3 1 1 1)

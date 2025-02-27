@@ -10,5 +10,5 @@ writeColor (Vec3 r g b) =
              show (truncate (255.999 * g) :: Int),
              show (truncate (255.999 * b) :: Int)]
 
-lerp :: Double -> Color -> Color -> Color
+lerp :: Double -> Color -> Color -> Color^
 lerp t start end = scale (1.0 - t) start `add` scale t end
