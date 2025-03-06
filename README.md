@@ -766,3 +766,76 @@ traceRay ray =
 This extends our ray tracer to support multiple objects while keeping the implementation modular and scalable.
 
 ![Multiple Spheres](docs/multiple_spheres.png)
+
+### Fixing Perspective Distortion with Focal Length & Camera Position
+
+When rendering our scene, we initially noticed a weird stretching effect, especially near the edges of the image. This was due to **perspective distortion**, which occurs when the **field of view** is too wide.
+
+To fix this, we move our camera back and increase the focal length.
+
+```haskell
+defaultCamera :: Int -> Int -> Camera
+defaultCamera width height =
+    let aspectRatio = fromIntegral width / fromIntegral height
+        viewportHeight = 2.0
+        viewportWidth = viewportHeight * aspectRatio
+
+        focalLength = 5.0
+
+        cOrigin = V.Vec3 0.0 0.0 5.0    -- 
+        cHorizontal = V.Vec3 viewportWidth 0.0 0.0
+        cVertical = V.Vec3 0.0 viewportHeight 0.0
+        cLowerLeftCorner = cOrigin `V.sub` V.scale 0.5 cHorizontal
+                                `V.sub` V.scale 0.5 cVertical
+                                `V.sub` V.Vec3 0.0 0.0 focalLength
+    in Camera cOrigin cLowerLeftCorner cHorizontal cVertical
+```
+
+**Understanding Perspective Distortion**
+
+In a ray tracer, our camera sends rays through a virtual viewport (or image plane) to determine the color of the pixel. The way we set up this viewport and position the camera determines **how objects appear in the scene**.
+
+If the viewport is too **close to the camera**, the rays spread out too much, causing s**trong perspective distortion**. This makes objects **near the edge** of the image appear **stretched**.
+
+This happens because our rays originate from the camera's position, and the farther away from the center of the image a pixel is, the more the ray direction diverges.
+
+**The Role of Focal Length**
+
+The focal length in our camera setup determines how far the viewport is from the camera along the z-axis. However, it does not move the camera itself. It moves the virtual screen where rays are aimed.
+
+We originally had:
+
+```haskell
+focalLength = 1.0
+```
+
+This means the viewport was positioned at z = -1.0, close to the camera at (0,0,0). Because of this, rays spread out quickly, covering a **wide field of view** - this is why objects near the edges appread stretched.
+
+When we increase the focal length:
+
+```haskell
+focalLength = 5.0
+```
+
+The viewport moves farther away, to `z = -5.0`. This means rays spread out less, effectively **zooming** in on the scene (because the viewport is closer to the obejcts in the scene).
+
+However, this alone does not fix the perspective distortion. Since the viewport is farther away, objects **appear larger**, but they can still exhibit **stretching near the edges**. To correct this, we also m**ove the camera back**, ensuring the rays entering the viewport have **a more natural perspective**.
+
+In other words:
+
+- Larger focal length: Moves the image plane closer to the scene, making the view more zoomed in.
+- Smaller focal length: Moves the image plane closer, making the view wider.
+
+But **focal length does not move the camera** itself!
+
+### Front Faces vs. Back Faces
+
+Another decision we need to make for normal sis whether they should point out or in. Currently, the normal found will always be in the direction of the center to the intersection point (it points out). If the ray intersects the sphere from the outside, the normal points against the ray. If the ray intersects the sphere from the inside, the normal points with the ray.
+
+Alternatively, we can have the normal always point against the ray. If the ray is outside the sphere, the normal will point outward, but if the ray is inside the sphere, the normal will point inward.
+
+![Front Faces vs Back Faces](docs/frontvsbackfaces.jpg)
+_[Source: Ray Tracing in One Weekend](hhttps://raytracing.github.io/books/RayTracingInOneWeekend.html#surfacenormalsandmultipleobjects/frontfacesversusbackfaces)_
+
+We need to choose one of these possibilities, because we will want to determine which side of the surface that the ray is coming from. This is important for objects that are rendered differently on each side, like the text on a two-sides sheet of paper, or for objects that have an inside and an outside, like glass balls.
+
