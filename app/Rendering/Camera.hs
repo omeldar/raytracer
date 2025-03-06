@@ -24,7 +24,7 @@ defaultCamera width height =
 
         focalLength = 5.0
 
-        cOrigin = V.Vec3 0.0 0.0 5.0    -- 
+        cOrigin = V.Vec3 0.0 0.0 5.0
         cHorizontal = V.Vec3 viewportWidth 0.0 0.0
         cVertical = V.Vec3 0.0 viewportHeight 0.0
         cLowerLeftCorner = cOrigin `V.sub` V.scale 0.5 cHorizontal

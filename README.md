@@ -795,7 +795,7 @@ defaultCamera width height =
 
 In a ray tracer, our camera sends rays through a virtual viewport (or image plane) to determine the color of the pixel. The way we set up this viewport and position the camera determines **how objects appear in the scene**.
 
-If the viewport is too **close to the camera**, the rays spread out too much, causing s**trong perspective distortion**. This makes objects **near the edge** of the image appear **stretched**.
+If the viewport is too **close to the camera**, the rays spread out too much, causing **strong perspective distortion**. This makes objects **near the edge** of the image appear **stretched**.
 
 This happens because our rays originate from the camera's position, and the farther away from the center of the image a pixel is, the more the ray direction diverges.
 
