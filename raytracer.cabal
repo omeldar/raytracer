@@ -29,6 +29,8 @@ executable raytracer
     other-modules:
         Rendering.ImageGenerator,
         Utils.ProgressBar,
+        Utils.Constants,
+        Utils.Interval,
         Core.Vec3,
         Rendering.Color,
         Core.Ray,
@@ -39,9 +41,11 @@ executable raytracer
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,
-        ansi-terminal
+        ansi-terminal,
+        random
     hs-source-dirs:   app
     default-language: Haskell2010
+    ghc-options:      -O2  
 
 -- executable with profiling enabled
 executable profraytracer
@@ -50,6 +54,8 @@ executable profraytracer
     other-modules:
         Rendering.ImageGenerator,
         Utils.ProgressBar,
+        Utils.Constants,
+        Utils.Interval,
         Core.Vec3,
         Rendering.Color,
         Core.Ray,
@@ -60,7 +66,8 @@ executable profraytracer
     build-depends:
         base ^>=4.17.2.1,
         time >=1.12 && <1.13,
-        ansi-terminal
+        ansi-terminal,
+        random
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options: -O2 -prof -fprof-auto -rtsopts -fprof-cafs

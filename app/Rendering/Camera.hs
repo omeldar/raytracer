@@ -6,6 +6,7 @@ module Rendering.Camera (
 
 import qualified Core.Vec3 as V
 import qualified Core.Ray as R
+import Utils.Constants (degreesToRadians)
 
 -- Define the Camera type
 data Camera = Camera

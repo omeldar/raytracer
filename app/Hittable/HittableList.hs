@@ -2,12 +2,13 @@ module Hittable.HittableList where
 
 import Hittable.Objects.Sphere
 import Hittable.Class
+import Utils.Interval (Interval)
 
 newtype HittableList = HittableList [Sphere]
 
 instance Hittable HittableList where
-    hit (HittableList objects) ray tMin tMax =
-        foldr (\obj acc -> case hit obj ray tMin tMax of
+    hit (HittableList objects) ray interval =
+        foldr (\obj acc -> case hit obj ray interval of
             Nothing -> acc
             Just rec -> case acc of
                 Nothing -> Just rec

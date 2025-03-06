@@ -828,6 +828,8 @@ In other words:
 
 But **focal length does not move the camera** itself!
 
+![Perspective Distortion Fixed](docs/perspective_distortion_fix.png)
+
 ### Front Faces vs. Back Faces
 
 Another decision we need to make for normal sis whether they should point out or in. Currently, the normal found will always be in the direction of the center to the intersection point (it points out). If the ray intersects the sphere from the outside, the normal points against the ray. If the ray intersects the sphere from the inside, the normal points with the ray.
@@ -838,4 +840,6 @@ Alternatively, we can have the normal always point against the ray. If the ray i
 _[Source: Ray Tracing in One Weekend](hhttps://raytracing.github.io/books/RayTracingInOneWeekend.html#surfacenormalsandmultipleobjects/frontfacesversusbackfaces)_
 
 We need to choose one of these possibilities, because we will want to determine which side of the surface that the ray is coming from. This is important for objects that are rendered differently on each side, like the text on a two-sides sheet of paper, or for objects that have an inside and an outside, like glass balls.
+
+### 
 

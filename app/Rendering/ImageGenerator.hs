@@ -16,6 +16,8 @@ import Hittable.Objects.Sphere as S
 import Hittable.HittableList as HL
 import Hittable.Class as H
 
+import Utils.Interval (Interval(..))
+
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
 type Row = [Pixel]
@@ -34,18 +36,18 @@ createPPM width height =
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
     let spheres = HittableList [ 
-            S.Sphere (V.Vec3 0 0 (-1)) 0.5,  -- Sphere 1
-            S.Sphere (V.Vec3 1.5 0 (-1)) 0.5,  -- Sphere 2
-            S.Sphere (V.Vec3 (-1.5) 0 (-1)) 0.5 -- Sphere 3
+            S.Sphere (V.Vec3 (-1.2) 0 (-1)) 0.5,
+            S.Sphere (V.Vec3 0.0 0 (-1)) 0.5,
+            S.Sphere (V.Vec3 (1.2) 0 (-1)) 0.5
             ]
-        tMin = 0.0
-        tMax = 100
-    in case H.hit spheres ray tMin tMax of
+        interval = Interval 0.001 100  -- Avoids shadow acne
+    in case H.hit spheres ray interval of
         Just hitRec ->
-            let normal = V.normalize (H.normal hitRec)  -- Normalize normal to prevent artifacts
-            in 0.5 `V.scale` (normal `V.add` V.Vec3 1 1 1)
-
-        Nothing ->  -- Background gradient
+            let normal = V.normalize (H.normal hitRec)
+            in if H.frontFace hitRec
+                then 0.5 `V.scale` (normal `V.add` V.Vec3 1 1 1)
+                else V.Vec3 1.0 0.0 0.0
+        Nothing ->  
             Col.lerp (0.5 * (V.y (V.normalize (R.direction ray)) + 1.0))
                     (V.Vec3 1 1 1)
                     (V.Vec3 0.5 0.7 1.0)

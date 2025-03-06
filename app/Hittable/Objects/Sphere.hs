@@ -3,17 +3,19 @@ module Hittable.Objects.Sphere where
 import Core.Vec3
 import Core.Ray
 import Hittable.Class
+import Utils.Interval (Interval, contains)
 
 data Sphere = Sphere
     { center :: Vec3
     , radius :: Double
     } deriving (Show)
 
+
 instance Hittable Sphere where
-    hit sphere ray tMin tMax
+    hit sphere ray interval
         | discriminant < 0 = Nothing
-        | t1 >= tMin && t1 <= tMax = Just (makeHitRecord t1)
-        | t2 >= tMin && t2 <= tMax = Just (makeHitRecord t2)
+        | contains interval t1 = Just (makeHitRecord t1)
+        | contains interval t2 = Just (makeHitRecord t2)
         | otherwise = Nothing
         where
             oc = origin ray `sub` center sphere
@@ -23,7 +25,11 @@ instance Hittable Sphere where
             sqrtD = sqrt discriminant
             t1 = (-h - sqrtD) / a
             t2 = (-h + sqrtD) / a
+            
             makeHitRecord t' =
                 let p = ray `at` t'
                     outwardNormal = (1.0 / radius sphere) `scale` (p `sub` center sphere)
-                in HitRecord p outwardNormal t'
+                    (normal, front) = setFaceNormal ray outwardNormal
+                in HitRecord p normal t' front
+
+
