@@ -674,4 +674,95 @@ hit.makeHitRecord.outwardNormal Hittable.Objects.Sphere  app/Hittable/Objects/Sp
 
 ### An Abstraction for Hittable Objects
 
-next up.
+In ray tracing, objects in the scene must implement functionality to determine if a ray intersects them and at what point. In Haskell, we define an interface for hittable objects using the type `class`.
+
+```haskell
+module Hittable.Class where
+
+import Core.Vec3
+import Core.Ray
+
+data HitRecord = HitRecord
+    { point :: Vec3
+    , normal :: Vec3
+    , t :: Double 
+    } deriving (Show)
+
+class Hittable a where
+    hit :: a -> Ray -> Double -> Double -> Maybe HitRecord
+```
+
+To implement hittable objects, we create an instance of `Hittable` for a `Sphere`. The instance must define the `hit` function:
+
+```haskell
+instance Hittable Sphere where
+    hit sphere ray tMin tMax
+        | discriminant < 0 = Nothing
+        | t1 >= tMin && t1 <= tMax = Just (makeHitRecord t1)
+        | t2 >= tMin && t2 <= tMax = Just (makeHitRecord t2)
+        | otherwise = Nothing
+        where
+            oc = origin ray `sub` center sphere
+            a = lengthSquared $ direction ray
+            h = dot oc $ direction ray
+            discriminant = h * h - a * (lengthSquared oc - radius sphere * radius sphere)
+            sqrtD = sqrt discriminant
+            t1 = (-h - sqrtD) / a
+            t2 = (-h + sqrtD) / a
+            makeHitRecord t' =
+                let p = ray `at` t'
+                    outwardNormal = (1.0 / radius sphere) `scale` (p `sub` center sphere)
+                in HitRecord p outwardNormal t'
+```
+
+This implementation finds the intersection points by solving the quadratic equation for a sphere, as it was before.
+
+### Lets add more objects to the scene
+
+To support multiple objects in a scene, we define a `HittableList`. This is a `newtype` wrapper around a list of hittable objects:
+
+```haskell
+newtype HittableList = HittableList [Sphere]
+```
+
+The `Hittable` instance for `HittableList` checks for the closest intersection:
+
+```haskell
+instance Hittable HittableList where
+    hit (HittableList objects) ray tMin tMax =
+        foldr (\obj acc -> case hit obj ray tMin tMax of
+            Nothing -> acc
+            Just rec -> case acc of
+                Nothing -> Just rec
+                Just prevRec -> if t rec < t prevRec then Just rec else acc
+        ) Nothing objects
+```
+
+This function iterates through all objects, keeping track of the closes valid intersection.
+
+Now, our `traceRay` function needs to work with `HittableList`. We define a scene containing multiple spheres:
+
+```haskell
+traceRay :: R.Ray -> Col.Color
+traceRay ray =
+    let spheres = HittableList [ 
+            S.Sphere (V.Vec3 0 0 (-1)) 0.5,  -- Sphere 1
+            S.Sphere (V.Vec3 1.5 0 (-1)) 0.5,  -- Sphere 2
+            S.Sphere (V.Vec3 (-1.5) 0 (-1)) 0.5 -- Sphere 3
+            ]
+        tMin = 0.0
+        tMax = 100
+    in case H.hit spheres ray tMin tMax of
+        Just hitRec ->
+            let normal = V.normalize (H.normal hitRec)  -- Normalize normal to prevent artifacts
+            in 0.5 `V.scale` (normal `V.add` V.Vec3 1 1 1)
+
+        Nothing ->  -- Background gradient
+            Col.lerp (0.5 * (V.y (V.normalize (R.direction ray)) + 1.0))
+                    (V.Vec3 1 1 1)
+                    (V.Vec3 0.5 0.7 1.0)
+```
+
+This extends our ray tracer to support multiple objects while keeping the implementation modular and scalable.
+
+![Multiple Spheres](docs/multiple_spheres.png)

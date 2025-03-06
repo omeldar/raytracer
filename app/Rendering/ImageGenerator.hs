@@ -41,11 +41,14 @@ traceRay ray =
         tMin = 0.0
         tMax = 100
     in case H.hit spheres ray tMin tMax of
-        Just hitRec -> 0.5 `V.scale` (H.normal hitRec `V.add` V.Vec3 1 1 1)
+        Just hitRec ->
+            let normal = V.normalize (H.normal hitRec)  -- Normalize normal to prevent artifacts
+            in 0.5 `V.scale` (normal `V.add` V.Vec3 1 1 1)
+
         Nothing ->  -- Background gradient
             Col.lerp (0.5 * (V.y (V.normalize (R.direction ray)) + 1.0))
-                     (V.Vec3 1 1 1)
-                     (V.Vec3 0.5 0.7 1.0)
+                    (V.Vec3 1 1 1)
+                    (V.Vec3 0.5 0.7 1.0)
 
 
 -- Convert an Image to a PPM string
