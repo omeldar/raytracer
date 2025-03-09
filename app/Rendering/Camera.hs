@@ -34,10 +34,10 @@ defaultCamera width height =
     in Camera cOrigin cLowerLeftCorner cHorizontal cVertical
 
 -- Generate a ray for pixel (i, j)
-generateRay :: Camera -> Int -> Int -> Int -> Int -> R.Ray
-generateRay camera i j width height =
-    let u = fromIntegral i / fromIntegral (width - 1)
-        v = fromIntegral j / fromIntegral (height - 1)
+generateRay :: Camera -> Int -> Int -> Int -> Int -> Double -> Double -> R.Ray
+generateRay camera i j width height uOffset vOffset =
+    let u = (fromIntegral i + uOffset) / fromIntegral (width - 1)
+        v = (fromIntegral j + vOffset) / fromIntegral (height - 1)
         direction = (lowerLeftCorner camera `V.add`
                      V.scale u (horizontal camera) `V.add`
                      V.scale v (vertical camera))

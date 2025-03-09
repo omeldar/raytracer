@@ -17,21 +17,28 @@ import Hittable.HittableList as HL
 import Hittable.Class as H
 
 import Utils.Interval (Interval(..))
+import Utils.Constants (randomDouble)
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
 type Row = [Pixel]
 type Image = [Row]
 
--- Create a PPM image with a red circle using ray tracing
-createPPM :: Int -> Int -> Image
-createPPM width height =
-    [[pixelColor i (height - 1 - j) | i <- [0..width-1]] | j <- [0..height-1]]
-    where
-        camera = Cam.defaultCamera width height
-        pixelColor i j =
-            let ray = Cam.generateRay camera i j width height
-            in traceRay ray
+createPPM :: Int -> Int -> Int -> IO Image
+createPPM width height samplesPerPixel = 
+    mapM (\j -> mapM (\i -> pixelColor i (height - 1 - j)) [0..width-1]) [0..height-1]
+  where
+    camera = Cam.defaultCamera width height
+    pixelColor i j = do
+        sampledColors <- mapM (\_ -> do
+            uOffset <- randomDouble
+            vOffset <- randomDouble
+            let ray = Cam.generateRay camera i j width height uOffset vOffset
+            return $ traceRay ray) [1..samplesPerPixel]
+        return $ averageColor sampledColors
+
+averageColor :: [Color] -> Color
+averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
 
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
