@@ -1,5 +1,5 @@
 {
-  description = "Haskell development environment";
+  description = "Raytracer Haskell Dev Env";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
@@ -24,7 +24,7 @@
           ];
 
           shellHook = ''
-            echo "Welcome to your Haskell development environment!"
+            echo "Raytracing Haskell Environment up and ready!"
           '';
         };
       });
