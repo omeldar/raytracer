@@ -1,23 +1,24 @@
 module Core.Vec3
-    ( Vec3 (..)         -- Export types and constructors
-    , x                 -- Extractor for x    
-    , y                 -- Extractor for y
-    , z                 -- Extractor for z
-    , add               -- Vector addition
-    , sub               -- Vector subtraction
-    , dot               -- Dot product
-    , cross             -- Cross product
-    , scale             -- Scalar multiplication
-    , vLength           -- Vector length (magnitude)
-    , normalize         -- Normalize vector
-    , negateV           -- Negate a vector
-    , mul               -- Component-wise multiplication
-    , divV              -- Component-wise division
-    , nearZero          -- Check if vector is near zero
-    , reflect           -- Reflect a vector
-    , refract           -- Refract a vector
-    , lengthSquared     -- Dot product of the same vector squaring its length
-    ) where
+  ( Vec3 (..), -- Export types and constructors
+    x, -- Extractor for x
+    y, -- Extractor for y
+    z, -- Extractor for z
+    add, -- Vector addition
+    sub, -- Vector subtraction
+    dot, -- Dot product
+    cross, -- Cross product
+    scale, -- Scalar multiplication
+    vLength, -- Vector length (magnitude)
+    normalize, -- Normalize vector
+    negateV, -- Negate a vector
+    mul, -- Component-wise multiplication
+    divV, -- Component-wise division
+    nearZero, -- Check if vector is near zero
+    reflect, -- Reflect a vector
+    refract, -- Refract a vector
+    lengthSquared, -- Dot product of the same vector squaring its length
+  )
+where
 
 data Vec3 = Vec3 Double Double Double deriving (Show, Eq)
 
@@ -72,10 +73,10 @@ reflect v n = sub v (scale (2 * dot v n) n)
 {-# INLINE refract #-}
 refract :: Vec3 -> Vec3 -> Double -> Vec3
 refract uv n etaiOverEtat =
-    let cosTheta = min (dot (negateV uv) n) 1.0
-        rOutPerp = scale etaiOverEtat (add uv (scale cosTheta n))
-        rOutParallel = scale (-sqrt (abs (1.0 - vLength rOutPerp ** 2))) n
-    in add rOutPerp rOutParallel
+  let cosTheta = min (dot (negateV uv) n) 1.0
+      rOutPerp = scale etaiOverEtat (add uv (scale cosTheta n))
+      rOutParallel = scale (-sqrt (abs (1.0 - vLength rOutPerp ** 2))) n
+   in add rOutPerp rOutParallel
 
 {-# INLINE lengthSquared #-}
 lengthSquared :: Vec3 -> Double
