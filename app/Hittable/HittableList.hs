@@ -2,7 +2,6 @@ module Hittable.HittableList where
 
 import Hittable.Class
 import Hittable.Objects.Sphere
-import Utils.Interval (Interval)
 
 newtype HittableList = HittableList [Sphere]
 

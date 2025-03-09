@@ -3,7 +3,7 @@ module Hittable.Objects.Sphere where
 import Core.Ray
 import Core.Vec3
 import Hittable.Class
-import Utils.Interval (Interval, contains)
+import Utils.Interval (contains)
 
 data Sphere = Sphere
   { center :: Vec3,
@@ -29,5 +29,5 @@ instance Hittable Sphere where
       makeHitRecord t' =
         let p = ray `at` t'
             outwardNormal = (1.0 / radius sphere) `scale` (p `sub` center sphere)
-            (normal, front) = setFaceNormal ray outwardNormal
-         in HitRecord p normal t' front
+            (faceNormal, front) = setFaceNormal ray outwardNormal
+         in HitRecord p faceNormal t' front
