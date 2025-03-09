@@ -39,7 +39,7 @@ executable raytracer
         Hittable.Class,
         Hittable.HittableList
     build-depends:
-        base ^>=4.17.2.1,
+        base ^>=4.17 && <4.19,
         time >=1.12 && <1.13,
         ansi-terminal,
         random
