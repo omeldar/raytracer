@@ -31,8 +31,8 @@ type Row = [Pixel]
 
 type Image = [Row]
 
-createPPM :: Int -> Int -> Int -> IO Image
-createPPM width height samplesPerPixel =
+createPPM :: Int -> Int -> Int -> Bool -> IO Image
+createPPM width height samplesPerPixel aa =
   mapM (\j -> mapM (\i -> pixelColor i (height - 1 - j)) [0 .. width - 1]) [0 .. height - 1]
   where
     camera = Cam.defaultCamera width height
@@ -44,8 +44,8 @@ createPPM width height samplesPerPixel =
 
     samplePixel :: Int -> Int -> IO Col.Color
     samplePixel i j = do
-      uOffset <- randomDouble
-      vOffset <- randomDouble
+      uOffset <- if aa then randomDouble else return 0.5
+      vOffset <- if aa then randomDouble else return 0.5
       let ray = Cam.generateRay camera i j width height uOffset vOffset
       traceRay ray maxDepth
 
@@ -60,7 +60,7 @@ traceRay ray depth
             HL.HittableList
               [ S.Sphere (V.Vec3 (-1.2) 0 (-1)) 0.5,
                 S.Sphere (V.Vec3 0 0 (-1)) 0.5,
-                S.Sphere (V.Vec3 1.2 0 (-1)) 0.5
+                S.Sphere (V.Vec3 1.2 0.3 (-1.6)) 0.5
               ]
           interval = Interval 0.001 100 -- Avoid shadow acne by ignoring self-intersections
       case H.hit spheres ray interval of

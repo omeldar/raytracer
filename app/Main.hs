@@ -1,6 +1,5 @@
 module Main where
 
-import Control.Concurrent (threadDelay)
 import Data.Time (defaultTimeLocale, diffUTCTime, formatTime, getCurrentTime)
 import Rendering.ImageGenerator as IG
   ( createAndWriteFile,
@@ -9,11 +8,15 @@ import Rendering.ImageGenerator as IG
   )
 import System.Environment (getArgs)
 import Utils.ProgressBar
+  ( ProgressBar,
+    updateMessage,
+    updateProgress,
+  )
 
 main :: IO ()
 main = do
   args <- getArgs -- Retrieve command-line args
-  let (width, height, samplesPerPixel) = parseArgs args
+  let (width, height, samplesPerPixel, aa) = parseArgs args
   putStrLn "-----------------------------------"
   putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", AASize: " ++ show samplesPerPixel
 
@@ -22,7 +25,7 @@ main = do
   let filename = "out/" ++ timestamp ++ ".ppm"
 
   startFileCreation <- getCurrentTime
-  image <- createPPM width height samplesPerPixel
+  image <- createPPM width height samplesPerPixel aa
   IG.createAndWriteFile filename $ IG.ppmToStr image
   endFileCreation <- getCurrentTime
 
@@ -31,38 +34,24 @@ main = do
   putStrLn $ "Time taken for create and write file: " ++ show timeToCreate
   putStrLn $ "File written to: " ++ filename
 
-simTask :: ProgressBar -> IO ()
-simTask pb = do
-  updateMessage pb "Starting tasks..."
-
-  threadDelay 100000
-  updateMessage pb "Running..."
-  updateProgress pb 313
-
-  threadDelay 100000
-  updateMessage pb "Finalizing"
-  updateProgress pb 32417
-
-  threadDelay 100000
-  updateMessage pb "Task complete!"
-  updateProgress pb 32418
-
-  putStrLn ""
-
 -- Parse the command-line arguments
-parseArgs :: [String] -> (Int, Int, Int)
-parseArgs [] = (640, 360, 10) -- assign default with aspect ratio 16:9
+parseArgs :: [String] -> (Int, Int, Int, Bool)
+parseArgs [] = (640, 360, 10, True) -- Default: 640x360 with AA
+parseArgs ["--no-aa"] = (640, 360, 1, False) -- Disable AA with default resolution
 parseArgs [a] =
   let width = read a
-      height = (width * 9) `div` 16 -- Calculate height based on 16:9 aspect ratio
-   in (width, height, 10)
-parseArgs [a, b] =
-  let width = read a
-      height = read b
-      -- Ensure the aspect ratio is 16:9
-      expectedHeight = (width * 9) `div` 16
-   in if height == expectedHeight
-        then (width, height, 10)
-        else error $ "Invalid aspect ratio. For width " ++ show width ++ ", height must be " ++ show expectedHeight
-parseArgs [a, b, c] = (read a, read b, read c)
-parseArgs _ = error "Too many arguments. Provide at most two arguments."
+      height = (width * 9) `div` 16 -- Maintain 16:9 aspect ratio
+   in (width, height, 10, True)
+parseArgs [a, b]
+  | a == "--no-aa" = (read b, (read b * 9) `div` 16, 1, False) -- --no-aa width
+  | otherwise =
+      let width = read a
+          height = read b
+          expectedHeight = (width * 9) `div` 16
+       in if height == expectedHeight
+            then (width, height, 10, True)
+            else error $ "Invalid aspect ratio. For width " ++ show width ++ ", height must be " ++ show expectedHeight
+parseArgs [a, b, c]
+  | a == "--no-aa" = (read b, read c, 1, False) -- --no-aa width height
+  | otherwise = (read a, read b, read c, True) -- Normal width height samples
+parseArgs _ = error "Invalid arguments. Usage: <width> <height> <samples> or --no-aa <width> <height>"
