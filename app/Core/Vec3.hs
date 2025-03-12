@@ -17,8 +17,11 @@ module Core.Vec3
     reflect, -- Reflect a vector
     refract, -- Refract a vector
     lengthSquared, -- Dot product of the same vector squaring its length
+    randomInUnitSphere, -- Generate a random vector in unit sphere
   )
 where
+
+import Utils.Constants (randomDoubleInRange)
 
 data Vec3 = Vec3 Double Double Double deriving (Show, Eq)
 
@@ -81,6 +84,19 @@ refract uv n etaiOverEtat =
 {-# INLINE lengthSquared #-}
 lengthSquared :: Vec3 -> Double
 lengthSquared v = dot v v
+
+{-# INLINE randomInUnitSphere #-}
+randomInUnitSphere :: IO Vec3
+randomInUnitSphere = do
+  let loop = do
+        randx <- randomDoubleInRange (-1) 1
+        randy <- randomDoubleInRange (-1) 1
+        randz <- randomDoubleInRange (-1) 1
+        let p = Vec3 randx randy randz
+        if lengthSquared p < 1
+          then return p
+          else loop
+  loop
 
 {-# INLINE x #-}
 x :: Vec3 -> Double
