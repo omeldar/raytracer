@@ -5,8 +5,6 @@ module Rendering.ImageGenerator
     Image,
     -- functions
     createPPM,
-    ppmToStr,
-    createAndWriteFile,
   )
 where
 
@@ -21,6 +19,7 @@ import Hittable.HittableList as HL (HittableList (HittableList))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
 import Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
+import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (randomDouble)
 import Utils.Interval (Interval (..))
 
@@ -31,11 +30,27 @@ type Row = [Pixel]
 
 type Image = [Row]
 
-createPPM :: Int -> Int -> Int -> Bool -> IO Image
-createPPM width height samplesPerPixel aa =
-  mapM (\j -> mapM (\i -> pixelColor i (height - 1 - j)) [0 .. width - 1]) [0 .. height - 1]
+createPPM :: Int -> Int -> Int -> Bool -> String -> IO ()
+createPPM width height samplesPerPixel aa filename =
+  withFile filename WriteMode $ \handle -> do
+    hSetBuffering handle (BlockBuffering (Just (1024 * 512))) -- Enable buffering
+    hPutStr handle ("P3\n" ++ show width ++ " " ++ show height ++ "\n255\n") -- Write header
+    mapM_ (`processRow` handle) [0 .. height - 1]
+    putStrLn $ "Image saved to " ++ filename -- Print confirmation
   where
-    camera = Cam.defaultCamera width height
+    lookFrom = V.Vec3 0 0 5 -- Camera position
+    lookAt = V.Vec3 0 0 (-1) -- Point the camera is looking at
+    vUp = V.Vec3 0 1 0 -- "Up" direction
+    vfov = 30.0 -- Field of view (in degrees)
+    aperture = 0.0 -- Small aperture for defocus blur
+    focusDist = 1.0
+    camera = Cam.defaultCamera lookFrom lookAt vUp vfov (fromIntegral width / fromIntegral height) aperture focusDist
+
+    processRow :: Int -> Handle -> IO ()
+    processRow j handle = do
+      row <- mapM (\i -> pixelColor i (height - 1 - j)) [0 .. width - 1]
+      hPutStr handle (unlines (map showPixel row) ++ "\n")
+
     maxDepth = 50 -- Set the maximum depth for recursion in traceRay
     pixelColor :: Int -> Int -> IO Col.Color
     pixelColor i j = do
@@ -46,8 +61,11 @@ createPPM width height samplesPerPixel aa =
     samplePixel i j = do
       uOffset <- if aa then randomDouble else return 0.5
       vOffset <- if aa then randomDouble else return 0.5
-      let ray = Cam.generateRay camera i j width height uOffset vOffset
+      ray <- Cam.generateRay camera i j width height uOffset vOffset
       traceRay ray maxDepth
+
+    showPixel :: Pixel -> String
+    showPixel (V.Vec3 r g b) = unwords $ map (show . truncate . (* 255.999)) [r, g, b]
 
 averageColor :: [Color] -> Color
 averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
@@ -76,21 +94,3 @@ traceRay ray depth
           let unitDir = V.normalize (R.direction ray)
               tHit = 0.5 * (V.y unitDir + 1.0)
           return $ Col.lerp tHit (V.Vec3 1 1 1) (V.Vec3 0.5 0.7 1) -- Linear interpolation for sky color
-
--- Convert an Image to a PPM string
-ppmToStr :: Image -> String
-ppmToStr image =
-  let height = length image
-      width = if null image then 0 else length (head image)
-      header = "P3\n" ++ show width ++ " " ++ show height ++ "\n255\n"
-      pixelData = unlines $ map (unwords . map showPixel) image
-   in header ++ pixelData
-  where
-    -- Convert a Vec3 (Pixel) to a PPM format string
-    showPixel :: Pixel -> String
-    showPixel (V.Vec3 r g b) =
-      unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
-
--- Write the PPM image to a file
-createAndWriteFile :: String -> String -> IO ()
-createAndWriteFile = writeFile

@@ -2,9 +2,7 @@ module Main where
 
 import Data.Time (defaultTimeLocale, diffUTCTime, formatTime, getCurrentTime)
 import Rendering.ImageGenerator as IG
-  ( createAndWriteFile,
-    createPPM,
-    ppmToStr,
+  ( createPPM,
   )
 import System.Environment (getArgs)
 import Utils.ProgressBar
@@ -18,15 +16,16 @@ main = do
   args <- getArgs -- Retrieve command-line args
   let (width, height, samplesPerPixel, aa) = parseArgs args
   putStrLn "-----------------------------------"
-  putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", AASize: " ++ show samplesPerPixel
+  if aa
+    then putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", AASize: " ++ show samplesPerPixel
+    else putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", No AA:"
 
   currentTime <- getCurrentTime
   let timestamp = formatTime defaultTimeLocale "%Y%m%d-%H%M%S" currentTime
   let filename = "out/" ++ timestamp ++ ".ppm"
 
   startFileCreation <- getCurrentTime
-  image <- createPPM width height samplesPerPixel aa
-  IG.createAndWriteFile filename $ IG.ppmToStr image
+  createPPM width height samplesPerPixel aa filename
   endFileCreation <- getCurrentTime
 
   let timeToCreate = diffUTCTime endFileCreation startFileCreation

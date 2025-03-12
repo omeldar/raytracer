@@ -18,6 +18,7 @@ module Core.Vec3
     refract, -- Refract a vector
     lengthSquared, -- Dot product of the same vector squaring its length
     randomInUnitSphere, -- Generate a random vector in unit sphere
+    randomInUnitDisk, -- Generate a random vector in unit disk
   )
 where
 
@@ -88,15 +89,24 @@ lengthSquared v = dot v v
 {-# INLINE randomInUnitSphere #-}
 randomInUnitSphere :: IO Vec3
 randomInUnitSphere = do
-  let loop = do
-        randx <- randomDoubleInRange (-1) 1
-        randy <- randomDoubleInRange (-1) 1
-        randz <- randomDoubleInRange (-1) 1
-        let p = Vec3 randx randy randz
-        if lengthSquared p < 1
-          then return p
-          else loop
-  loop
+  randx <- randomDoubleInRange (-1) 1
+  randy <- randomDoubleInRange (-1) 1
+  randz <- randomDoubleInRange (-1) 1
+  let p = Vec3 randx randy randz
+  if lengthSquared p < 1
+    then return p
+    else randomInUnitSphere
+
+-- Generate random points in a unit disk (for defocus blur)
+{-# INLINE randomInUnitDisk #-}
+randomInUnitDisk :: IO Vec3
+randomInUnitDisk = do
+  randx <- randomDoubleInRange (-1.0) 1.0
+  randy <- randomDoubleInRange (-1.0) 1.0
+  let p = Vec3 randx randy 0
+  if lengthSquared p < 1.0
+    then return p
+    else randomInUnitDisk
 
 {-# INLINE x #-}
 x :: Vec3 -> Double
