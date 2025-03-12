@@ -403,38 +403,38 @@ So in our code, we'll have to make our rays not parallel, but spread out from th
 
 1. The camera defines a viewport
 
-    ```haskell
-    lowerLeftCorner = origin `V.sub` V.scale 0.5 horizontal
-                            `V.sub` V.scale 0.5 vertical
-                            `V.sub` V.Vec3 0.0 0.0 focalLength
-    ```
+   ```haskell
+   lowerLeftCorner = origin `V.sub` V.scale 0.5 horizontal
+                           `V.sub` V.scale 0.5 vertical
+                           `V.sub` V.Vec3 0.0 0.0 focalLength
+   ```
 
-    This sets up the bottom-left of a 2D screen in front of the camera. The viewport is centered at `z = -focalLength`, meaning it's in front of the camera. `horizontal` and `vertical` define the size of this screen.
+   This sets up the bottom-left of a 2D screen in front of the camera. The viewport is centered at `z = -focalLength`, meaning it's in front of the camera. `horizontal` and `vertical` define the size of this screen.
 
 2. Each Ray Points at a Different Pixel
 
-    In `generateRay`:
+   In `generateRay`:
 
-    ```haskell
-    let u = fromIntegral i / fromIntegral (width - 1)
-    v = fromIntegral j / fromIntegral (height - 1)
-    ```
+   ```haskell
+   let u = fromIntegral i / fromIntegral (width - 1)
+   v = fromIntegral j / fromIntegral (height - 1)
+   ```
 
-    `u` and `v` define the position of the pixel in the viewport, where
+   `u` and `v` define the position of the pixel in the viewport, where
 
-    - `u = 0` is the leftmost pixel, `u = 1` is the rightmost.
-    - `v = 0` is the bottom pixel, `v = 1` is the top.
+   - `u = 0` is the leftmost pixel, `u = 1` is the rightmost.
+   - `v = 0` is the bottom pixel, `v = 1` is the top.
 
-    Then the ray's direction is computed:
+   Then the ray's direction is computed:
 
-    ```haskell
-    direction = (lowerLeftCorner camera `V.add`
-             V.scale u (horizontal camera) `V.add`
-             V.scale v (vertical camera))
-            `V.sub` origin camera
-    ```
+   ```haskell
+   direction = (lowerLeftCorner camera `V.add`
+            V.scale u (horizontal camera) `V.add`
+            V.scale v (vertical camera))
+           `V.sub` origin camera
+   ```
 
-    This means the ray's direction is from the camera origin to a specific pixel on the viewport. Since the viewport is in front of the camera at `z = -1.0`, the farther pixels are at larger `z` values.
+   This means the ray's direction is from the camera origin to a specific pixel on the viewport. Since the viewport is in front of the camera at `z = -1.0`, the farther pixels are at larger `z` values.
 
 **Why this causes objects to look smaller in distance**: Rays spread out from a single point (the camera origin). Unlike orthographic projection, these rays fan out from $(0,0,0)$. Distant objects get fewer rays per unit of their surface, meaning less pixels are covered by them.
 
@@ -498,9 +498,9 @@ By visualizing normals, we can debug our code and ensure that the normals are be
 So while trying to start with the shading of objects, I tried to generate a color map of the
 surface normals on the sphere. While doing that, I accidentally created the following two images.
 
-Generation with multiple issues |  Generation (inverted hit detection)
-:-------------------------:|:-------------------------:
-![](docs/blooper.png)  |  ![](docs/blooper2.png)
+| Generation with multiple issues | Generation (inverted hit detection) |
+| :-----------------------------: | :---------------------------------: |
+|      ![](docs/blooper.png)      |       ![](docs/blooper2.png)        |
 
 After correcting the mistakes, I got following image:
 
@@ -523,7 +523,7 @@ hitSphere center radius ray
     | t1 > 0.0 = t1
     | t2 > 0.0 = t2
     | otherwise = -1.0
-    where 
+    where
         oc = R.origin ray `V.sub` center
         a = V.dot (R.direction ray) (R.direction ray)
         b = 2.0 * V.dot (R.direction ray) oc
@@ -565,7 +565,7 @@ hitSphere :: V.Vec3 -> Double -> R.Ray -> Double
 hitSphere center radius ray
     | discriminant < 0 = -1.0
     | otherwise = (-h - sqrt discriminant) / a
-    where 
+    where
         oc = R.origin ray `V.sub` center
         a = V.lengthSquared $ R.direction ray
         h = V.dot oc $ R.direction ray
@@ -575,54 +575,53 @@ hitSphere center radius ray
 In this implementation, the `hitSphere` function has been optimized to improve performance:
 
 1. Substitution of `h`:
-    Instead of calculating `b = 2.0 * V.dot oc $ R.direction ray`, we compute `h = V.dot oc $ R.direction ray`, which is equivalent to `b / 2`. This simplifies the discriminant calculation to:
-    ```haskell
-    discriminant = h * h - a * c
-    ```
+   Instead of calculating `b = 2.0 * V.dot oc $ R.direction ray`, we compute `h = V.dot oc $ R.direction ray`, which is equivalent to `b / 2`. This simplifies the discriminant calculation to:
+   ```haskell
+   discriminant = h * h - a * c
+   ```
 2. Simplified Intersection Calculation:
-    The intersection parameter `t` is now calculated as:
-    ```haskell
-    t = (-h - sqrt discriminant) / a
-    ```
-    This voids the division by `2.0 * a`, further reducing the number of operations.
-
+   The intersection parameter `t` is now calculated as:
+   ```haskell
+   t = (-h - sqrt discriminant) / a
+   ```
+   This voids the division by `2.0 * a`, further reducing the number of operations.
 
 By reducing the number of multiplications and divisions, this version is more efficient. This is critical for ray tracing, where the `hitSphere` function can be called millions of times depending on the scene.
-
 
 ### Profiling
 
 To enable profiling for your Haskell project, follow these steps:
 
 1. **Create/Update** `cabal.project.local`
-    Add the following lines to your `cabal.project.local` file to enable profiling:
+   Add the following lines to your `cabal.project.local` file to enable profiling:
 
-    ```
-    package *
-      profiling: True
-    ```
+   ```
+   package *
+     profiling: True
+   ```
 
 2. **Clean the project**
-    Run the following command to clean the project and ensure a fresh build:
-    ```
-    cabal clean
-    ```
+   Run the following command to clean the project and ensure a fresh build:
+
+   ```
+   cabal clean
+   ```
 
 3. **Build with Profiling**
-    Execute the project with profiling enabled:
+   Execute the project with profiling enabled:
 
-    ```
-    cabal build --enable-profiling
-    ```
+   ```
+   cabal build --enable-profiling
+   ```
 
 4. **Run with Profiling**
-    Execute the program with profiling enabled. For example:
+   Execute the program with profiling enabled. For example:
 
-    ```
-    cabal run profraytracer 1920 1080 -- +RTS -p
-    ```
+   ```
+   cabal run profraytracer 1920 1080 -- +RTS -p
+   ```
 
-    This will generate a profiling report, which provides insights into time and memory allocation. Below is an example of the output:
+   This will generate a profiling report, which provides insights into time and memory allocation. Below is an example of the output:
 
 ```
 	Mon Feb 24 23:23 2025 Time and Allocation Profiling Report  (Final)
@@ -650,25 +649,25 @@ hit.makeHitRecord.outwardNormal Hittable.Objects.Sphere  app/Hittable/Objects/Sp
 ```
 
 5. **Disable Profiling**
-    To run the program without profiling, update the `cabal.project.local` file to disable profiling:
+   To run the program without profiling, update the `cabal.project.local` file to disable profiling:
 
-    ```
-    package *
-      profiling: False
-    ```
+   ```
+   package *
+     profiling: False
+   ```
 
 6. **Rebuild and Run**
-    Rebuild the project normally:
+   Rebuild the project normally:
 
-    ```
-    cabal build
-    ```
+   ```
+   cabal build
+   ```
 
-    You may encounter an exception during the build, but it can be ignored. Run the program as usual:
+   You may encounter an exception during the build, but it can be ignored. Run the program as usual:
 
-    ```
-    cabal run raytracer <x> <y>
-    ```
+   ```
+   cabal run raytracer <x> <y>
+   ```
 
 **Note**: Enabling profiling increases computation time due to the additional overhead of collecting profiling data. Use it only when necessary for performance analysis.
 
@@ -685,7 +684,7 @@ import Core.Ray
 data HitRecord = HitRecord
     { point :: Vec3
     , normal :: Vec3
-    , t :: Double 
+    , t :: Double
     } deriving (Show)
 
 class Hittable a where
@@ -745,7 +744,7 @@ Now, our `traceRay` function needs to work with `HittableList`. We define a scen
 ```haskell
 traceRay :: R.Ray -> Col.Color
 traceRay ray =
-    let spheres = HittableList [ 
+    let spheres = HittableList [
             S.Sphere (V.Vec3 0 0 (-1)) 0.5,  -- Sphere 1
             S.Sphere (V.Vec3 1.5 0 (-1)) 0.5,  -- Sphere 2
             S.Sphere (V.Vec3 (-1.5) 0 (-1)) 0.5 -- Sphere 3
@@ -782,7 +781,7 @@ defaultCamera width height =
 
         focalLength = 5.0
 
-        cOrigin = V.Vec3 0.0 0.0 5.0    -- 
+        cOrigin = V.Vec3 0.0 0.0 5.0    --
         cHorizontal = V.Vec3 viewportWidth 0.0 0.0
         cVertical = V.Vec3 0.0 viewportHeight 0.0
         cLowerLeftCorner = cOrigin `V.sub` V.scale 0.5 cHorizontal
@@ -841,5 +840,10 @@ _[Source: Ray Tracing in One Weekend](hhttps://raytracing.github.io/books/RayTra
 
 We need to choose one of these possibilities, because we will want to determine which side of the surface that the ray is coming from. This is important for objects that are rendered differently on each side, like the text on a two-sides sheet of paper, or for objects that have an inside and an outside, like glass balls.
 
-### 
+### Anti Aliasing
 
+is implemented, no documentation yet.
+
+### Diffuse Materials
+
+currently implementing.
