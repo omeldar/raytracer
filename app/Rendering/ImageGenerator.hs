@@ -24,6 +24,8 @@ import Rendering.Light as L (Light (PointLight), computeLighting)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (randomDouble)
 import Utils.Interval (Interval (..))
+import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateProgress, updateMessage)
+
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
@@ -35,9 +37,10 @@ type Image = [Row]
 createPPM :: Int -> Int -> Int -> Bool -> String -> IO ()
 createPPM width height samplesPerPixel aa filename =
   withFile filename WriteMode $ \handle -> do
+    progressBar <- PB.newProgressBar height
     hSetBuffering handle (BlockBuffering (Just (1024 * 512))) -- Enable buffering
     hPutStr handle ("P3\n" ++ show width ++ " " ++ show height ++ "\n255\n") -- Write header
-    mapM_ (`processRow` handle) [0 .. height - 1]
+    mapM_ (processRow progressBar handle) [0 .. height - 1]
     putStrLn $ "Image saved to " ++ filename -- Print confirmation
   where
     lookFrom = V.Vec3 0 0 5 -- Camera position
@@ -48,10 +51,12 @@ createPPM width height samplesPerPixel aa filename =
     focusDist = 1.0
     camera = Cam.defaultCamera lookFrom lookAt vUp vfov (fromIntegral width / fromIntegral height) aperture focusDist
 
-    processRow :: Int -> Handle -> IO ()
-    processRow j handle = do
+    processRow :: PB.ProgressBar -> Handle -> Int -> IO ()
+    processRow progressBar handle j = do
       row <- mapM (\i -> pixelColor i (height - 1 - j)) [0 .. width - 1]
       hPutStr handle (unlines (map showPixel row) ++ "\n")
+      PB.updateMessage progressBar ("Rendering row " ++ show (j + 1) ++ " of " ++ show height)
+      PB.updateProgress progressBar (j + 1) -- Update progress
 
     maxDepth = 50 -- Set the maximum depth for recursion in traceRay
     pixelColor :: Int -> Int -> IO Col.Color

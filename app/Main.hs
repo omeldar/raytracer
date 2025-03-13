@@ -17,8 +17,8 @@ main = do
   let (width, height, samplesPerPixel, aa) = parseArgs args
   putStrLn "-----------------------------------"
   if aa
-    then putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", AASize: " ++ show samplesPerPixel
-    else putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", No AA:"
+    then putStrLn $ "Resolution: " ++ show width ++ "x" ++ show height ++ ", AASize: " ++ show samplesPerPixel
+    else putStrLn $ "Resolution: " ++ show width ++ "x" ++ show height ++ ", AA disabled!"
 
   currentTime <- getCurrentTime
   let timestamp = formatTime defaultTimeLocale "%Y%m%d-%H%M%S" currentTime
