@@ -6,7 +6,7 @@ name:               raytracer
 --                  | +----- non-breaking API additions
 --                  | | +--- code changes with no API change
 version:            0.1.0
-description:        A minimalistic raytracer written in Haskell.
+description:        A raytracer written in Haskell.
 homepage:           raytracer.omeldar.com
 
 license:            GPL-3.0-or-later
@@ -27,17 +27,20 @@ executable raytracer
     import:           warnings
     main-is:          Main.hs
     other-modules:
-        Rendering.ImageGenerator,
         Utils.ProgressBar,
         Utils.Constants,
         Utils.Interval,
-        Core.Vec3,
-        Rendering.Color,
         Core.Ray,
+        Core.Vec3,
         Rendering.Camera,
-        Hittable.Objects.Sphere,
+        Rendering.Color,
+        Rendering.ImageGenerator,
+        Rendering.Light,
         Hittable.Class,
-        Hittable.HittableList
+        Hittable.HittableList,
+        Hittable.Objects.Sphere,
+        Hittable.Objects.Plane,
+        Hittable.Objects.Triangle
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
@@ -52,17 +55,20 @@ executable profraytracer
     import:           warnings
     main-is:          Main.hs
     other-modules:
-        Rendering.ImageGenerator,
         Utils.ProgressBar,
         Utils.Constants,
         Utils.Interval,
-        Core.Vec3,
-        Rendering.Color,
         Core.Ray,
+        Core.Vec3,
         Rendering.Camera,
-        Hittable.Objects.Sphere,
+        Rendering.Color,
+        Rendering.ImageGenerator,
+        Rendering.Light,
         Hittable.Class,
-        Hittable.HittableList
+        Hittable.HittableList,
+        Hittable.Objects.Sphere,
+        Hittable.Objects.Plane,
+        Hittable.Objects.Triangle
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,

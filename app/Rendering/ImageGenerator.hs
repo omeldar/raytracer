@@ -16,16 +16,15 @@ import Hittable.Class as H
     Hittable (hit),
   )
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
-import Hittable.Objects.Sphere as S (Sphere (Sphere))
 import Hittable.Objects.Plane as P (Plane (Plane))
+import Hittable.Objects.Sphere as S (Sphere (Sphere))
 import Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import Rendering.Light as L (Light (PointLight), computeLighting)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (randomDouble)
 import Utils.Interval (Interval (..))
-import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateProgress, updateMessage)
-
+import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateMessage, updateProgress)
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
@@ -41,7 +40,6 @@ createPPM width height samplesPerPixel aa filename =
     hSetBuffering handle (BlockBuffering (Just (1024 * 512))) -- Enable buffering
     hPutStr handle ("P3\n" ++ show width ++ " " ++ show height ++ "\n255\n") -- Write header
     mapM_ (processRow progressBar handle) [0 .. height - 1]
-    putStrLn $ "Image saved to " ++ filename -- Print confirmation
   where
     lookFrom = V.Vec3 0 0 5 -- Camera position
     lookAt = V.Vec3 0 0 (-1) -- Point the camera is looking at
@@ -55,9 +53,8 @@ createPPM width height samplesPerPixel aa filename =
     processRow progressBar handle j = do
       row <- mapM (\i -> pixelColor i (height - 1 - j)) [0 .. width - 1]
       hPutStr handle (unlines (map showPixel row) ++ "\n")
-      PB.updateMessage progressBar ("Rendering row " ++ show (j + 1) ++ " of " ++ show height)
+      PB.updateMessage progressBar ("Rendering row " ++ show (j + 1))
       PB.updateProgress progressBar (j + 1) -- Update progress
-
     maxDepth = 50 -- Set the maximum depth for recursion in traceRay
     pixelColor :: Int -> Int -> IO Col.Color
     pixelColor i j = do
@@ -105,4 +102,3 @@ traceRay ray depth
           let unitDir = V.normalize (R.direction ray)
               tHit = 0.5 * (V.y unitDir + 1.0)
           return $ Col.lerp tHit (V.Vec3 1 1 1) (V.Vec3 0.5 0.7 1)
-

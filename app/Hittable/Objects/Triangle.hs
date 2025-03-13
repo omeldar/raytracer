@@ -1,7 +1,7 @@
 module Hittable.Objects.Triangle where
 
-import Core.Vec3 as V (Vec3, sub, cross, dot, scale)
-import Core.Ray as R (Ray, origin, direction, at)
+import Core.Ray as R (at, direction, origin)
+import Core.Vec3 as V (Vec3, cross, dot, sub)
 import Hittable.Class
 import Utils.Interval (contains)
 
@@ -20,18 +20,21 @@ instance Hittable Triangle where
         e2 = V.sub p2 p0
         h = V.cross (R.direction ray) e2
         a = V.dot e1 h
-    in if abs a < epsilon  -- Check if ray is parallel
-         then Nothing
-         else let f = 1.0 / a
-                  s = V.sub (R.origin ray) p0
-                  u = f * V.dot s h
-              in if u < 0.0 || u > 1.0
-                   then Nothing
-                   else let q = V.cross s e1
-                            v = f * V.dot (R.direction ray) q
-                        in if v < 0.0 || u + v > 1.0
-                             then Nothing
-                             else let t = f * V.dot e2 q
-                                  in if contains interval t
-                                       then Just $ HitRecord (R.at ray t) (V.cross e1 e2) t True
-                                       else Nothing
+     in if abs a < epsilon -- Check if ray is parallel
+          then Nothing
+          else
+            let f = 1.0 / a
+                s = V.sub (R.origin ray) p0
+                u = f * V.dot s h
+             in if u < 0.0 || u > 1.0
+                  then Nothing
+                  else
+                    let q = V.cross s e1
+                        v = f * V.dot (R.direction ray) q
+                     in if v < 0.0 || u + v > 1.0
+                          then Nothing
+                          else
+                            let t = f * V.dot e2 q
+                             in if contains interval t
+                                  then Just $ HitRecord (R.at ray t) (V.cross e1 e2) t True
+                                  else Nothing
