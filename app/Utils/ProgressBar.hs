@@ -1,5 +1,5 @@
 module Utils.ProgressBar
-  ( ProgressBar,
+  ( ProgressBar (..),
     newProgressBar,
     updateProgress,
     updateMessage,

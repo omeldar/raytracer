@@ -18,7 +18,7 @@ main = do
   putStrLn "-----------------------------------"
   if aa
     then putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", AASize: " ++ show samplesPerPixel
-    else putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", No AA:"
+    else putStrLn $ "Width: " ++ show width ++ ", Height: " ++ show height ++ ", No AA!"
 
   currentTime <- getCurrentTime
   let timestamp = formatTime defaultTimeLocale "%Y%m%d-%H%M%S" currentTime

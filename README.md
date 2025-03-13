@@ -848,7 +848,9 @@ is implemented, no documentation yet.
 
 currently implementing.
 
-### Buffered Writing of Image
+### Memory efficiency and performance
+
+_Buffered Writing of Image & Multi-Threading_
 
 Before: for 1920x1080 AA: 50, 75% (max) of RAM (64 GB) - Time: 68s
 After : for 1920x1080 AA: 50, 0.8% (max) of RAM (64 GB) - Time: 58s
