@@ -10,7 +10,7 @@ where
 
 import qualified Control.Monad
 import Core.Ray as R (Ray (Ray, direction))
-import Core.Vec3 as V (Vec3 (..), add, normalize, randomInUnitSphere, scale, y)
+import Core.Vec3 as V (Vec3 (..), add, normalize, randomInUnitSphere, scale, x, y, z)
 import Hittable.Class as H
   ( HitRecord (normal, point),
     Hittable (hit),
@@ -18,11 +18,12 @@ import Hittable.Class as H
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
+import Hittable.Objects.Triangle as T (Triangle (..))
 import Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import Rendering.Light as L (Light (PointLight), computeLighting)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
-import Utils.Constants (randomDouble)
+import Utils.Constants (clamp, randomDouble)
 import Utils.Interval (Interval (..))
 import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateMessage, updateProgress)
 
@@ -69,7 +70,7 @@ createPPM width height samplesPerPixel aa filename =
       traceRay ray maxDepth
 
     showPixel :: Pixel -> String
-    showPixel (V.Vec3 r g b) = unwords $ map (show . truncate . (* 255.999)) [r, g, b]
+    showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
 
 averageColor :: [Color] -> Color
 averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
@@ -84,10 +85,11 @@ traceRay ray depth
               [ HL.SomeHittable (S.Sphere (V.Vec3 (-1.2) 0 (-1)) 0.5),
                 HL.SomeHittable (S.Sphere (V.Vec3 0 0 (-1)) 0.5),
                 HL.SomeHittable (S.Sphere (V.Vec3 1.2 0.3 (-1.6)) 0.5),
-                HL.SomeHittable (Plane (V.Vec3 0 (-0.5) 0) (V.Vec3 0 1 0)) -- Ground plane
+                HL.SomeHittable (P.Plane (V.Vec3 0 (-0.5) 0) (V.Vec3 0 1 0)), -- Ground plane
+                HL.SomeHittable (T.Triangle (V.Vec3 (-0.5) 0 0) (V.Vec3 0.5 0 0) (V.Vec3 0 0.5 (-0.5)))
               ]
           interval = Interval 0.001 100
-          lights = [PointLight (V.Vec3 (-2) 0 0) (V.Vec3 1 1 1)]
+          lights = [PointLight (V.Vec3 (-10) 5 0.5) (V.Vec3 0.3 0.3 0.3)]
 
       case H.hit world ray interval of
         Just hitRecord -> do
@@ -95,9 +97,11 @@ traceRay ray depth
           let newDirection = V.add (H.normal hitRecord) randomVec
               scatteredRay = R.Ray (H.point hitRecord) newDirection
               directLight = L.computeLighting hitRecord lights
+              clampedLight =
+                V.Vec3 (clamp (V.x directLight) 0 1) (clamp (V.y directLight) 0 1) (clamp (V.z directLight) 0 1)
 
           bounceColor <- traceRay scatteredRay (depth - 1)
-          return $ V.add (V.scale 0.5 bounceColor) directLight
+          return $ V.add (V.scale 0.5 bounceColor) clampedLight
         Nothing -> do
           let unitDir = V.normalize (R.direction ray)
               tHit = 0.5 * (V.y unitDir + 1.0)

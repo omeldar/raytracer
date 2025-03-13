@@ -2,16 +2,14 @@
 
 module Hittable.HittableList
   ( HittableList (HittableList),
-    SomeHittable (SomeHittable)
-  ) where
+    SomeHittable (SomeHittable),
+  )
+where
 
 import Hittable.Class
-import Utils.Interval (Interval)
-import Core.Ray as R (Ray)
-import Core.Vec3 as V (Vec3)
 
 -- Existential wrapper for any Hittable type
-data SomeHittable = forall a. Hittable a => SomeHittable a
+data SomeHittable = forall a. (Hittable a) => SomeHittable a
 
 newtype HittableList = HittableList [SomeHittable]
 

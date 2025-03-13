@@ -34,7 +34,7 @@ instance Hittable Triangle where
                      in if v < 0.0 || u + v > 1.0
                           then Nothing
                           else
-                            let t = f * V.dot e2 q
-                             in if contains interval t
-                                  then Just $ HitRecord (R.at ray t) (V.cross e1 e2) t True
+                            let intersect = f * V.dot e2 q
+                             in if contains interval intersect
+                                  then Just $ HitRecord (R.at ray intersect) (V.cross e1 e2) intersect True
                                   else Nothing
