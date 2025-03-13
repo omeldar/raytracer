@@ -15,10 +15,12 @@ import Hittable.Class as H
   ( HitRecord (normal, point),
     Hittable (hit),
   )
-import Hittable.HittableList as HL (HittableList (HittableList))
+import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
+import Hittable.Objects.Plane as P (Plane (Plane))
 import Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
+import Rendering.Light as L (Light (PointLight), computeLighting)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (randomDouble)
 import Utils.Interval (Interval (..))
@@ -72,25 +74,30 @@ averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.V
 
 traceRay :: R.Ray -> Int -> IO Col.Color
 traceRay ray depth
-  | depth <= 0 = return (V.Vec3 0 0 0) -- Return black if recursion depth is exceeded
+  | depth <= 0 = return (V.Vec3 0 0 0)
   | otherwise = do
-      let spheres =
+      let world :: HL.HittableList
+          world =
             HL.HittableList
-              [ S.Sphere (V.Vec3 (-1.2) 0 (-1)) 0.5,
-                S.Sphere (V.Vec3 0 0 (-1)) 0.5,
-                S.Sphere (V.Vec3 1.2 0.3 (-1.6)) 0.5
+              [ HL.SomeHittable (S.Sphere (V.Vec3 (-1.2) 0 (-1)) 0.5),
+                HL.SomeHittable (S.Sphere (V.Vec3 0 0 (-1)) 0.5),
+                HL.SomeHittable (S.Sphere (V.Vec3 1.2 0.3 (-1.6)) 0.5),
+                HL.SomeHittable (Plane (V.Vec3 0 (-0.5) 0) (V.Vec3 0 1 0)) -- Ground plane
               ]
-          interval = Interval 0.001 100 -- Avoid shadow acne by ignoring self-intersections
-      case H.hit spheres ray interval of
+          interval = Interval 0.001 100
+          lights = [PointLight (V.Vec3 (-2) 0 0) (V.Vec3 1 1 1)]
+
+      case H.hit world ray interval of
         Just hitRecord -> do
-          randomVec <- V.randomInUnitSphere -- Generate a random bounce direction
+          randomVec <- V.randomInUnitSphere
           let newDirection = V.add (H.normal hitRecord) randomVec
               scatteredRay = R.Ray (H.point hitRecord) newDirection
+              directLight = L.computeLighting hitRecord lights
 
-          bounceColor <- traceRay scatteredRay (depth - 1) -- Recursive bounce
-          return $ V.scale 0.5 bounceColor -- Attenuate the bounced color
+          bounceColor <- traceRay scatteredRay (depth - 1)
+          return $ V.add (V.scale 0.5 bounceColor) directLight
         Nothing -> do
-          -- Compute background color gradient
           let unitDir = V.normalize (R.direction ray)
               tHit = 0.5 * (V.y unitDir + 1.0)
-          return $ Col.lerp tHit (V.Vec3 1 1 1) (V.Vec3 0.5 0.7 1) -- Linear interpolation for sky color
+          return $ Col.lerp tHit (V.Vec3 1 1 1) (V.Vec3 0.5 0.7 1)
+

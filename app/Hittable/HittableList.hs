@@ -1,14 +1,24 @@
-module Hittable.HittableList where
+{-# LANGUAGE ExistentialQuantification #-}
+
+module Hittable.HittableList
+  ( HittableList (HittableList),
+    SomeHittable (SomeHittable)
+  ) where
 
 import Hittable.Class
-import Hittable.Objects.Sphere
+import Utils.Interval (Interval)
+import Core.Ray as R (Ray)
+import Core.Vec3 as V (Vec3)
 
-newtype HittableList = HittableList [Sphere]
+-- Existential wrapper for any Hittable type
+data SomeHittable = forall a. Hittable a => SomeHittable a
+
+newtype HittableList = HittableList [SomeHittable]
 
 instance Hittable HittableList where
   hit (HittableList objects) ray interval =
     foldr
-      ( \obj acc -> case hit obj ray interval of
+      ( \(SomeHittable obj) acc -> case hit obj ray interval of
           Nothing -> acc
           Just rec -> case acc of
             Nothing -> Just rec
