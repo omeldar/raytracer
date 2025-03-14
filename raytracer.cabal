@@ -44,8 +44,10 @@ executable raytracer
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
+        massiv >=1.0,
         ansi-terminal,
-        random
+        random,
+        split
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2  
@@ -72,8 +74,10 @@ executable profraytracer
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
+        massiv >=1.0,
         ansi-terminal,
-        random
+        random,
+        split
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options: -O2 -prof -fprof-auto -rtsopts -fprof-cafs
