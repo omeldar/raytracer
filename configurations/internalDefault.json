@@ -1,0 +1,61 @@
+{
+    "image": {
+        "width": 1920,
+        "height": 1080,
+        "samplesPerPixel": 10,
+        "antialiasing": true
+    },
+    "background": {
+        "tag": "Gradient",
+        "color1": [1.0, 1.0, 1.0],
+        "color2": [0.5, 0.7, 1.0]
+    },
+    "camera": {
+        "lookFrom": [0, 0, 5],
+        "lookAt": [0, 0, -1],
+        "vUp": [0, 1, 0],
+        "vfov": 30.0,
+        "aperture": 0.0,
+        "focusDist": 1.0
+    },
+    "raytracer": {
+        "maxBounces": 50,
+        "useBVH": false,
+        "russianRoulette": {
+            "enabled": true,
+            "probability": 0.8
+        }
+    },
+    "lights": [
+        {
+            "type": "point",
+            "position": [-10, 5, 0.5],
+            "intensity": [0.3, 0.3, 0.3]
+        }
+    ],
+    "scene": {
+        "tag": "InternalObjects",
+        "objects": [
+            {
+                "type": "sphere",
+                "center": [-1.2, 0, -1],
+                "radius": 0.5
+            },
+            {
+                "type": "sphere",
+                "center": [0, 0, -1],
+                "radius": 0.5
+            },
+            {
+                "type": "sphere",
+                "center": [1.2, 0.3, -1.6],
+                "radius": 0.5
+            },
+            {
+                "type": "plane",
+                "pointOnPlane": [0, -0.5, 0],
+                "normal": [0, 1, 0]
+            }
+        ]
+    }
+}

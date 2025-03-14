@@ -19,12 +19,30 @@ module Core.Vec3
     lengthSquared, -- Dot product of the same vector squaring its length
     randomInUnitSphere, -- Generate a random vector in unit sphere
     randomInUnitDisk, -- Generate a random vector in unit disk
+    toList, -- Convert Vec3 to list
   )
 where
 
+import Data.Aeson (FromJSON, Value (..), parseJSON, withArray)
+import qualified Data.Foldable as F
 import Utils.Constants (randomDoubleInRange)
 
 data Vec3 = Vec3 Double Double Double deriving (Show, Eq)
+
+-- Implement FromJSON instance for Vec3
+instance FromJSON Vec3 where
+  parseJSON = withArray "Vec3" $ \arr ->
+    let values = take 3 (map extractDouble (F.toList arr))
+     in case values of
+          [Just xJ, Just yJ, Just zJ] -> return (Vec3 xJ yJ zJ)
+          _ -> fail "Failed parsing Vec3 from JSON config. Vec3 must contain exactly three valid numbers."
+    where
+      extractDouble :: Value -> Maybe Double
+      extractDouble (Number n) = Just (realToFrac n)
+      extractDouble _ = Nothing
+
+toList :: Vec3 -> [Double]
+toList (Vec3 xV yV zV) = [xV, yV, zV]
 
 {-# INLINE add #-}
 add :: Vec3 -> Vec3 -> Vec3

@@ -40,12 +40,16 @@ executable raytracer
         Hittable.HittableList,
         Hittable.Objects.Sphere,
         Hittable.Objects.Plane,
-        Hittable.Objects.Triangle
+        Hittable.Objects.Triangle,
+        Config
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
         ansi-terminal,
-        random
+        random,
+        aeson,
+        bytestring,
+        directory
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2  
@@ -68,12 +72,16 @@ executable profraytracer
         Hittable.HittableList,
         Hittable.Objects.Sphere,
         Hittable.Objects.Plane,
-        Hittable.Objects.Triangle
+        Hittable.Objects.Triangle,
+        Config
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
         ansi-terminal,
-        random
+        random,
+        aeson,
+        bytestring,
+        directory
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options: -O2 -prof -fprof-auto -rtsopts -fprof-cafs
