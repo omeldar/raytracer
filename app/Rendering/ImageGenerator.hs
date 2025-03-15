@@ -15,6 +15,8 @@ import Config
     ImageSettings (..),
     LightSettings (..),
     RaytracerSettings (..),
+    SceneObject (..),
+    SceneSettings (..),
   )
 import qualified Control.Monad
 import Core.Ray as R (Ray (Ray, direction))
@@ -85,14 +87,7 @@ traceRay :: Config -> R.Ray -> Int -> IO Col.Color
 traceRay config ray depth
   | depth <= 0 = return (V.Vec3 0 0 0)
   | otherwise = do
-      let world =
-            HL.HittableList
-              [ HL.SomeHittable (S.Sphere (V.Vec3 (-1.2) 0 (-1)) 0.5),
-                HL.SomeHittable (S.Sphere (V.Vec3 0 0 (-1)) 0.5),
-                HL.SomeHittable (S.Sphere (V.Vec3 1.2 0.3 (-1.6)) 0.5),
-                HL.SomeHittable (P.Plane (V.Vec3 0 (-0.5) 0) (V.Vec3 0 1 0)), -- Ground plane
-                HL.SomeHittable (T.Triangle (V.Vec3 (-0.5) 0 0) (V.Vec3 0.5 0 0) (V.Vec3 0 0.5 (-0.5)))
-              ]
+      let world = parseSceneObjects (scene config)
           interval = Interval 0.001 100
 
       case H.hit world ray interval of
@@ -112,6 +107,16 @@ traceRay config ray depth
 
 convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
+
+parseSceneObjects :: SceneSettings -> HittableList
+parseSceneObjects sceneConfig =
+  let parsedObjects = map toHittable (objects sceneConfig)
+   in HL.HittableList parsedObjects
+
+toHittable :: SceneObject -> SomeHittable
+toHittable (SphereObj center radius) = HL.SomeHittable (S.Sphere center radius)
+toHittable (PlaneObj pointOnPlane planeNormal) = HL.SomeHittable (P.Plane pointOnPlane planeNormal)
+toHittable (TriangleObj v0' v1' v2') = HL.SomeHittable (T.Triangle v0' v1' v2')
 
 getBackgroundColor :: R.Ray -> BackgroundSettings -> Col.Color
 getBackgroundColor ray (Gradient c1 c2) =

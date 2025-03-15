@@ -29,8 +29,8 @@
     "lights": [
         {
             "type": "point",
-            "position": [-10, 5, 0.5],
-            "intensity": [0.3, 0.3, 0.3]
+            "position": [-7, 5, 2],
+            "intensity": [0.6, 0.6, 0.6]
         }
     ],
     "scene": {
@@ -38,7 +38,7 @@
         "objects": [
             {
                 "type": "sphere",
-                "center": [-1.2, 0, -1],
+                "center": [-1.2, -0.3, -1],
                 "radius": 0.5
             },
             {

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Config
   ( Config (..),
@@ -8,12 +9,13 @@ module Config
     RaytracerSettings (..),
     SceneSettings (..),
     LightSettings (..),
+    SceneObject (..),
     loadConfig,
   )
 where
 
 import Core.Vec3 (Vec3 (..))
-import Data.Aeson (FromJSON, eitherDecode)
+import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.:))
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics (Generic)
 import System.Directory (doesFileExist)
@@ -58,7 +60,26 @@ data RussianRouletteSettings = RussianRouletteSettings
 data LightSettings = PointLight {position :: Vec3, intensity :: Vec3}
   deriving (Show, Generic)
 
-data SceneSettings = InternalObjects | FileImport {objFile :: String} deriving (Show, Generic)
+data SceneObject
+  = SphereObj Vec3 Double
+  | PlaneObj Vec3 Vec3
+  | TriangleObj Vec3 Vec3 Vec3
+  deriving (Show, Generic)
+
+instance FromJSON SceneObject where
+  parseJSON = withObject "SceneObject" $ \v -> do
+    objType <- v .: "type"
+    case (objType :: String) of
+      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius"
+      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal"
+      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2"
+      _ -> fail $ "Unknown object type: " ++ objType
+
+data SceneSettings = SceneSettings
+  { tag :: String,
+    objects :: [SceneObject]
+  }
+  deriving (Show, Generic)
 
 data Config = Config
   { image :: ImageSettings,
