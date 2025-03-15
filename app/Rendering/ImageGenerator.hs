@@ -15,6 +15,7 @@ import Config
     ImageSettings (..),
     LightSettings (..),
     RaytracerSettings (..),
+    RussianRouletteSettings (..),
     SceneObject (..),
     SceneSettings (..),
   )
@@ -28,7 +29,7 @@ import Hittable.Objects.Sphere as S (Sphere (Sphere))
 import Hittable.Objects.Triangle as T (Triangle (..))
 import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
-import qualified Rendering.Light as L (Light (PointLight), computeLighting)
+import qualified Rendering.Light as L (Light (..), computeLighting)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (clamp, randomDouble)
 import Utils.Interval (Interval (..))
@@ -95,18 +96,32 @@ traceRay config ray depth
           randomVec <- V.randomInUnitSphere
           let newDirection = V.add (H.normal hitRecord) randomVec
               scatteredRay = R.Ray (H.point hitRecord) newDirection
-
               sceneLights = map convertLight (lights config)
               directLight = L.computeLighting hitRecord sceneLights
               clampedLight =
                 V.Vec3 (clamp (V.x directLight) 0 1) (clamp (V.y directLight) 0 1) (clamp (V.z directLight) 0 1)
 
-          bounceColor <- traceRay config scatteredRay (depth - 1)
-          return $ V.add (V.scale 0.5 bounceColor) clampedLight
+          -- Russian Roulette
+          let rrEnabled = enabled (russianRoulette (raytracer config))
+              rrProbability = probability (russianRoulette (raytracer config))
+
+          terminate <-
+            if rrEnabled && depth > 3
+              then do
+                randVal <- randomDouble
+                return (randVal < rrProbability)
+              else return False
+
+          if terminate
+            then return (V.Vec3 0 0 0)
+            else do
+              bounceColor <- traceRay config scatteredRay (depth - 1)
+              return $ V.add (V.scale 0.5 bounceColor) clampedLight
         Nothing -> return $ getBackgroundColor ray (background config)
 
 convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
+convertLight (DirectionalLight dir lIntensity) = L.DirectionalLight dir lIntensity
 
 parseSceneObjects :: SceneSettings -> HittableList
 parseSceneObjects sceneConfig =

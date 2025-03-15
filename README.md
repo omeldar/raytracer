@@ -855,3 +855,13 @@ After : for 1920x1080 AA: 50, 0.8% (max) of RAM (64 GB) - Time: 58s
 
 Before: for 1920x1080 AA: 500, ~100% (max) of RAM (64 GB) - Time: crashed, aborted
 After : for 1920x1080 AA: 500, 1.1% (max) of RAM (64 GB) - Time: 603.69s
+
+### Move from arguments to configuration file
+
+Instead of passing arguments we now can specify everything in a config file and provide that to the raytracer.
+
+### Some new improvements
+
+- Russian Roulette Termination
+- BVH
+- Importing .obj scenes

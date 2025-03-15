@@ -10,6 +10,7 @@ module Config
     SceneSettings (..),
     LightSettings (..),
     SceneObject (..),
+    RussianRouletteSettings (..),
     loadConfig,
   )
 where
@@ -57,7 +58,9 @@ data RussianRouletteSettings = RussianRouletteSettings
   }
   deriving (Show, Generic)
 
-data LightSettings = PointLight {position :: Vec3, intensity :: Vec3}
+data LightSettings
+  = PointLight {position :: Vec3, intensity :: Vec3}
+  | DirectionalLight {direction :: Vec3, intensity :: Vec3}
   deriving (Show, Generic)
 
 data SceneObject

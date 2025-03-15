@@ -2,7 +2,7 @@
     "image": {
         "width": 1920,
         "height": 1080,
-        "samplesPerPixel": 10,
+        "samplesPerPixel": 40,
         "antialiasing": true
     },
     "background": {
@@ -23,12 +23,12 @@
         "useBVH": false,
         "russianRoulette": {
             "enabled": true,
-            "probability": 0.8
+            "probability": 0.2
         }
     },
     "lights": [
         {
-            "type": "point",
+            "tag": "PointLight",
             "position": [-7, 5, 2],
             "intensity": [0.6, 0.6, 0.6]
         }
