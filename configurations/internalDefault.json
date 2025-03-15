@@ -2,7 +2,7 @@
     "image": {
         "width": 1920,
         "height": 1080,
-        "samplesPerPixel": 40,
+        "samplesPerPixel": 10,
         "antialiasing": true
     },
     "background": {
@@ -23,7 +23,10 @@
         "useBVH": false,
         "russianRoulette": {
             "enabled": true,
-            "probability": 0.2
+            "probability": 0.05,
+            "adaptive": true,
+            "adaptivityFactor": 2,
+            "adaptiveMethod": "sqrt"
         }
     },
     "lights": [

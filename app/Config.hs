@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Config
@@ -11,12 +12,14 @@ module Config
     LightSettings (..),
     SceneObject (..),
     RussianRouletteSettings (..),
+    AdaptiveMethod (..),
     loadConfig,
   )
 where
 
 import Core.Vec3 (Vec3 (..))
 import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.:))
+import Data.Aeson.Types (withText)
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics (Generic)
 import System.Directory (doesFileExist)
@@ -52,9 +55,21 @@ data RaytracerSettings = RaytracerSettings
   }
   deriving (Show, Generic)
 
+data AdaptiveMethod = Linear | Exponential | Sqrt deriving (Show, Generic)
+
+instance FromJSON AdaptiveMethod where
+  parseJSON = withText "AdaptiveMethod" $ \case
+    "linear" -> return Linear
+    "exponential" -> return Exponential
+    "sqrt" -> return Sqrt
+    _ -> fail "Unknown adaptive method. Use 'linear', 'exponential', or 'sqrt'."
+
 data RussianRouletteSettings = RussianRouletteSettings
   { enabled :: Bool,
-    probability :: Double
+    probability :: Double,
+    adaptive :: Bool,
+    adaptivityFactor :: Double,
+    adaptiveMethod :: AdaptiveMethod
   }
   deriving (Show, Generic)
 

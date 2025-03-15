@@ -9,7 +9,8 @@ module Rendering.ImageGenerator
 where
 
 import Config
-  ( BackgroundSettings (..),
+  ( AdaptiveMethod (..),
+    BackgroundSettings (..),
     CameraSettings (..),
     Config (..),
     ImageSettings (..),
@@ -101,19 +102,24 @@ traceRay config ray depth
               clampedLight =
                 V.Vec3 (clamp (V.x directLight) 0 1) (clamp (V.y directLight) 0 1) (clamp (V.z directLight) 0 1)
 
-          -- Russian Roulette
-          let rrEnabled = enabled (russianRoulette (raytracer config))
-              rrProbability = probability (russianRoulette (raytracer config))
-
+          -- Russian Roulette, using adaptive probability
+          let rrSettings = russianRoulette (raytracer config)
+              rrEnabled = enabled rrSettings
+              baseProb = probability rrSettings
+              adaptivity = adaptivityFactor rrSettings
+              adaptiveProb = case adaptiveMethod rrSettings of
+                Linear -> min 1.0 (baseProb * (fromIntegral depth / adaptivity)) -- Slower growth
+                Exponential -> min 1.0 (1.0 - exp (-fromIntegral depth / adaptivity)) -- Rapid increase
+                Sqrt -> min 1.0 (baseProb * sqrt (fromIntegral depth / adaptivity)) -- Smooth scaling
           terminate <-
-            if rrEnabled && depth > 3
+            if rrEnabled && depth > 5
               then do
                 randVal <- randomDouble
-                return (randVal < rrProbability)
+                return (randVal < adaptiveProb)
               else return False
 
           if terminate
-            then return (V.Vec3 0 0 0)
+            then return clampedLight
             else do
               bounceColor <- traceRay config scatteredRay (depth - 1)
               return $ V.add (V.scale 0.5 bounceColor) clampedLight
