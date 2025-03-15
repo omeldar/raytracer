@@ -93,8 +93,3 @@ formatTime seconds =
       secs :: Int
       secs = floor (seconds - fromIntegral hours * 3600 - fromIntegral minutes * 60)
    in show hours ++ ":" ++ show minutes ++ ":" ++ show secs
-
-withProgressBar :: Int -> (ProgressBar -> IO a) -> IO a
-withProgressBar total action = do
-  pb <- newProgressBar total
-  action pb
