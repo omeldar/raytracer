@@ -1,3 +1,6 @@
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+
+{-# HLINT ignore "Use lambda-case" #-}
 module Rendering.Light where
 
 import Core.Vec3 as V (Vec3 (..), add, dot, normalize, scale, sub)
@@ -7,8 +10,23 @@ data Light
   = PointLight {position :: V.Vec3, intensity :: V.Vec3}
   | DirectionalLight {direction :: V.Vec3, intensity :: V.Vec3}
 
-computeLighting :: H.HitRecord -> [Light] -> V.Vec3
-computeLighting hitRecord = foldr (V.add . lightContribution hitRecord) (V.Vec3 0 0 0)
+computeLighting :: HitRecord -> [Light] -> V.Vec3
+computeLighting hitRecord lights =
+  let hitNormal = normalize (H.normal hitRecord) -- Renamed to avoid shadowing
+      lightContributions =
+        map
+          ( \light -> case light of
+              PointLight pos localIntensity ->
+                let lightDir = normalize (pos `sub` H.point hitRecord)
+                    diff = max 0 (dot hitNormal lightDir) -- Increase shadow contrast
+                 in scale diff localIntensity
+              DirectionalLight dir localIntensity ->
+                let lightDir = normalize dir
+                    diff = max 0 (dot hitNormal lightDir)
+                 in scale diff localIntensity
+          )
+          lights -- Correct indentation of `) lights`
+   in foldr add (Vec3 0 0 0) lightContributions
 
 lightContribution :: H.HitRecord -> Light -> V.Vec3
 lightContribution hitRecord (PointLight pos lightIntensity) =

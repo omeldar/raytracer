@@ -8,13 +8,14 @@ import Utils.Interval (contains)
 data Triangle = Triangle
   { v0 :: V.Vec3,
     v1 :: V.Vec3,
-    v2 :: V.Vec3
+    v2 :: V.Vec3,
+    color :: V.Vec3
   }
   deriving (Show)
 
 -- Möller-Trumbore intersection algorithm
 instance Hittable Triangle where
-  hit (Triangle p0 p1 p2) ray interval =
+  hit (Triangle p0 p1 p2 col) ray interval =
     let epsilon = 1e-8
         e1 = V.sub p1 p0
         e2 = V.sub p2 p0
@@ -35,6 +36,8 @@ instance Hittable Triangle where
                           then Nothing
                           else
                             let intersect = f * V.dot e2 q
+                                normalV = V.cross e1 e2
+                                (faceNormal, front) = setFaceNormal ray normalV
                              in if contains interval intersect
-                                  then Just $ HitRecord (R.at ray intersect) (V.cross e1 e2) intersect True
+                                  then Just $ HitRecord (R.at ray intersect) faceNormal intersect front col
                                   else Nothing

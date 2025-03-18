@@ -28,10 +28,12 @@ import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (S
 import Hittable.Objects.Plane as P (Plane (Plane))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
 import Hittable.Objects.Triangle as T (Triangle (..))
+import ObjParser (loadObj)
 import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)
-import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
+import System.Directory (createDirectoryIfMissing)
+import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hFlush, hPutStr, hSetBuffering, withFile)
 import Utils.Constants (clamp, randomDouble)
 import Utils.Interval (Interval (..))
 import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateMessage, updateProgress)
@@ -44,27 +46,32 @@ type Row = [Pixel]
 type Image = [Row]
 
 createPPM :: Config -> FilePath -> IO ()
-createPPM config filename =
+createPPM config filename = do
+  let outputDir = "out/"
+  createDirectoryIfMissing True outputDir
+
+  world <- parseSceneObjects (scene config)
+
   withFile filename WriteMode $ \handle -> do
     progressBar <- PB.newProgressBar (height (image config))
     hSetBuffering handle (BlockBuffering (Just (1024 * 512))) -- Enable buffering
     hPutStr handle ("P3\n" ++ show (width (image config)) ++ " " ++ show (height (image config)) ++ "\n255\n") -- Write header
-    mapM_ (processRow config progressBar handle) [0 .. height (image config) - 1]
+    mapM_ (processRow config progressBar handle world) [0 .. height (image config) - 1]
 
-processRow :: Config -> PB.ProgressBar -> Handle -> Int -> IO ()
-processRow config progressBar handle j = do
-  row <- mapM (\i -> pixelColor config i (height (image config) - 1 - j)) [0 .. width (image config) - 1]
+processRow :: Config -> PB.ProgressBar -> Handle -> HittableList -> Int -> IO ()
+processRow config progressBar handle world j = do
+  row <- mapM (\i -> pixelColor config world i (height (image config) - 1 - j)) [0 .. width (image config) - 1]
   hPutStr handle (unlines (map showPixel row) ++ "\n")
   PB.updateMessage progressBar ("Rendering row " ++ show (j + 1))
   PB.updateProgress progressBar (j + 1)
 
-pixelColor :: Config -> Int -> Int -> IO Col.Color
-pixelColor config i j = do
-  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config i j)
+pixelColor :: Config -> HittableList -> Int -> Int -> IO Col.Color
+pixelColor config world i j = do
+  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world i j)
   return $ averageColor sampledColors
 
-samplePixel :: Config -> Int -> Int -> IO Col.Color
-samplePixel config i j = do
+samplePixel :: Config -> HittableList -> Int -> Int -> IO Col.Color
+samplePixel config world i j = do
   uOffset <- if antialiasing (image config) then randomDouble else return 0.5
   vOffset <- if antialiasing (image config) then randomDouble else return 0.5
   let cameraObj =
@@ -77,7 +84,7 @@ samplePixel config i j = do
           (aperture (camera config))
           (focusDist (camera config))
   ray <- Cam.generateRay cameraObj i j (width (image config)) (height (image config)) uOffset vOffset
-  traceRay config ray (maxBounces (raytracer config))
+  traceRay config world ray (maxBounces (raytracer config))
 
 showPixel :: Pixel -> String
 showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
@@ -85,12 +92,11 @@ showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (
 averageColor :: [Color] -> Color
 averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
 
-traceRay :: Config -> R.Ray -> Int -> IO Col.Color
-traceRay config ray depth
+traceRay :: Config -> HittableList -> R.Ray -> Int -> IO Col.Color
+traceRay config world ray depth
   | depth <= 0 = return (V.Vec3 0 0 0)
   | otherwise = do
-      let world = parseSceneObjects (scene config)
-          interval = Interval 0.001 100
+      let interval = Interval 0.001 100
 
       case H.hit world ray interval of
         Just hitRecord -> do
@@ -121,7 +127,7 @@ traceRay config ray depth
           if terminate
             then return clampedLight
             else do
-              bounceColor <- traceRay config scatteredRay (depth - 1)
+              bounceColor <- traceRay config world scatteredRay (depth - 1)
               return $ V.add (V.scale 0.5 bounceColor) clampedLight
         Nothing -> return $ getBackgroundColor ray (background config)
 
@@ -129,15 +135,21 @@ convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
 convertLight (DirectionalLight dir lIntensity) = L.DirectionalLight dir lIntensity
 
-parseSceneObjects :: SceneSettings -> HittableList
-parseSceneObjects sceneConfig =
-  let parsedObjects = map toHittable (objects sceneConfig)
-   in HL.HittableList parsedObjects
+parseSceneObjects :: SceneSettings -> IO HittableList
+parseSceneObjects sceneConfig = do
+  let parsedObjects = maybe [] (map toHittable) (objects sceneConfig)
+
+  case objFile sceneConfig of
+    Just filePath -> do
+      HittableList objModels <- loadObj filePath
+      return $ HittableList (parsedObjects ++ objModels)
+    Nothing -> do
+      return $ HittableList parsedObjects
 
 toHittable :: SceneObject -> SomeHittable
-toHittable (SphereObj center radius) = HL.SomeHittable (S.Sphere center radius)
-toHittable (PlaneObj pointOnPlane planeNormal) = HL.SomeHittable (P.Plane pointOnPlane planeNormal)
-toHittable (TriangleObj v0' v1' v2') = HL.SomeHittable (T.Triangle v0' v1' v2')
+toHittable (SphereObj center radius hColor) = HL.SomeHittable (S.Sphere center radius hColor)
+toHittable (PlaneObj pointOnPlane planeNormal hColor) = HL.SomeHittable (P.Plane pointOnPlane planeNormal hColor)
+toHittable (TriangleObj v0' v1' v2' hColor) = HL.SomeHittable (T.Triangle v0' v1' v2' hColor)
 
 getBackgroundColor :: R.Ray -> BackgroundSettings -> Col.Color
 getBackgroundColor ray (Gradient c1 c2) =

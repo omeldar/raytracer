@@ -8,7 +8,8 @@ data HitRecord = HitRecord
   { point :: Vec3,
     normal :: Vec3,
     t :: Double,
-    frontFace :: Bool
+    frontFace :: Bool,
+    color :: Vec3
   }
   deriving (Show)
 

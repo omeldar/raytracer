@@ -35,6 +35,7 @@ runRaytracer config = do
 
   putStrLn "---------------------------------"
   putStrLn "Raytracer"
+
   if imgAA
     then putStrLn $ "Resolution: " ++ show imgWidth ++ "x" ++ show imgHeight ++ ", AASize: " ++ show imgSamples
     else putStrLn $ "Resolution: " ++ show imgWidth ++ "x" ++ show imgHeight ++ ", AA disabled!"

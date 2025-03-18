@@ -6,7 +6,7 @@ module Hittable.HittableList
   )
 where
 
-import Hittable.Class
+import Hittable.Class (HitRecord (t), Hittable (..))
 
 -- Existential wrapper for any Hittable type
 data SomeHittable = forall a. (Hittable a) => SomeHittable a

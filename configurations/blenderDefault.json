@@ -6,7 +6,7 @@
         "antialiasing": true
     },
     "background": {
-        "tag": "gradient",
+        "tag": "Gradient",
         "color1": [1.0, 1.0, 1.0],
         "color2": [0.5, 0.7, 1.0]
     },
@@ -22,19 +22,29 @@
         "maxBounces": 50,
         "useBVH": false,
         "russianRoulette": {
-            "enabled": true,
-            "probability": 0.8
+            "enabled": false,
+            "probability": 0.05,
+            "adaptive": true,
+            "adaptivityFactor": 2,
+            "adaptiveMethod": "sqrt"
         }
     },
     "lights": [
         {
-            "type": "point",
-            "position": [-10, 5, 0.5],
-            "intensity": [0.3, 0.3, 0.3]
+            "tag": "PointLight",
+            "position": [-7, 5, 2],
+            "intensity": [0.6, 0.6, 0.6]
         }
     ],
     "scene": {
         "tag": "FileImport",
-        "objFile": "scene.obj"
+        "objFile": "/home/akotami/Source/raytracer/configurations/test-objects/cube_tilted.obj",
+        "objects": [
+            {
+                "type": "plane",
+                "pointOnPlane": [0, -0.5, 0],
+                "normal": [0, 1, 0]
+            }
+        ]
     }
 }

@@ -18,7 +18,7 @@ module Config
 where
 
 import Core.Vec3 (Vec3 (..))
-import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.:))
+import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.!=), (.:), (.:?))
 import Data.Aeson.Types (withText)
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics (Generic)
@@ -79,25 +79,30 @@ data LightSettings
   deriving (Show, Generic)
 
 data SceneObject
-  = SphereObj Vec3 Double
-  | PlaneObj Vec3 Vec3
-  | TriangleObj Vec3 Vec3 Vec3
+  = SphereObj Vec3 Double Vec3
+  | PlaneObj Vec3 Vec3 Vec3
+  | TriangleObj Vec3 Vec3 Vec3 Vec3
   deriving (Show, Generic)
 
 instance FromJSON SceneObject where
   parseJSON = withObject "SceneObject" $ \v -> do
     objType <- v .: "type"
     case (objType :: String) of
-      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius"
-      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal"
-      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2"
+      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius" <*> (v .:? "color" .!= Vec3 1 1 1)
+      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal" <*> (v .:? "color" .!= Vec3 1 1 1)
+      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> (v .:? "color" .!= Vec3 1 1 1)
       _ -> fail $ "Unknown object type: " ++ objType
 
 data SceneSettings = SceneSettings
   { tag :: String,
-    objects :: [SceneObject]
+    objects :: Maybe [SceneObject],
+    objFile :: Maybe FilePath
   }
   deriving (Show, Generic)
+
+instance FromJSON SceneSettings where
+  parseJSON = withObject "SceneSettings" $ \v ->
+    SceneSettings <$> v .: "tag" <*> v .:? "objects" <*> v .:? "objFile"
 
 data Config = Config
   { image :: ImageSettings,
@@ -120,8 +125,6 @@ instance FromJSON RaytracerSettings
 instance FromJSON RussianRouletteSettings
 
 instance FromJSON LightSettings
-
-instance FromJSON SceneSettings
 
 instance FromJSON Config
 

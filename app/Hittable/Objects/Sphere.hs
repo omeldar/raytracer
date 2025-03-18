@@ -7,7 +7,8 @@ import Utils.Interval (contains)
 
 data Sphere = Sphere
   { center :: Vec3,
-    radius :: Double
+    radius :: Double,
+    color :: Vec3
   }
   deriving (Show)
 
@@ -30,4 +31,4 @@ instance Hittable Sphere where
         let p = ray `at` t'
             outwardNormal = (1.0 / radius sphere) `scale` (p `sub` center sphere)
             (faceNormal, front) = setFaceNormal ray outwardNormal
-         in HitRecord p faceNormal t' front
+         in HitRecord p faceNormal t' front (Hittable.Objects.Sphere.color sphere)
