@@ -2,7 +2,7 @@
     "image": {
         "width": 1920,
         "height": 1080,
-        "samplesPerPixel": 10,
+        "samplesPerPixel": 50,
         "antialiasing": true
     },
     "background": {
@@ -11,15 +11,15 @@
         "color2": [0.5, 0.7, 1.0]
     },
     "camera": {
-        "lookFrom": [0, 0, 5],
+        "lookFrom": [0, 0, 2],
         "lookAt": [0, 0.0, -1],
         "vUp": [0, 1, 0],
-        "vfov": 50.0,
+        "vfov": 5.0,
         "aperture": 0.0,
-        "focusDist": 1.0
+        "focusDist": 3.0
     },
     "raytracer": {
-        "maxBounces": 50,
+        "maxBounces": 5,
         "useBVH": false,
         "russianRoulette": {
             "enabled": false,

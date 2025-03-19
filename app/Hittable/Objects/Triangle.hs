@@ -1,7 +1,7 @@
 module Hittable.Objects.Triangle where
 
 import Core.Ray as R (at, direction, origin)
-import Core.Vec3 as V (Vec3, cross, dot, sub)
+import Core.Vec3 as V (Vec3, cross, dot, normalize, sub)
 import Hittable.Class
 import Utils.Interval (contains)
 
@@ -36,7 +36,7 @@ instance Hittable Triangle where
                           then Nothing
                           else
                             let intersect = f * V.dot e2 q
-                                normalV = V.cross e1 e2
+                                normalV = normalize $ V.cross e1 e2
                                 (faceNormal, front) = setFaceNormal ray normalV
                              in if contains interval intersect
                                   then Just $ HitRecord (R.at ray intersect) faceNormal intersect front col

@@ -4,7 +4,6 @@ import Core.Vec3
 import Data.List (isPrefixOf)
 import Hittable.HittableList
 import Hittable.Objects.Triangle
-import System.IO.Error (catchIOError)
 
 parseObj :: String -> ([Vec3], [Triangle])
 parseObj content =
@@ -30,8 +29,8 @@ parseFace line verts inColor =
                 then
                   [ Triangle
                       (verts !! (head faceVerts - 1))
-                      (verts !! (faceVerts !! 2 - 1)) -- Swapped order
-                      (verts !! (faceVerts !! 1 - 1))
+                      (verts !! (faceVerts !! 1 - 1)) -- Swapped order
+                      (verts !! (faceVerts !! 2 - 1))
                       inColor -- Swapped order
                   ]
                 else

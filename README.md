@@ -863,5 +863,8 @@ Instead of passing arguments we now can specify everything in a config file and 
 ### Some new improvements
 
 - Russian Roulette Termination
-- BVH
 - Importing .obj scenes
+
+### Monkey
+
+![Rendering the blender monkey](./docs/monkey.png)
