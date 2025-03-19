@@ -868,3 +868,12 @@ Instead of passing arguments we now can specify everything in a config file and 
 ### Monkey
 
 ![Rendering the blender monkey](./docs/monkey.png)
+
+### BVH
+
+- BVH with depth (e.g. 10)
+- BVH with depth (e.g. 32)
+- BVH Distance Test (only move into box where closer hit) (BVH-10)
+- BVH child order (test closer box hit first) (BVH-10)
+- BVH-32 with new implementations
+- 
