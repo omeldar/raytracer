@@ -876,4 +876,11 @@ Instead of passing arguments we now can specify everything in a config file and 
 - BVH Distance Test (only move into box where closer hit) (BVH-10)
 - BVH child order (test closer box hit first) (BVH-10)
 - BVH-32 with new implementations
-- 
+
+A Bounding Volume Hierarchy (BVH) will accelerate ray-object intersections by recursively subdividing the scene into bounding boxes. This implementation will:
+
+- Split bounding boxes along the longest axis for balanced tree depth.
+- Use an array to store primitives, but still allow efficient traversal.
+- Sort triangles during BVH construction to minimize overlaps.
+- Check the closest bounding box first to optimize traversal order.
+- Add a configurable max depth for BVH in the Config.hs file.
