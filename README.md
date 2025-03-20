@@ -885,5 +885,12 @@ A Bounding Volume Hierarchy (BVH) will accelerate ray-object intersections by re
 - Check the closest bounding box first to optimize traversal order.
 - Add a configurable max depth for BVH in the Config.hs file.
 
-Before BVH-10 on ~1000 Triangles (1920x1080, AA:50) = 42:04
-After BVH-10 on ~1000 Triangles (1920x1080, AA:50) = 1:44
+---
+
+Rendering the monkey (1920x1080, AA:50), ~1000 Triangles
+
+Before BVH-10 = 42 minutes 04 seconds
+
+After BVH-10 = 1 minute 44 seconds
+
+ADD TABLE HERE DESCRIBING THE DIFFERENCE IN CHECKS NEEDED with vs without BVH

@@ -3,7 +3,7 @@
         "width": 1920,
         "height": 1080,
         "samplesPerPixel": 50,
-        "antialiasing": true
+        "antialiasing": false
     },
     "background": {
         "tag": "Gradient",
@@ -20,7 +20,7 @@
     },
     "raytracer": {
         "maxBounces": 5,
-        "useBVH": false,
+        "useBVH": true,
         "bvhMaxDepth" : 10,
         "russianRoulette": {
             "enabled": false,
