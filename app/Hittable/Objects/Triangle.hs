@@ -2,6 +2,7 @@ module Hittable.Objects.Triangle where
 
 import Core.Ray as R (at, direction, origin)
 import Core.Vec3 as V (Vec3, cross, dot, normalize, sub)
+import Data.Typeable (Typeable)
 import Hittable.Class
 import Utils.Interval (contains)
 
@@ -11,7 +12,7 @@ data Triangle = Triangle
     v2 :: V.Vec3,
     color :: V.Vec3
   }
-  deriving (Show)
+  deriving (Show, Typeable)
 
 -- Möller-Trumbore intersection algorithm
 instance Hittable Triangle where
