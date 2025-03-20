@@ -21,6 +21,7 @@
     "raytracer": {
         "maxBounces": 50,
         "useBVH": false,
+        "bvhMaxDepth" : 10,
         "russianRoulette": {
             "enabled": false,
             "probability": 0.05,

@@ -41,7 +41,9 @@ executable raytracer
         Hittable.Objects.Sphere,
         Hittable.Objects.Plane,
         Hittable.Objects.Triangle,
-        Config
+        Hittable.BVH,
+        Config,
+        ObjParser
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
@@ -73,7 +75,9 @@ executable profraytracer
         Hittable.Objects.Sphere,
         Hittable.Objects.Plane,
         Hittable.Objects.Triangle,
-        Config
+        Hittable.BVH,
+        Config,
+        ObjParser
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,

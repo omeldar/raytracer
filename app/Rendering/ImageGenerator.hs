@@ -23,6 +23,8 @@ import Config
 import qualified Control.Monad
 import Core.Ray as R (Ray (Ray, direction))
 import Core.Vec3 as V (Vec3 (..), add, normalize, randomInUnitSphere, scale, x, y, z)
+import Data.Typeable (cast)
+import Hittable.BVH (BVHNode, closestHit, constructBVH)
 import Hittable.Class as H (HitRecord (normal, point), Hittable (hit))
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
@@ -58,19 +60,19 @@ createPPM config filename = do
     hPutStr handle ("P3\n" ++ show (width (image config)) ++ " " ++ show (height (image config)) ++ "\n255\n") -- Write header
     mapM_ (processRow config progressBar handle world) [0 .. height (image config) - 1]
 
-processRow :: Config -> PB.ProgressBar -> Handle -> HittableList -> Int -> IO ()
+processRow :: Config -> PB.ProgressBar -> Handle -> (BVHNode, HittableList) -> Int -> IO ()
 processRow config progressBar handle world j = do
   row <- mapM (\i -> pixelColor config world i (height (image config) - 1 - j)) [0 .. width (image config) - 1]
   hPutStr handle (unlines (map showPixel row) ++ "\n")
   PB.updateMessage progressBar ("Rendering row " ++ show (j + 1))
   PB.updateProgress progressBar (j + 1)
 
-pixelColor :: Config -> HittableList -> Int -> Int -> IO Col.Color
+pixelColor :: Config -> (BVHNode, HittableList) -> Int -> Int -> IO Col.Color
 pixelColor config world i j = do
   sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world i j)
   return $ averageColor sampledColors
 
-samplePixel :: Config -> HittableList -> Int -> Int -> IO Col.Color
+samplePixel :: Config -> (BVHNode, HittableList) -> Int -> Int -> IO Col.Color
 samplePixel config world i j = do
   uOffset <- if antialiasing (image config) then randomDouble else return 0.5
   vOffset <- if antialiasing (image config) then randomDouble else return 0.5
@@ -92,13 +94,16 @@ showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (
 averageColor :: [Color] -> Color
 averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
 
-traceRay :: Config -> HittableList -> R.Ray -> Int -> IO Col.Color
-traceRay config world ray depth
+traceRay :: Config -> (BVHNode, HittableList) -> R.Ray -> Int -> IO Col.Color
+traceRay config (bvh, hittableList) ray depth
   | depth <= 0 = return (V.Vec3 0 0 0)
   | otherwise = do
       let interval = Interval 0.001 100
 
-      case H.hit world ray interval of
+      let bvhHit = H.hit bvh ray interval
+      let listHit = H.hit hittableList ray interval
+
+      case closestHit ray interval bvhHit listHit of
         Just hitRecord -> do
           randomVec <- V.randomInUnitSphere
           let newDirection = V.add (H.normal hitRecord) randomVec
@@ -114,9 +119,10 @@ traceRay config world ray depth
               baseProb = probability rrSettings
               adaptivity = adaptivityFactor rrSettings
               adaptiveProb = case adaptiveMethod rrSettings of
-                Linear -> min 1.0 (baseProb * (fromIntegral depth / adaptivity)) -- Slower growth
-                Exponential -> min 1.0 (1.0 - exp (-fromIntegral depth / adaptivity)) -- Rapid increase
-                Sqrt -> min 1.0 (baseProb * sqrt (fromIntegral depth / adaptivity)) -- Smooth scaling
+                Linear -> min 1.0 (baseProb * (fromIntegral depth / adaptivity))
+                Exponential -> min 1.0 (1.0 - exp (-fromIntegral depth / adaptivity))
+                Sqrt -> min 1.0 (baseProb * sqrt (fromIntegral depth / adaptivity))
+
           terminate <-
             if rrEnabled && depth > 5
               then do
@@ -127,7 +133,7 @@ traceRay config world ray depth
           if terminate
             then return clampedLight
             else do
-              bounceColor <- traceRay config world scatteredRay (depth - 1)
+              bounceColor <- traceRay config (bvh, hittableList) scatteredRay (depth - 1)
               return $ V.add (V.scale 0.5 bounceColor) clampedLight
         Nothing -> return $ getBackgroundColor ray (background config)
 
@@ -135,21 +141,41 @@ convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
 convertLight (DirectionalLight dir lIntensity) = L.DirectionalLight dir lIntensity
 
-parseSceneObjects :: SceneSettings -> IO HittableList
+parseSceneObjects :: SceneSettings -> IO (BVHNode, HittableList)
 parseSceneObjects sceneConfig = do
-  let parsedObjects = maybe [] (map toHittable) (objects sceneConfig)
+  let hittables = case objects sceneConfig of
+        Just objs -> map toHittable objs
+        Nothing -> []
 
-  case objFile sceneConfig of
+  objTriangles <- case objFile sceneConfig of
     Just filePath -> do
       HittableList objModels <- loadObj filePath
-      return $ HittableList (parsedObjects ++ objModels)
-    Nothing -> do
-      return $ HittableList parsedObjects
+      return (extractTriangles objModels)
+    Nothing -> return []
+
+  let onlyTriangles = extractTriangles hittables
+  let otherObjects = HittableList (filter isNotTriangle hittables) -- Keep planes & spheres seperately
+  return (constructBVH (onlyTriangles ++ objTriangles), otherObjects)
+
+isNotTriangle :: SomeHittable -> Bool
+isNotTriangle (SomeHittable obj) = case cast obj :: Maybe T.Triangle of
+  Just _ -> False
+  Nothing -> True
+
+extractTriangles :: [SomeHittable] -> [T.Triangle]
+extractTriangles [] = []
+extractTriangles (SomeHittable obj : rest) =
+  case cast obj of
+    Just triangle -> triangle : extractTriangles rest
+    Nothing -> extractTriangles rest
 
 toHittable :: SceneObject -> SomeHittable
-toHittable (SphereObj center radius hColor) = HL.SomeHittable (S.Sphere center radius hColor)
-toHittable (PlaneObj pointOnPlane planeNormal hColor) = HL.SomeHittable (P.Plane pointOnPlane planeNormal hColor)
-toHittable (TriangleObj v0' v1' v2' hColor) = HL.SomeHittable (T.Triangle v0' v1' v2' hColor)
+toHittable (SphereObj center radius sColor) =
+  SomeHittable (S.Sphere center radius sColor)
+toHittable (PlaneObj pointOnPlane pnormal pColor) =
+  SomeHittable (P.Plane pointOnPlane pnormal pColor)
+toHittable (TriangleObj tv0 tv1 tv2 tColor) =
+  SomeHittable (T.Triangle tv0 tv1 tv2 tColor)
 
 getBackgroundColor :: R.Ray -> BackgroundSettings -> Col.Color
 getBackgroundColor ray (Gradient c1 c2) =

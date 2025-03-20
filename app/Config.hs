@@ -51,7 +51,8 @@ data CameraSettings = CameraSettings
 data RaytracerSettings = RaytracerSettings
   { maxBounces :: Int,
     russianRoulette :: RussianRouletteSettings,
-    useBVH :: Bool
+    useBVH :: Bool,
+    bvhMaxDepth :: Int
   }
   deriving (Show, Generic)
 

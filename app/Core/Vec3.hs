@@ -20,6 +20,8 @@ module Core.Vec3
     randomInUnitSphere, -- Generate a random vector in unit sphere
     randomInUnitDisk, -- Generate a random vector in unit disk
     toList, -- Convert Vec3 to list
+    maxVec3, -- Component-wise maximum
+    minVec3, -- Component-wise minimum
   )
 where
 
@@ -125,6 +127,14 @@ randomInUnitDisk = do
   if lengthSquared p < 1.0
     then return p
     else randomInUnitDisk
+
+{-# INLINE maxVec3 #-}
+maxVec3 :: Vec3 -> Vec3 -> Vec3
+maxVec3 (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) = Vec3 (max x1 x2) (max y1 y2) (max z1 z2)
+
+{-# INLINE minVec3 #-}
+minVec3 :: Vec3 -> Vec3 -> Vec3
+minVec3 (Vec3 x1 y1 z1) (Vec3 x2 y2 z2) = Vec3 (min x1 x2) (min y1 y2) (min z1 z2)
 
 {-# INLINE x #-}
 x :: Vec3 -> Double

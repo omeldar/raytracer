@@ -6,10 +6,11 @@ module Hittable.HittableList
   )
 where
 
+import Data.Typeable (Typeable)
 import Hittable.Class (HitRecord (t), Hittable (..))
 
 -- Existential wrapper for any Hittable type
-data SomeHittable = forall a. (Hittable a) => SomeHittable a
+data SomeHittable = forall a. (Hittable a, Typeable a) => SomeHittable a
 
 newtype HittableList = HittableList [SomeHittable]
 
