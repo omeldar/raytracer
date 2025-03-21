@@ -49,8 +49,10 @@ generateRay camera i j width height uOffset vOffset = do
   lensRand <- V.randomInUnitDisk
   let lensOffset = V.scale (aperture camera / 2) (V.add (V.scale (V.x lensRand) (u camera)) (V.scale (V.y lensRand) (v camera)))
       origin' = V.add (origin camera) lensOffset
-      rayu = (fromIntegral i + uOffset) / fromIntegral (width - 1)
-      rayv = (fromIntegral j + vOffset) / fromIntegral (height - 1)
+      ww = fromIntegral width
+      hh = fromIntegral height
+      rayu = (fromIntegral i + uOffset) / ww
+      rayv = (fromIntegral j + vOffset) / hh
       direction =
         V.sub
           (V.add (V.add (lowerLeftCorner camera) (V.scale rayu (horizontal camera))) (V.scale rayv (vertical camera)))
