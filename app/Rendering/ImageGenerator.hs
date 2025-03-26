@@ -148,7 +148,6 @@ convertLight (DirectionalLight dir lIntensity) = L.DirectionalLight dir lIntensi
 
 parseSceneObjects :: SceneSettings -> IO (BVHNode, HittableList)
 parseSceneObjects sceneConfig = do
-  putStrLn $ "DEBUG: objFiles = " ++ show (objFiles sceneConfig)
   let hittables = case objects sceneConfig of
         Just objs -> map toHittable objs
         Nothing -> []
@@ -159,9 +158,13 @@ parseSceneObjects sceneConfig = do
       return $ concatMap (\(HittableList hs) -> extractTriangles hs) allObjTrias
     Nothing -> return []
 
-  let onlyTriangles = extractTriangles hittables
-  let otherObjects = HittableList (filter isNotTriangle hittables) -- Keep planes & spheres seperately
-  return (constructBVH (onlyTriangles ++ objTriangles), otherObjects)
+  let configTriangles = extractTriangles hittables
+      otherObjects = HittableList (filter isNotTriangle hittables) -- Keep planes & spheres seperately
+      totalTriangles = configTriangles ++ objTriangles
+
+  putStrLn $ "Loaded " ++ show (length totalTriangles) ++ " triangles into BVH."
+
+  return (constructBVH totalTriangles, otherObjects)
 
 isNotTriangle :: SomeHittable -> Bool
 isNotTriangle (SomeHittable obj) = case cast obj :: Maybe T.Triangle of

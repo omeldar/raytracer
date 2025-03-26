@@ -1,8 +1,8 @@
 {
     "image": {
-        "width": 1920,
-        "height": 1080,
-        "samplesPerPixel": 100,
+        "width": 640,
+        "height": 380,
+        "samplesPerPixel": 50,
         "antialiasing": true
     },
     "background": {
@@ -39,6 +39,14 @@
     ],
     "scene": {
         "tag": "FileImport",
+        "objects": [
+            {
+            "type": "plane",
+            "pointOnPlane": [0, -2, 0],
+            "normal": [0, 1, 0],
+            "color": [0.8, 0.8, 0.8]
+            }
+        ],
         "objFiles": [
             {
                 "path": "/home/akotami/Source/raytracer/configurations/test-objects/monkey_def_size.obj",
