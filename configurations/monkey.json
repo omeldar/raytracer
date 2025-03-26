@@ -1,8 +1,8 @@
 {
     "image": {
-        "width": 640,
-        "height": 380,
-        "samplesPerPixel": 50,
+        "width": 1920,
+        "height": 1080,
+        "samplesPerPixel": 100,
         "antialiasing": true
     },
     "background": {
