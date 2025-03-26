@@ -22,9 +22,9 @@ The config file lets you customize:
 This project is documented as a progressive journey. The steps are grouped in own files:
 
 1. [Creating the Image](./docs/01_image.md) - Basic PPM output & gradients
-2. [Progress Bar]() - Rendering feedback & performance tracking
-3. [Vec3 Module]() - First vector operations and math foundations
-4. [Drawing a Circle]() - First shape before proper ray-sphere logic
+2. [Progress Bar](./docs/02_progress_bar.md) - Rendering feedback & performance tracking
+3. [Vec3 Module](./docs/03_vec3.md) - First vector operations and math foundations
+4. [Drawing a Circle](./docs/04_circle.md) - First shape before proper ray-sphere logic
 5. [The Ray Module]() - Definition of rays and ray evaluation
 6. [Adding a Camera]() - Camera and background gradient
 7. [Sphere Intersection]() - Algebra and rendering a sphere
