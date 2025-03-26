@@ -15,6 +15,7 @@ import Config
     Config (..),
     ImageSettings (..),
     LightSettings (..),
+    ObjFileEntry (..),
     RaytracerSettings (..),
     RussianRouletteSettings (..),
     SceneObject (..),
@@ -30,7 +31,7 @@ import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (S
 import Hittable.Objects.Plane as P (Plane (Plane))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
 import Hittable.Objects.Triangle as T (Triangle (..))
-import ObjParser (loadObj)
+import ObjParser (loadObjWithOffset)
 import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)
@@ -143,14 +144,15 @@ convertLight (DirectionalLight dir lIntensity) = L.DirectionalLight dir lIntensi
 
 parseSceneObjects :: SceneSettings -> IO (BVHNode, HittableList)
 parseSceneObjects sceneConfig = do
+  putStrLn $ "DEBUG: objFiles = " ++ show (objFiles sceneConfig)
   let hittables = case objects sceneConfig of
         Just objs -> map toHittable objs
         Nothing -> []
 
-  objTriangles <- case objFile sceneConfig of
-    Just filePath -> do
-      HittableList objModels <- loadObj filePath
-      return (extractTriangles objModels)
+  objTriangles <- case objFiles sceneConfig of
+    Just entries -> do
+      allObjTrias <- mapM (\entry -> loadObjWithOffset (path entry) (objposition entry)) entries
+      return $ concatMap (\(HittableList hs) -> extractTriangles hs) allObjTrias
     Nothing -> return []
 
   let onlyTriangles = extractTriangles hittables

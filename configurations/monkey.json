@@ -14,7 +14,7 @@
         "lookFrom": [0, 0, 2],
         "lookAt": [0, 0.0, -1],
         "vUp": [0, 1, 0],
-        "vfov": 5.0,
+        "vfov": 7.0,
         "aperture": 0.0,
         "focusDist": 3.0
     },
@@ -39,12 +39,14 @@
     ],
     "scene": {
         "tag": "FileImport",
-        "objFile": "/home/akotami/Source/raytracer/configurations/test-objects/monkey.obj",
-        "objects": [
+        "objFiles": [
             {
-                "type": "plane",
-                "pointOnPlane": [0, -2, 0],
-                "normal": [0, 1, 0]
+                "path": "/home/akotami/Source/raytracer/configurations/test-objects/monkey.obj",
+                "objposition": [0.1, 0, -3]
+            },
+            {
+                "path": "/home/akotami/Source/raytracer/configurations/test-objects/monkey.obj",
+                "objposition": [-0.1, 0, -3]
             }
         ]
     }

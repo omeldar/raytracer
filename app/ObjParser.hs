@@ -1,4 +1,4 @@
-module ObjParser (loadObj) where
+module ObjParser (loadObjWithOffset) where
 
 import Core.Vec3
 import Data.List (isPrefixOf)
@@ -43,9 +43,8 @@ parseFace line verts inColor =
                   ]
     _ -> error "Invalid face format in .obj file"
 
-loadObj :: FilePath -> IO HittableList
-loadObj path = do
-  putStrLn $ "Attempting to load OBJ file: " ++ path
+loadObjWithOffset :: FilePath -> Vec3 -> IO HittableList
+loadObjWithOffset path offset = do
   content <- readFile path
   if null content
     then do
@@ -53,8 +52,8 @@ loadObj path = do
       return $ HittableList []
     else do
       let (_, triangles) = parseObj content
+          offsetTriangle (Triangle a b c col) =
+            Triangle (add a offset) (add b offset) (add c offset) col
           colors = cycle [Vec3 1 0 0, Vec3 0 1 0, Vec3 0 0 1, Vec3 1 1 0, Vec3 1 0 1, Vec3 0 1 1]
-          -- Colors: Red, Green, Blue, Yellow, Magenta, Cyan
-          coloredTriangles = zipWith (\t c -> Triangle (v0 t) (v1 t) (v2 t) c) triangles colors
-      putStrLn $ "Loaded OBJ: " ++ show (length triangles) ++ " triangles with colors"
+          coloredTriangles = zipWith (\t c -> offsetTriangle t {color = c}) triangles colors
       return $ HittableList [SomeHittable t | t <- coloredTriangles]

@@ -13,6 +13,7 @@ module Config
     SceneObject (..),
     RussianRouletteSettings (..),
     AdaptiveMethod (..),
+    ObjFileEntry (..),
     loadConfig,
   )
 where
@@ -85,6 +86,14 @@ data SceneObject
   | TriangleObj Vec3 Vec3 Vec3 Vec3
   deriving (Show, Generic)
 
+data ObjFileEntry = ObjFileEntry
+  { path :: FilePath,
+    objposition :: Vec3
+  }
+  deriving (Show, Generic)
+
+instance FromJSON ObjFileEntry
+
 instance FromJSON SceneObject where
   parseJSON = withObject "SceneObject" $ \v -> do
     objType <- v .: "type"
@@ -97,13 +106,16 @@ instance FromJSON SceneObject where
 data SceneSettings = SceneSettings
   { tag :: String,
     objects :: Maybe [SceneObject],
-    objFile :: Maybe FilePath
+    objFiles :: Maybe [ObjFileEntry]
   }
   deriving (Show, Generic)
 
 instance FromJSON SceneSettings where
   parseJSON = withObject "SceneSettings" $ \v ->
-    SceneSettings <$> v .: "tag" <*> v .:? "objects" <*> v .:? "objFile"
+    SceneSettings
+      <$> v .: "tag"
+      <*> v .:? "objects"
+      <*> v .:? "objFiles"
 
 data Config = Config
   { image :: ImageSettings,
