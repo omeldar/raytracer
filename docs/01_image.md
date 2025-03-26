@@ -2,7 +2,7 @@
 
 When building a raytracer, the first step is to generate an image. A simple and human-readable format is the [PPM image format](https://de.wikipedia.org/wiki/Portable_Anymap). It allows us to directly write pixels to a file without needing an image library.
 
-![PPM example](./media/01/pppm_example.png)
+![PPM example](./media/01/ppm_example.png)
 
 ### 🔧 Writing Pixels to PPM
 
