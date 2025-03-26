@@ -96,7 +96,7 @@ averageColor :: [Color] -> Color
 averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
 
 traceRay :: Config -> (BVHNode, HittableList) -> R.Ray -> Int -> IO Col.Color
-traceRay config (bvh, hittableList) ray depth
+traceRay config world@(bvh, hittableList) ray depth
   | depth <= 0 = return (V.Vec3 0 0 0)
   | otherwise = do
       let interval = Interval 0.001 100
@@ -110,9 +110,13 @@ traceRay config (bvh, hittableList) ray depth
           let newDirection = V.add (H.normal hitRecord) randomVec
               scatteredRay = R.Ray (H.point hitRecord) newDirection
               sceneLights = map convertLight (lights config)
-              directLight = L.computeLighting hitRecord sceneLights
-              clampedLight =
-                V.Vec3 (clamp (V.x directLight) 0 1) (clamp (V.y directLight) 0 1) (clamp (V.z directLight) 0 1)
+
+          directLight <- L.computeLighting hitRecord sceneLights world
+          let clampedLight =
+                V.Vec3
+                  (clamp (V.x directLight) 0 1)
+                  (clamp (V.y directLight) 0 1)
+                  (clamp (V.z directLight) 0 1)
 
           -- Russian Roulette, using adaptive probability
           let rrSettings = russianRoulette (raytracer config)

@@ -1,7 +1,7 @@
 {
     "image": {
-        "width": 1920,
-        "height": 1080,
+        "width": 640,
+        "height": 380,
         "samplesPerPixel": 50,
         "antialiasing": true
     },
@@ -14,7 +14,7 @@
         "lookFrom": [0, 0, 2],
         "lookAt": [0, 0.0, -1],
         "vUp": [0, 1, 0],
-        "vfov": 7.0,
+        "vfov": 30.0,
         "aperture": 0.0,
         "focusDist": 3.0
     },
@@ -33,20 +33,20 @@
     "lights": [
         {
             "tag": "PointLight",
-            "position": [-7, 5, 2],
-            "intensity": [0.6, 0.6, 0.6]
+            "position": [-7, 1, 5],
+            "intensity": [0.5, 0.5, 0.5]
         }
     ],
     "scene": {
         "tag": "FileImport",
         "objFiles": [
             {
-                "path": "/home/akotami/Source/raytracer/configurations/test-objects/monkey.obj",
-                "objposition": [0.1, 0, -3]
+                "path": "/home/akotami/Source/raytracer/configurations/test-objects/monkey_def_size.obj",
+                "objposition": [0.5, -0.2, -8]
             },
             {
-                "path": "/home/akotami/Source/raytracer/configurations/test-objects/monkey.obj",
-                "objposition": [-0.1, 0, -3]
+                "path": "/home/akotami/Source/raytracer/configurations/test-objects/monkey_def_size.obj",
+                "objposition": [-0.5, 0.5, -5]
             }
         ]
     }
