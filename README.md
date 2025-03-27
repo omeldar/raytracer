@@ -44,34 +44,24 @@ This project is documented as a progressive journey. The steps are grouped in ow
 
 ## 🖼️ Render Gallery
 
+You can check out my complete gallery on [raytracing.omeldar.com](https://raytracing.omeldar.com)
+
+Some of my favorites are:
+
 <div align="center">
 
 <table>
   <tr>
     <td align="center" width="33%">
-      <img src="./docs/media/other/lights_on_spheres.png" alt="BVH layout" width="100%"/><br/>
-      <sub>Shadows in a 988 triangles scene. 640x360, AA-10</sub>
+      <img src="./docs/media/renders/20250313-175001.png" alt="Spheres, Lights, Shadows" width="100%"/><br/>
+      <sub>Spheres with lights and shadows. High res and high Anti-Aliasing.</sub>
     </td>
     <td align="center" width="33%">
-      <img src="./docs/media/other/complicated_scene.png" alt="988 triangles" width="100%"/><br/>
+      <img src="./docs/media/other/complicated_scene.png" alt="988 triangles scene" width="100%"/><br/>
       <sub>Shadows in a 988 triangles scene. 1920x1080, AA-50</sub>
     </td>
     <td align="center" width="33%">
-      <img src="./docs/media/other/complex_monkey.png" alt="63k triangles" width="100%"/><br/>
-      <sub>Shadows in a 63,432 triangles scene. 1920x1080, AA-100</sub>
-    </td>
-  </tr>
-  <tr>
-    <td align="center" width="33%">
-      <img src="./docs/media/other/lowres-complex.png" alt="BVH layout" width="100%"/><br/>
-      <sub>Shadows in a 988 triangles scene. 640x360, AA-10</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./docs/media/other/complicated_scene.png" alt="988 triangles" width="100%"/><br/>
-      <sub>Shadows in a 988 triangles scene. 1920x1080, AA-50</sub>
-    </td>
-    <td align="center" width="33%">
-      <img src="./docs/media/other/complex_monkey.png" alt="63k triangles" width="100%"/><br/>
+      <img src="./docs/media/other/complex_monkey.png" alt="63k triangles scene" width="100%"/><br/>
       <sub>Shadows in a 63,432 triangles scene. 1920x1080, AA-100</sub>
     </td>
   </tr>
