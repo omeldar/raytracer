@@ -29,17 +29,18 @@ This project is documented as a progressive journey. The steps are grouped in ow
 6. [Adding a Camera](./docs/06_camera.md) - Camera and background gradient
 7. [Sphere Intersection](./docs/07_sphere.md) - Algebra and rendering a sphere
 8. [Surface Normals & Perspective Projection](./docs/08_normals_and_perspective.md) - Visualization of normals and perspective
-9. [Hittable Abstraction]() - Polymorphism for objects
-10. [Multiple Objects]() - Scene with many spheres
-11. [Fixing Perspective]() - Distortion & focal length
-12. [Front vs Back Faces]() - Handling ray-side normal direction
-13. [Anti-Aliasing]() - Reducing jagged edges
-14. [Diffuse Materials]() - (WIP) Lambertian surfaces
-15. [Buffered Writing]() - Optimizing memory usage
-16. [Config Files]() - Switching from CLI args to JSON configs
-17. [Optimizations]() - Russian Roulette, .OBJ import
-18. [Monkey Render]() - Rendering Blender monkey with triangles
-19. [BVH (Bounding Volume Hierarchy)]() - Huge speedup via spatial acceleration
+9. [Ray-Sphere Simplification & Profiling]() - Simplyfing the ray-sphere intersection and profiling the Raytracer
+10. [Hittable Abstraction]() - Polymorphism for objects
+11. [Multiple Objects]() - Scene with many spheres
+12. [Fixing Perspective]() - Distortion & focal length
+13. [Front vs Back Faces]() - Handling ray-side normal direction
+14. [Anti-Aliasing]() - Reducing jagged edges
+15. [Diffuse Materials]() - (WIP) Lambertian surfaces
+16. [Buffered Writing]() - Optimizing memory usage
+17. [Config Files]() - Switching from CLI args to JSON configs
+18. [Optimizations]() - Russian Roulette, .OBJ import
+19. [Monkey Render]() - Rendering Blender monkey with triangles
+20. [BVH (Bounding Volume Hierarchy)]() - Huge speedup via spatial acceleration
 
 ## 🖼️ Render Gallery
 
