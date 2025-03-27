@@ -51,3 +51,8 @@ This project is documented as a progressive journey. The steps are grouped in ow
 | ![](./docs/media/other/complex_monkey.png) |
 | :----------------: |
 | Shadowing in a 63432 triangles scene |
+
+## Todo's
+
+- Create multiple lights for each light to have soft shadows
+- Mit mehreren Lichtquellen: Für jede Lichtquelle: intensität / anz. Lichtquellen, damit keine Überbelichtung
