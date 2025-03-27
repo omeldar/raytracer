@@ -1,3 +1,5 @@
+[🔗 Back to Chapters](/README.md#-chapters)
+
 # Chapter 1: Creating the Image
 
 When building a raytracer, the first step is to generate an image. A simple and human-readable format is the [PPM image format](https://de.wikipedia.org/wiki/Portable_Anymap). It allows us to directly write pixels to a file without needing an image library.

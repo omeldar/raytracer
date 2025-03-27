@@ -1,3 +1,5 @@
+[🔗 Back to Chapters](/README.md#-chapters)
+
 # Chapter 2: Creating the Progress Bar
 
 When building a computationally intense application like a raytracer, we expect longer computation times. It can take a while to render complex scenes.

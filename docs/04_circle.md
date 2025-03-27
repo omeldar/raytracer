@@ -1,3 +1,5 @@
+[🔗 Back to Chapters](/README.md#-chapters)
+
 # Chapter : Drawing a Circle
 
 Before we jump into real ray-sphere intersections in 3D, it helps to start with something simpler — a 2D circle. This lets us get a feel for shape generation and rendering logic using pure image-space math.
