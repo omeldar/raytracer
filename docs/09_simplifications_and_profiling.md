@@ -39,8 +39,9 @@ $$
 
 So we define:
 
-- $$ h = \vec{oc} \cdot \vec{d} $$
-- $$ a = \vec{d} \cdot \vec{d} $$
+$$ h = \vec{oc} \cdot \vec{d} $$
+
+$$ a = \vec{d} \cdot \vec{d} $$
 
 This gives us a much cleaner implementation:
 
