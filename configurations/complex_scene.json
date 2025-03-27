@@ -1,0 +1,49 @@
+{
+    "image": {
+        "width": 1920,
+        "height": 1080,
+        "samplesPerPixel": 100,
+        "antialiasing": true
+    },
+    "background": {
+        "tag": "Gradient",
+        "color1": [1.0, 1.0, 1.0],
+        "color2": [0.5, 0.7, 1.0]
+    },
+    "camera": {
+        "lookFrom": [0, 0.5, 2],
+        "lookAt": [0, 0.0, -1],
+        "vUp": [0, 1, 0],
+        "vfov": 30.0,
+        "aperture": 0.0,
+        "focusDist": 3.0
+    },
+    "raytracer": {
+        "maxBounces": 5,
+        "useBVH": true,
+        "bvhMaxDepth" : 10,
+        "russianRoulette": {
+            "enabled": false,
+            "probability": 0.05,
+            "adaptive": true,
+            "adaptivityFactor": 2,
+            "adaptiveMethod": "sqrt"
+        }
+    },
+    "lights": [
+        {
+            "tag": "PointLight",
+            "position": [-7, 0.9, 10],
+            "intensity": [0.5, 0.5, 0.5]
+        }
+    ],
+    "scene": {
+        "tag": "FileImport",
+        "objFiles": [
+            {
+                "path": "/home/eldar/Source/Repositories/raytracer/configurations/test-objects/even_more_complex.obj",
+                "objposition": [0.0, -1.3, -3.3]
+            }
+        ]
+    }
+}
