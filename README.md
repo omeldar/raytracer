@@ -29,7 +29,7 @@ This project is documented as a progressive journey. The steps are grouped in ow
 6. [Adding a Camera](./docs/06_camera.md) - Camera and background gradient
 7. [Sphere Intersection](./docs/07_sphere.md) - Algebra and rendering a sphere
 8. [Surface Normals & Perspective Projection](./docs/08_normals_and_perspective.md) - Visualization of normals and perspective
-9. [Ray-Sphere Simplification & Profiling]() - Simplyfing the ray-sphere intersection and profiling the Raytracer
+9. [Ray-Sphere Simplification & Profiling](./docs/09_simplifications_and_profiling.md) - Simplyfing the ray-sphere intersection and profiling the Raytracer
 10. [Hittable Abstraction]() - Polymorphism for objects
 11. [Multiple Objects]() - Scene with many spheres
 12. [Fixing Perspective]() - Distortion & focal length
