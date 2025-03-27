@@ -1,4 +1,4 @@
-[🔗 Back to Chapters](../README.md#chapters)
+[🔗 Back to Chapters](/README.md#-chapters)
 
 # Chapter 9: Ray-Sphere Simplification & Profiling
 

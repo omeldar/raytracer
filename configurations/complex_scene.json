@@ -2,7 +2,7 @@
     "image": {
         "width": 1920,
         "height": 1080,
-        "samplesPerPixel": 50,
+        "samplesPerPixel": 100,
         "antialiasing": true
     },
     "background": {
@@ -33,7 +33,7 @@
     "lights": [
         {
             "tag": "PointLight",
-            "position": [-7, 1, 10],
+            "position": [-7, 0.9, 10],
             "intensity": [0.5, 0.5, 0.5]
         }
     ],
@@ -41,7 +41,7 @@
         "tag": "FileImport",
         "objFiles": [
             {
-                "path": "/home/eldar/Source/Repositories/raytracer/configurations/test-objects/complex_scene.obj",
+                "path": "/home/eldar/Source/Repositories/raytracer/configurations/test-objects/even_more_complex.obj",
                 "objposition": [0.0, -1.3, -3.3]
             }
         ]
