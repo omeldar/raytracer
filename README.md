@@ -28,7 +28,7 @@ This project is documented as a progressive journey. The steps are grouped in ow
 5. [The Ray Module](./docs/05_ray.md) - Definition of rays and ray evaluation
 6. [Adding a Camera](./docs/06_camera.md) - Camera and background gradient
 7. [Sphere Intersection](./docs/07_sphere.md) - Algebra and rendering a sphere
-8. [Surface Normals]() - Visualization of normals
+8. [Surface Normals & Perspective Projection](./docs/08_normals_and_perspective.md) - Visualization of normals and perspective
 9. [Hittable Abstraction]() - Polymorphism for objects
 10. [Multiple Objects]() - Scene with many spheres
 11. [Fixing Perspective]() - Distortion & focal length

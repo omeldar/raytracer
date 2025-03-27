@@ -4,8 +4,6 @@
 
 Now that we have a camera and background gradient, it’s time to add a real object to the scene — a sphere. This introduces the first meaningful geometric intersection: determining whether a ray hits a sphere and where.
 
----
-
 ## 🧮 Sphere Equation
 
 A sphere with a given radius $r$ centered at the origin can be described by the equation:
