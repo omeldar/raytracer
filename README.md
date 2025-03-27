@@ -44,15 +44,29 @@ This project is documented as a progressive journey. The steps are grouped in ow
 
 ## 🖼️ Render Gallery
 
-| ![](./docs/media/other/complicated_scene.png) |
-| :----------------: |
-| Shadowing in a 988 triangles scene  |
+<div align="center">
 
-| ![](./docs/media/other/complex_monkey.png) |
-| :----------------: |
-| Shadowing in a 63432 triangles scene |
+<table>
+  <tr>
+    <td align="center" width="33%">
+      <img src="./docs/media/other/lowres-complex.png" alt="BVH layout" width="100%"/><br/>
+      <sub>Low resolution - Shadows in a 988 triangles scene.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="./docs/media/other/complicated_scene.png" alt="988 triangles" width="100%"/><br/>
+      <sub>Shadows in a 988 triangles scene.</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="./docs/media/other/complex_monkey.png" alt="63k triangles" width="100%"/><br/>
+      <sub>Shadows in a 63,432 triangles scene</sub>
+    </td>
+  </tr>
+</table>
+
+</div>
 
 ## Todo's
 
-- Create multiple lights for each light to have soft shadows
-- Mit mehreren Lichtquellen: Für jede Lichtquelle: intensität / anz. Lichtquellen, damit keine Überbelichtung
+- Create multiple lights for each light source to have soft shadows (configurable in config)
+-For each lightsource, make sure intensity isnt too high causing surfaces to get completely white very quickly.
+- Smoothing (3 normals per triangle, so that triangle surfaces look smoother between triangles)
