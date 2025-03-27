@@ -55,7 +55,5 @@ With this camera setup, the rays diverge more slowly. Objects now appear with co
 - Increasing the focal length narrows the view
 - Moving the camera back compensates and centers the scene
 
-Together, these steps make the perspective feel more realistic and consistent. We now have proper control over the camera's projection — a key step toward realism.
-
-In the next chapter, we’ll address surface orientation: **front faces vs. back faces**.
+Together, these steps make the perspective feel more realistic and consistent.
 
