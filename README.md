@@ -49,6 +49,20 @@ This project is documented as a progressive journey. The steps are grouped in ow
 <table>
   <tr>
     <td align="center" width="33%">
+      <img src="./docs/media/other/lights_on_spheres.png" alt="BVH layout" width="100%"/><br/>
+      <sub>Shadows in a 988 triangles scene. 640x360, AA-10</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="./docs/media/other/complicated_scene.png" alt="988 triangles" width="100%"/><br/>
+      <sub>Shadows in a 988 triangles scene. 1920x1080, AA-50</sub>
+    </td>
+    <td align="center" width="33%">
+      <img src="./docs/media/other/complex_monkey.png" alt="63k triangles" width="100%"/><br/>
+      <sub>Shadows in a 63,432 triangles scene. 1920x1080, AA-100</sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="33%">
       <img src="./docs/media/other/lowres-complex.png" alt="BVH layout" width="100%"/><br/>
       <sub>Shadows in a 988 triangles scene. 640x360, AA-10</sub>
     </td>
