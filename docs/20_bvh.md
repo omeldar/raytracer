@@ -55,19 +55,16 @@ We tested BVH on the monkey model (~1000 triangles).
 | BVH Depth 10 | 1m 44s     |
 | BVH Depth 32 | 1m 36s     |
 
-With BVH enabled, only a fraction of the triangle intersections are tested.
+With BVH enabled, only a fraction of the triangle intersections are tested. Instead of $O(n)$ we get a complexity of $O(log n)$.
 
-
-## 🪛 Current TODO / Bugs
-
-- Without anti-aliasing, a faint **blank vertical line** appears in the center of some renders — possibly a box test edge case.
-- Improve BVH node balancing heuristics
-- Visualize bounding boxes for debugging
-
-
-## 🧠 Why This Matters
-
-BVH is the cornerstone of modern raytracers. Without it, render times become unusable as scenes grow.
-
-We now render complex triangle meshes at interactive speeds. Every model, every light bounce, every feature added going forward — benefits from the performance boost BVH brings.
-
+| Triangle Count | Checks (no BVH) | Checks (BVH) | Decrease (%) |
+|------------|-------------|------------|-------------|
+| 10 | 10 | 3 | 70% |
+| 100 | 100 | 6 | 94% |
+| 1'000 | 1'000 | 9 | 99.1% |
+| 10'000 | 10'000 | 13 | 99.87% |
+| 100'000 | 100'000 | 16 | 99.984% |
+| 1'000'000 | 1'000'000 | 19 | 99.9981% |
+| 10'000'000 | 10'000'000 | 23 | 99.999770% |
+| 100'000'000 | 100'000'000 | 26 | 99.999974% |
+| 1'000'000'000 | 1'000'000'000 | 29 | 99.999997% |
