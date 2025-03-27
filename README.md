@@ -39,8 +39,8 @@ This project is documented as a progressive journey. The steps are grouped in ow
 16. [Buffered Writing](./docs/16_buffered_writing.md) - Optimizing memory usage
 17. [Config Files](./docs/17_config_files.md) - Switching from CLI args to JSON configs
 18. [Optimizations](./docs/18_optimizations.md) - Russian Roulette, .OBJ import
-19. [Monkey Render]() - Rendering Blender monkey with triangles
-20. [BVH (Bounding Volume Hierarchy)]() - Huge speedup via spatial acceleration
+19. [Monkey Render](./docs/19_monkey_render.md) - Rendering Blender monkey with triangles
+20. [BVH (Bounding Volume Hierarchy)](./docs/20_bvh.md) - Huge speedup via spatial acceleration
 
 ## 🖼️ Render Gallery
 
@@ -48,6 +48,6 @@ This project is documented as a progressive journey. The steps are grouped in ow
 | :----------------: |
 | Shadowing in a 988 triangles scene  |
 
-| ![](./docs/media/) |
+| ![](./docs/media/other/complex_monkey.png) |
 | :----------------: |
 | Shadowing in a 63432 triangles scene |
