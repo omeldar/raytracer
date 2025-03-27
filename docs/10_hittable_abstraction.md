@@ -126,8 +126,6 @@ traceRay ray =
 
 Each sphere returns a hit if intersected, and we use the closest one to determine the color. If no hit occurs, we render the background.
 
-![Multiple Spheres](../docs/multiple_spheres.png)
-
 ---
 
 ## 💡 Summary
