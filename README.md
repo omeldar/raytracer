@@ -36,9 +36,9 @@ This project is documented as a progressive journey. The steps are grouped in ow
 13. [Front vs Back Faces](./docs/13_front_vs_backfaces.md) - Handling ray-side normal direction
 14. [Anti-Aliasing](./docs/14_anti_aliasing.md) - Reducing jagged edges
 15. [Diffuse Materials](./docs/15_diffuse_materials.md) - (WIP) Lambertian surfaces
-16. [Buffered Writing]() - Optimizing memory usage
-17. [Config Files]() - Switching from CLI args to JSON configs
-18. [Optimizations]() - Russian Roulette, .OBJ import
+16. [Buffered Writing](./docs/16_buffered_writing.md) - Optimizing memory usage
+17. [Config Files](./docs/17_config_files.md) - Switching from CLI args to JSON configs
+18. [Optimizations](./docs/18_optimizations.md) - Russian Roulette, .OBJ import
 19. [Monkey Render]() - Rendering Blender monkey with triangles
 20. [BVH (Bounding Volume Hierarchy)]() - Huge speedup via spatial acceleration
 

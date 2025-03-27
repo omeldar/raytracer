@@ -41,7 +41,7 @@ This drastically reduces RAM usage.
 
 ## 📊 Results
 
-| Resolution / AA | Before (RAM/Time)     | After (RAM/Time)      |
+| Resolution / AA | Before (RAM/Time)      | After (RAM/Time)       |
 |-----------------|------------------------|------------------------|
 | 1920x1080 / 50  | ~75% RAM / 68s         | ~0.8% RAM / 58s        |
 | 1920x1080 / 500 | ~100% RAM / crash      | ~1.1% RAM / 603.69s    |
