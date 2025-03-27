@@ -32,7 +32,7 @@ This project is documented as a progressive journey. The steps are grouped in ow
 9. [Ray-Sphere Simplification & Profiling](./docs/09_simplifications_and_profiling.md) - Simplyfing the ray-sphere intersection and profiling the Raytracer
 10. [Hittable Abstraction](./docs/10_hittable_abstraction.md) - Polymorphism for objects
 11. [Multiple Objects](./docs/11_multiple_objects.md) - Scene with many spheres
-12. [Fixing Perspective]() - Distortion & focal length
+12. [Fixing Perspective](./docs/12_fixing_perspective.md) - Distortion & focal length
 13. [Front vs Back Faces]() - Handling ray-side normal direction
 14. [Anti-Aliasing]() - Reducing jagged edges
 15. [Diffuse Materials]() - (WIP) Lambertian surfaces

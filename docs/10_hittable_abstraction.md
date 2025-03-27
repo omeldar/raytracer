@@ -8,8 +8,6 @@ That’s where **abstraction** comes in.
 
 We'll define a common interface called `Hittable`, which lets any object determine whether it was hit by a ray.
 
----
-
 ## 🔢 Defining the `Hittable` Typeclass
 
 We start with a new module:
@@ -69,8 +67,6 @@ This is the same optimized logic as before, now integrated into a reusable and t
 
 Note: we calculate the **outward normal**, assuming we always want normals pointing against the incoming ray (which we can flip later if needed).
 
----
-
 ## 🗺️ Hittable List: A Scene with Multiple Objects
 
 We now want to support **scenes with many objects**. For that, we introduce a new wrapper type:
@@ -98,8 +94,6 @@ instance Hittable HittableList where
 
 We fold over the list of objects and keep the **closest valid hit**, if any. This gives us the first intersection along the ray.
 
----
-
 ## ✨ Example Usage
 
 Here's how we update `traceRay` to use the new `HittableList`:
@@ -125,8 +119,6 @@ traceRay ray =
 ```
 
 Each sphere returns a hit if intersected, and we use the closest one to determine the color. If no hit occurs, we render the background.
-
----
 
 ## 💡 Summary
 

@@ -4,8 +4,6 @@
 
 Now that we have a `Hittable` abstraction in place, we can easily extend our scenes to contain multiple objects. This chapter demonstrates how we build a small scene and trace rays through it using the `HittableList` structure.
 
----
-
 ## 🏛️ Building a Scene
 
 Let’s define a few spheres and group them in a `HittableList`:
@@ -34,8 +32,6 @@ traceRay ray =
 - Rays are traced through the entire list.
 - The result is the normal-based shading we established earlier.
 
----
-
 ## 📸 Render Output
 
 With this logic, the rendered scene should now contain **three spheres** side by side, all shaded based on their surface normals:
@@ -43,8 +39,6 @@ With this logic, the rendered scene should now contain **three spheres** side by
 ![Multiple Spheres](./media/11/multiple_spheres.png)
 
 The shading is a visualization of the surface normal at each hit point.
-
----
 
 ## 🔄 Future Extensions
 
@@ -57,7 +51,3 @@ Because of the abstraction we've created, we can easily:
 This is the real power of generalizing ray-object intersection logic.
 
 We now have our first real scene.
-
----
-
-Next up: improving realism through perspective control and camera tweaks.
