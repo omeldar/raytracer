@@ -44,10 +44,10 @@ This project is documented as a progressive journey. The steps are grouped in ow
 
 ## 🖼️ Render Gallery
 
-| ![](docs/img1.png) | ![](docs/img2.png) | ![](./docs/media/other/complicated_scene.png) |
-| :----------------: | :----------------: | :----------------: |
-|    First Render    |   Normal Mapping   | Complex Monkey Scene  |
+| ![](./docs/media/other/complicated_scene.png) |
+| :----------------: |
+| Shadowing in a 988 triangles scene  |
 
-| ![](docs/img4.png) | ![](docs/img5.png) | ![](docs/img6.png) |
-| :----------------: | :----------------: | :----------------: |
-|    Monkey Head     |  Multiple Spheres  |  BVH Optimization  |
+| ![](./docs/media/) |
+| :----------------: |
+| Shadowing in a 63432 triangles scene |
