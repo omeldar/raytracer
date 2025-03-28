@@ -81,27 +81,38 @@ data LightSettings
   deriving (Show, Generic)
 
 data SceneObject
-  = SphereObj Vec3 Double Vec3
-  | PlaneObj Vec3 Vec3 Vec3
-  | TriangleObj Vec3 Vec3 Vec3 Vec3
+  = SphereObj Vec3 Double Vec3 MaterialType
+  | PlaneObj Vec3 Vec3 Vec3 MaterialType
+  | TriangleObj Vec3 Vec3 Vec3 Vec3 MaterialType
   deriving (Show, Generic)
 
 data ObjFileEntry = ObjFileEntry
   { path :: FilePath,
-    objposition :: Vec3
+    objposition :: Vec3,
+    overrideColor :: Maybe Vec3,
+    overrideMaterial :: Maybe MaterialType
   }
   deriving (Show, Generic)
 
-instance FromJSON ObjFileEntry
+instance FromJSON ObjFileEntry where
+  parseJSON  = withObject "ObjFileEntry" $ \v -> do
+    ObjFileEntry
+      <$> v .: "path"
+      <*> v .: "objposition"
+      <*> v .:? "overrideColor"
+      <*> v .:? "overrideMaterial"
 
 instance FromJSON SceneObject where
   parseJSON = withObject "SceneObject" $ \v -> do
     objType <- v .: "type"
-    case (objType :: String) of
-      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius" <*> (v .:? "color" .!= Vec3 1 1 1)
-      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal" <*> (v .:? "color" .!= Vec3 1 1 1)
-      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> (v .:? "color" .!= Vec3 1 1 1)
-      _ -> fail $ "Unknown object type: " ++ objType
+    color <- v .:? "color" .!= Vec3 1 1 1
+    material <- v .:? "material" .!= Lambertian
+    case objType of
+      "sphere" -> SphereObj <$> v.: "center" <*> v .: "radius" <*> pure color <*> pure material
+      "plane" -> PlaneObj <$> v.: "pointOnPlane" <*> v .: "normal" <*> pure color <*> pure material
+      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> pure color <*> pure material
+      _ -> fail $ "Unknown scene object type " ++ objType 
+    
 
 data SceneSettings = SceneSettings
   { tag :: String,
@@ -126,6 +137,21 @@ data Config = Config
     scene :: SceneSettings
   }
   deriving (Show, Generic)
+
+data MaterialType
+  = Lambertian
+  | Metal { fuzz :: Double }
+  | Dielectric { refIdx :: Double }
+  deriving (Show, Generic)
+
+instance FromJSON MaterialType where
+  parseJSON = withObject "MaterialType" $ \v -> do
+    matType <- v.: "type"
+    case (matType :: String) of
+      "lambertian" -> return Lambertian
+      "metallic" -> Metal <$> v .:? "fuzz" .!= 0.0
+      "dielectric" -> Dielectric <$> v .: "refIdx"
+      _ -> fail $ "Unknown material type " ++ matType 
 
 instance FromJSON ImageSettings
 
