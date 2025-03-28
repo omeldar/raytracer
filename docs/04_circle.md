@@ -22,7 +22,7 @@ createPPM width height =
 
 This draws a red circle by checking whether a given pixel `(i, j)` lies within a given radius from the image center. If it does, it’s red; otherwise, it’s white.
 
-What's especially cool here is that we're already using `Vec3` to represent our color - even though this is just a 2D example. Colors often require operations like addition, scaling or blending. Since `Vec3` already supports these, and since a color is essentially three values (R, G, B), it fits naturally.
+What's especially nice here is that we're already using `Vec3` to represent our color - even though this is just a 2D example. Colors often require operations like addition, scaling or blending. Since `Vec3` already supports these, and since a color is essentially three values (R, G, B), it fits naturally.
 
 Here's what the rendered circle looks like:
 

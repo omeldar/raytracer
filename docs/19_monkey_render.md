@@ -6,23 +6,21 @@ After adding .obj file support and implementing acceleration structures, it was 
 
 Suzanne is a classic benchmark mesh — simple yet detailed enough to reveal raytracing bugs, performance issues, and shading artifacts.
 
-
 ## 📖 Importing the Model
 
 The monkey model was exported from Blender as a `.obj` file containing roughly **1000 triangles**.
 
-We parsed the file using our custom OBJ loader and converted the triangles into hittable objects:
+So we parse the file using our custom OBJ loader and convert the triangles into hittable objects:
 
 ```haskell
 loadObj :: FilePath -> Vec3 -> IO [Triangle]
 ```
 
-The triangles were optionally offset (e.g. moving the model up or back in the scene), then placed into a `BVHNode`.
-
+The triangles are optionally offset (e.g. moving the model up or back in the scene), then placed into a `BVHNode`.
 
 ## 🚀 BVH Acceleration
 
-To handle the large number of triangles efficiently, we inserted them into a Bounding Volume Hierarchy (BVH). This reduces ray-triangle intersection checks from O(n) to O(log n).
+To handle the large number of triangles efficiently, we insert them into a Bounding Volume Hierarchy (BVH). This reduces ray-triangle intersection checks from O(n) to O(log n).
 
 The monkey render was tested with various BVH settings:
 
@@ -31,26 +29,7 @@ The monkey render was tested with various BVH settings:
 - Heuristic for sorting along longest axis
 - Child ordering based on hit distance
 
-All of this is configurable in the config file.
-
-
-## 🔢 Configuration Snippet
-
-```json
-"scene": {
-  "models": [
-    {
-      "file": "models/monkey.obj",
-      "position": [0, 0, 0]
-    }
-  ]
-},
-"bvh": {
-  "enabled": true,
-  "maxDepth": 10
-}
-```
-
+The BVH depth is configurable within the configuration. Heuristic sorting along longest axis and child ordering are implemented without option to disable it - because why would we?
 
 ## 🎨 Final Render
 
@@ -60,12 +39,6 @@ The monkey was rendered at:
 - Samples per pixel: 50
 - Approx. 1000 triangles
 
-### Before BVH (no acceleration)
-
-**Render Time**: 42 minutes 04 seconds
-
-### After BVH-10
-
-**Render Time**: 1 minute 44 seconds
-
 ![Rendering the Blender Monkey](./media/19/monkey.png)
+
+You can learn more about how long that took with and without BVH in the next chapter: [Chapter 20 - BVH](./20_bvh.md)

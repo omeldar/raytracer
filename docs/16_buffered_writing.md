@@ -13,7 +13,7 @@ The original approach stored the entire rendered image in memory before writing 
 - Memory spike: 64 GB RAM used
 - Result: crash, or the system becomes unresponsive
 
-We needed a way to write the image incrementally to disk instead of holding it in memory.
+We need a way to write the image incrementally to disk instead of holding it in memory.
 
 ## 📁 The Fix: Streaming Output
 
@@ -41,10 +41,9 @@ This drastically reduces RAM usage.
 
 ## 📊 Results
 
-| Resolution / AA | Before (RAM/Time)      | After (RAM/Time)       |
-|-----------------|------------------------|------------------------|
-| 1920x1080 / 50  | ~75% RAM / 68s         | ~0.8% RAM / 58s        |
-| 1920x1080 / 500 | ~100% RAM / crash      | ~1.1% RAM / 603.69s    |
+| Resolution / AA | Before (RAM/Time) | After (RAM/Time)    |
+| --------------- | ----------------- | ------------------- |
+| 1920x1080 / 50  | ~75% RAM / 68s    | ~0.8% RAM / 58s     |
+| 1920x1080 / 500 | ~100% RAM / crash | ~1.1% RAM / 603.69s |
 
 Total RAM on the system: 64GB
-

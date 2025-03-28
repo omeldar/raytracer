@@ -4,12 +4,12 @@
 
 As the raytracer grew more capable, the number of command-line arguments became unmanageable. Resolution, samples per pixel, recursion depth, scene setup... passing these by CLI quickly became a headache.
 
-To make the project more scalable and flexible, we moved to using **JSON configuration files**.
+To make the project more scalable and flexible, we move to using **JSON configuration files**.
 
 ## 🔢 Why JSON?
 
 - Human-readable and editable
-- Easily parsed in Haskell (via Aeson)
+- (more or less) easily parsed in Haskell (via Aeson)
 - Allows deeply nested config (camera, materials, lights, etc.)
 - Enables saving and sharing entire scene setups
 
@@ -18,29 +18,63 @@ To make the project more scalable and flexible, we moved to using **JSON configu
 ```json
 {
   "image": {
-    "width": 1920,
-    "height": 1080,
+    "width": 640,
+    "height": 380,
     "samplesPerPixel": 50,
     "antialiasing": true
   },
+  "background": {
+    "tag": "Gradient",
+    "color1": [1.0, 1.0, 1.0],
+    "color2": [0.5, 0.7, 1.0]
+  },
   "camera": {
-    "origin": [0.0, 0.0, 5.0],
-    "lookAt": [0.0, 0.0, 0.0],
-    "focalLength": 5.0
+    "lookFrom": [0, 0, 2],
+    "lookAt": [0, 0.0, -1],
+    "vUp": [0, 1, 0],
+    "vfov": 30.0,
+    "aperture": 0.0,
+    "focusDist": 3.0
   },
+  "raytracer": {
+    "maxBounces": 5,
+    "useBVH": true,
+    "bvhMaxDepth": 10,
+    "russianRoulette": {
+      "enabled": false,
+      "probability": 0.05,
+      "adaptive": true,
+      "adaptivityFactor": 2,
+      "adaptiveMethod": "sqrt"
+    }
+  },
+  "lights": [
+    {
+      "tag": "PointLight",
+      "position": [-7, 1, 5],
+      "intensity": [0.5, 0.5, 0.5]
+    }
+  ],
   "scene": {
+    "tag": "FileImport",
     "objects": [
-      { "type": "sphere", "center": [0, 0, -1], "radius": 0.5 },
-      { "type": "sphere", "center": [1.5, 0, -1], "radius": 0.5 }
+      {
+        "type": "plane",
+        "pointOnPlane": [0, -2, 0],
+        "normal": [0, 1, 0],
+        "color": [0.8, 0.8, 0.8]
+      }
+    ],
+    "objFiles": [
+      {
+        "path": "pathto/monkey_def_size.obj",
+        "objposition": [0.5, -0.2, -8]
+      },
+      {
+        "path": "pathto/monkey_def_size.obj",
+        "objposition": [-0.5, 0.5, -5]
+      }
     ]
-  },
-  "render": {
-    "maxDepth": 10,
-    "russianRoulette": true
-  },
-  "bvh": {
-    "enabled": true,
-    "maxDepth": 32
   }
 }
 ```
