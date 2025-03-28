@@ -69,10 +69,28 @@ Some of my favorites are:
 
 </div>
 
-## Todo's
+## ✨ Planned Features and Improvements
 
-- Create multiple lights for each light source to have soft shadows (configurable in config)
--For each lightsource, make sure intensity isnt too high causing surfaces to get completely white very quickly.
-- Smoothing (3 normals per triangle, so that triangle surfaces look smoother between triangles)
-- Reflections on (e.g. metallic) surfaces 
-- Refractions through surfaces like glass
+### 🌆 Lighting & Shadows
+
+- **Soft Shadows via Multi-Light Sampling**  
+  Implement soft shadows by spawning multiple sample lights per light source. The number of samples will be configurable through the config file.
+
+- **Light Intensity Control**  
+  Clamp or scale light intensity per light source to avoid overexposed surfaces (e.g., fully white patches).
+
+### 🔷 Geometry & Shading
+
+- **Smooth Shading for Triangles**  
+  Add support for smooth shading using vertex normals (3 normals per triangle), enabling smooth transitions between adjacent triangle surfaces.
+
+### ✨ Materials
+
+- **Reflections (Metallic Surfaces)**  
+  Implement reflective behavior for metallic surfaces using the material system.
+
+- **Refractions (Glass-like Materials)**  
+  Add support for transparent, refractive materials with configurable IOR (index of refraction).
+
+- **Material Assignment and Parsing**  
+  Allow materials to be assigned per object, including support for .mtl file parsing from .obj models. Optionally, override all materials via the config for batch control.
