@@ -25,7 +25,7 @@ import qualified Control.Monad
 import Core.Ray as R (Ray (Ray, direction))
 import Core.Vec3 as V (Vec3 (..), add, normalize, randomInUnitSphere, scale, x, y, z)
 import Data.Typeable (cast)
-import Hittable.BVH (BVHNode, closestHit, constructBVH)
+import Hittable.BVH (BVHNode, constructBVH)
 import Hittable.Class as H (HitRecord (normal, point), Hittable (hit))
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
@@ -38,6 +38,7 @@ import qualified Rendering.Light as L (Light (..), computeLighting)
 import System.Directory (createDirectoryIfMissing)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (clamp, randomDouble)
+import Utils.HitHelpers (closestHit)
 import Utils.Interval (Interval (..))
 import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateMessage, updateProgress)
 
@@ -104,7 +105,7 @@ traceRay config world@(bvh, hittableList) ray depth
       let bvhHit = H.hit bvh ray interval
       let listHit = H.hit hittableList ray interval
 
-      case closestHit ray interval bvhHit listHit of
+      case closestHit bvhHit listHit of
         Just hitRecord -> do
           randomVec <- V.randomInUnitSphere
           let newDirection = V.add (H.normal hitRecord) randomVec
@@ -164,7 +165,8 @@ parseSceneObjects sceneConfig = do
 
   putStrLn $ "Loaded " ++ show (length totalTriangles) ++ " triangles into BVH."
 
-  return (constructBVH totalTriangles, otherObjects)
+  let bvh = constructBVH (map SomeHittable totalTriangles)
+  return (bvh, otherObjects)
 
 isNotTriangle :: SomeHittable -> Bool
 isNotTriangle (SomeHittable obj) = case cast obj :: Maybe T.Triangle of
@@ -184,7 +186,7 @@ toHittable (SphereObj center radius sColor mat) =
 toHittable (PlaneObj pointOnPlane pnormal pColor mat) =
   SomeHittable (P.Plane pointOnPlane pnormal pColor mat)
 toHittable (TriangleObj tv0 tv1 tv2 tColor mat) =
-  SomeHittable (T.Triangle tv0 tv1 tv2 tColor mat)  
+  SomeHittable (T.Triangle tv0 tv1 tv2 tColor mat)
 
 getBackgroundColor :: R.Ray -> BackgroundSettings -> Col.Color
 getBackgroundColor ray (Gradient c1 c2) =

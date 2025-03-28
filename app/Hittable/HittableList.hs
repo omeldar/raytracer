@@ -1,4 +1,5 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE InstanceSigs #-}
 
 module Hittable.HittableList
   ( HittableList (HittableList),
@@ -6,15 +7,21 @@ module Hittable.HittableList
   )
 where
 
-import Data.Typeable (Typeable)
+import Hittable.BoundingBox (AABB (..), surroundingBox)
 import Hittable.Class (HitRecord (t), Hittable (..))
-
--- Existential wrapper for any Hittable type
-data SomeHittable = forall a. (Hittable a, Typeable a) => SomeHittable a
+import Hittable.Helpers (getBox)
+import Hittable.Wrapped (SomeHittable (..))
 
 newtype HittableList = HittableList [SomeHittable]
 
 instance Hittable HittableList where
+  boundingBox :: HittableList -> AABB
+  boundingBox (HittableList []) = error "Empty HittableList has no bounding box"
+  boundingBox (HittableList (obj : objs)) =
+    foldr
+      (surroundingBox . getBox)
+      (getBox obj)
+      objs
   hit (HittableList objects) ray interval =
     foldr
       ( \(SomeHittable obj) acc -> case hit obj ray interval of

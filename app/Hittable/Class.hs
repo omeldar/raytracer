@@ -2,8 +2,9 @@ module Hittable.Class where
 
 import Core.Ray
 import Core.Vec3
-import Utils.Interval (Interval)
+import Hittable.BoundingBox (AABB)
 import Rendering.Material
+import Utils.Interval (Interval)
 
 data HitRecord = HitRecord
   { point :: Vec3,
@@ -17,6 +18,7 @@ data HitRecord = HitRecord
 
 class Hittable a where
   hit :: a -> Ray -> Interval -> Maybe HitRecord
+  boundingBox :: a -> AABB
 
 setFaceNormal :: Ray -> Vec3 -> (Vec3, Bool)
 setFaceNormal ray outwardNormal =

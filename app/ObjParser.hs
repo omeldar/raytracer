@@ -2,8 +2,10 @@ module ObjParser (loadObjWithOffset) where
 
 import Core.Vec3
 import Data.List (isPrefixOf)
+import Data.Maybe (fromMaybe)
 import Hittable.HittableList
 import Hittable.Objects.Triangle
+import Rendering.Material
 
 parseObj :: String -> Vec3 -> MaterialType -> ([Vec3], [Triangle])
 parseObj content inColor inMaterial =
@@ -28,7 +30,7 @@ parseFace line verts inColor inMaterial =
            in if vertexCount == 3
                 then
                   [ Triangle
-                      (verts !! (faceVerts !! 0 - 1))
+                      (verts !! (head faceVerts - 1))
                       (verts !! (faceVerts !! 1 - 1))
                       (verts !! (faceVerts !! 2 - 1))
                       inColor
@@ -36,7 +38,7 @@ parseFace line verts inColor inMaterial =
                   ]
                 else
                   [ Triangle
-                      (verts !! (faceVerts !! 0 - 1))
+                      (verts !! (head faceVerts - 1))
                       (verts !! (faceVerts !! (i + 1) - 1))
                       (verts !! (faceVerts !! i - 1))
                       inColor

@@ -5,9 +5,10 @@ module Rendering.Light where
 
 import qualified Core.Ray as R
 import Core.Vec3 as V (Vec3 (..), add, dot, normalize, scale, sub, vLength)
-import Hittable.BVH (BVHNode, closestHit)
+import Hittable.BVH (BVHNode)
 import Hittable.Class as H (HitRecord (normal, point), Hittable (..))
 import Hittable.HittableList (HittableList)
+import Utils.HitHelpers (closestHit)
 import Utils.Interval (Interval (..))
 
 data Light
@@ -37,7 +38,7 @@ checkLightVisibility origin surfaceNormal world light =
           shadowInterval = Interval 0.001 (distance - 1e-3)
           bvhHit = H.hit (fst world) shadowRay shadowInterval
           listHit = H.hit (snd world) shadowRay shadowInterval
-          shadowHit = closestHit shadowRay shadowInterval bvhHit listHit
+          shadowHit = closestHit bvhHit listHit
 
       return $
         case shadowHit of
@@ -57,7 +58,7 @@ checkLightVisibility origin surfaceNormal world light =
           shadowInterval = Interval 0.001 1.0e30
           bvhHit = H.hit (fst world) shadowRay shadowInterval
           listHit = H.hit (snd world) shadowRay shadowInterval
-          shadowHit = closestHit shadowRay shadowInterval bvhHit listHit
+          shadowHit = closestHit bvhHit listHit
 
       return $
         case shadowHit of

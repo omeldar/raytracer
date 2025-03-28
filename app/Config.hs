@@ -23,9 +23,9 @@ import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.!=), (.:), (
 import Data.Aeson.Types (withText)
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics (Generic)
+import Rendering.Material
 import System.Directory (doesFileExist)
 import System.IO (hPutStrLn, stderr)
-import Rendering.Material
 
 data ImageSettings = ImageSettings
   { width :: Int,
@@ -96,7 +96,7 @@ data ObjFileEntry = ObjFileEntry
   deriving (Show, Generic)
 
 instance FromJSON ObjFileEntry where
-  parseJSON  = withObject "ObjFileEntry" $ \v -> do
+  parseJSON = withObject "ObjFileEntry" $ \v -> do
     ObjFileEntry
       <$> v .: "path"
       <*> v .: "objposition"
@@ -109,11 +109,10 @@ instance FromJSON SceneObject where
     scolor <- v .:? "color" .!= Vec3 1 1 1
     material <- v .:? "material" .!= Lambertian
     case objType of
-      "sphere" -> SphereObj <$> v.: "center" <*> v .: "radius" <*> pure scolor <*> pure material
-      "plane" -> PlaneObj <$> v.: "pointOnPlane" <*> v .: "normal" <*> pure scolor <*> pure material
+      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius" <*> pure scolor <*> pure material
+      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal" <*> pure scolor <*> pure material
       "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> pure scolor <*> pure material
-      _ -> fail $ "Unknown scene object type " ++ objType 
-    
+      _ -> fail $ "Unknown scene object type " ++ objType
 
 data SceneSettings = SceneSettings
   { objects :: Maybe [SceneObject],
@@ -136,15 +135,6 @@ data Config = Config
     scene :: SceneSettings
   }
   deriving (Show, Generic)
-
-instance FromJSON MaterialType where
-  parseJSON = withObject "MaterialType" $ \v -> do
-    matType <- v.: "type"
-    case (matType :: String) of
-      "lambertian" -> return Lambertian
-      "metallic" -> Metal <$> v .:? "fuzz" .!= 0.0
-      "dielectric" -> Dielectric <$> v .: "refIdx"
-      _ -> fail $ "Unknown material type " ++ matType 
 
 instance FromJSON ImageSettings
 
