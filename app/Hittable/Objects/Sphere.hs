@@ -4,11 +4,14 @@ import Core.Ray
 import Core.Vec3
 import Hittable.Class
 import Utils.Interval (contains)
+import Rendering.Material
+
 
 data Sphere = Sphere
   { center :: Vec3,
     radius :: Double,
-    color :: Vec3
+    color :: Vec3,
+    material :: MaterialType
   }
   deriving (Show)
 
@@ -31,4 +34,4 @@ instance Hittable Sphere where
         let p = ray `at` t'
             outwardNormal = (1.0 / radius sphere) `scale` (p `sub` center sphere)
             (faceNormal, front) = setFaceNormal ray outwardNormal
-         in HitRecord p faceNormal t' front (Hittable.Objects.Sphere.color sphere)
+         in HitRecord p faceNormal t' front (Hittable.Objects.Sphere.color sphere) (material sphere)

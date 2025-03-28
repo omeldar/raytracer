@@ -25,6 +25,7 @@ import qualified Data.ByteString.Lazy as B
 import GHC.Generics (Generic)
 import System.Directory (doesFileExist)
 import System.IO (hPutStrLn, stderr)
+import Rendering.Material
 
 data ImageSettings = ImageSettings
   { width :: Int,
@@ -105,18 +106,17 @@ instance FromJSON ObjFileEntry where
 instance FromJSON SceneObject where
   parseJSON = withObject "SceneObject" $ \v -> do
     objType <- v .: "type"
-    color <- v .:? "color" .!= Vec3 1 1 1
+    scolor <- v .:? "color" .!= Vec3 1 1 1
     material <- v .:? "material" .!= Lambertian
     case objType of
-      "sphere" -> SphereObj <$> v.: "center" <*> v .: "radius" <*> pure color <*> pure material
-      "plane" -> PlaneObj <$> v.: "pointOnPlane" <*> v .: "normal" <*> pure color <*> pure material
-      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> pure color <*> pure material
+      "sphere" -> SphereObj <$> v.: "center" <*> v .: "radius" <*> pure scolor <*> pure material
+      "plane" -> PlaneObj <$> v.: "pointOnPlane" <*> v .: "normal" <*> pure scolor <*> pure material
+      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> pure scolor <*> pure material
       _ -> fail $ "Unknown scene object type " ++ objType 
     
 
 data SceneSettings = SceneSettings
-  { tag :: String,
-    objects :: Maybe [SceneObject],
+  { objects :: Maybe [SceneObject],
     objFiles :: Maybe [ObjFileEntry]
   }
   deriving (Show, Generic)
@@ -124,8 +124,7 @@ data SceneSettings = SceneSettings
 instance FromJSON SceneSettings where
   parseJSON = withObject "SceneSettings" $ \v ->
     SceneSettings
-      <$> v .: "tag"
-      <*> v .:? "objects"
+      <$> v .:? "objects"
       <*> v .:? "objFiles"
 
 data Config = Config
@@ -136,12 +135,6 @@ data Config = Config
     lights :: [LightSettings],
     scene :: SceneSettings
   }
-  deriving (Show, Generic)
-
-data MaterialType
-  = Lambertian
-  | Metal { fuzz :: Double }
-  | Dielectric { refIdx :: Double }
   deriving (Show, Generic)
 
 instance FromJSON MaterialType where

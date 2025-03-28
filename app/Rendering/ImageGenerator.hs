@@ -154,7 +154,7 @@ parseSceneObjects sceneConfig = do
 
   objTriangles <- case objFiles sceneConfig of
     Just entries -> do
-      allObjTrias <- mapM (\entry -> loadObjWithOffset (path entry) (objposition entry)) entries
+      allObjTrias <- mapM (\entry -> loadObjWithOffset (path entry) (objposition entry) (overrideColor entry) (overrideMaterial entry)) entries
       return $ concatMap (\(HittableList hs) -> extractTriangles hs) allObjTrias
     Nothing -> return []
 
@@ -179,12 +179,12 @@ extractTriangles (SomeHittable obj : rest) =
     Nothing -> extractTriangles rest
 
 toHittable :: SceneObject -> SomeHittable
-toHittable (SphereObj center radius sColor) =
-  SomeHittable (S.Sphere center radius sColor)
-toHittable (PlaneObj pointOnPlane pnormal pColor) =
-  SomeHittable (P.Plane pointOnPlane pnormal pColor)
-toHittable (TriangleObj tv0 tv1 tv2 tColor) =
-  SomeHittable (T.Triangle tv0 tv1 tv2 tColor)
+toHittable (SphereObj center radius sColor mat) =
+  SomeHittable (S.Sphere center radius sColor mat)
+toHittable (PlaneObj pointOnPlane pnormal pColor mat) =
+  SomeHittable (P.Plane pointOnPlane pnormal pColor mat)
+toHittable (TriangleObj tv0 tv1 tv2 tColor mat) =
+  SomeHittable (T.Triangle tv0 tv1 tv2 tColor mat)  
 
 getBackgroundColor :: R.Ray -> BackgroundSettings -> Col.Color
 getBackgroundColor ray (Gradient c1 c2) =

@@ -3,13 +3,15 @@ module Hittable.Class where
 import Core.Ray
 import Core.Vec3
 import Utils.Interval (Interval)
+import Rendering.Material
 
 data HitRecord = HitRecord
   { point :: Vec3,
     normal :: Vec3,
     t :: Double,
     frontFace :: Bool,
-    color :: Vec3
+    color :: Vec3,
+    material :: MaterialType
   }
   deriving (Show)
 
