@@ -23,10 +23,10 @@ import Config
   )
 import qualified Control.Monad
 import Core.Ray as R (Ray (Ray, direction))
-import Core.Vec3 as V (Vec3 (..), add, dot, negateV, normalize, randomInUnitSphere, reflect, refract, scale, x, y, z)
+import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, x, y, z)
 import Data.Typeable (cast)
 import Hittable.BVH (BVHNode, constructBVH)
-import Hittable.Class as H (HitRecord (normal, point), Hittable (hit), material)
+import Hittable.Class as H (HitRecord (normal, point), Hittable (hit), color, material)
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
@@ -106,13 +106,14 @@ traceRay config bvh ray depth
 
       case hitResult of
         Just hitRecord -> do
-          let hitmaterial = H.material hitRecord
+          let hitMaterial = H.material hitRecord
+              surfaceColor = H.color hitRecord
               sceneLights = map convertLight (lights config)
               p = H.point hitRecord
               n = H.normal hitRecord
               dir = R.direction ray
 
-          scatteredRay <- case hitmaterial of
+          scatteredRay <- case hitMaterial of
             Lambertian -> do
               rand <- V.randomInUnitSphere
               let target = V.add n rand
@@ -129,19 +130,20 @@ traceRay config bvh ray depth
                   cannotRefract = hitrefIdx * sinTheta > 1.0
                   reflectProb = schlick cosTheta hitrefIdx
               randVal <- randomDouble
-              let raydir =
+              let rayDir =
                     if cannotRefract || randVal < reflectProb
                       then V.reflect unitDir n
                       else V.refract unitDir n (1 / hitrefIdx)
-              return $ R.Ray p raydir
+              return $ R.Ray p rayDir
 
+          -- Compute lighting and tint it with material color
           directLight <- L.computeLighting hitRecord sceneLights bvh
-
-          let clampedLight =
+          let litColor = V.mul directLight surfaceColor
+              clampedLight =
                 V.Vec3
-                  (clamp (V.x directLight) 0 1)
-                  (clamp (V.y directLight) 0 1)
-                  (clamp (V.z directLight) 0 1)
+                  (clamp (V.x litColor) 0 1)
+                  (clamp (V.y litColor) 0 1)
+                  (clamp (V.z litColor) 0 1)
 
           -- Russian Roulette termination
           let rr = russianRoulette (raytracer config)
@@ -161,7 +163,8 @@ traceRay config bvh ray depth
             then return clampedLight
             else do
               bounceColor <- traceRay config bvh scatteredRay (depth - 1)
-              return $ V.add (V.scale 0.5 bounceColor) clampedLight
+              let finalColor = V.add (V.scale 0.5 (V.mul surfaceColor bounceColor)) clampedLight
+              return finalColor
         Nothing -> return $ getBackgroundColor ray (background config)
 
 schlick :: Double -> Double -> Double
