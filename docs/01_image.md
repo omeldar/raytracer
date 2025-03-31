@@ -36,9 +36,7 @@ This will generate a simple image fading from blue (bottom-left) to red (top-rig
 
 ![First generated image in the PPM format](./media/01/first_generated_images.png)
 
-<p align="left">
-  <a href="../README.md#-chapters">← All Chapters</a>
-</p>
-<p align="right">
+<p align="center">
+  <a href="../README.md#-chapters">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./02_progress_bar.md">Next Chapter →</a>
 </p>
