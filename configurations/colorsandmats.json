@@ -1,8 +1,8 @@
 {
   "image": {
-      "width": 640,
-      "height": 380,
-      "samplesPerPixel": 50,
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 200,
       "antialiasing": true
   },
   "background": {
@@ -14,7 +14,7 @@
       "lookFrom": [0, 0, 2],
       "lookAt": [0, 0.0, -1],
       "vUp": [0, 1, 0],
-      "vfov": 30.0,
+      "vfov": 35.0,
       "aperture": 0.0,
       "focusDist": 3.0
   },
@@ -41,16 +41,16 @@
       "objects": [
         {
           "type": "sphere",
-          "center": [1, 0, -1],
+          "center": [-1.1, 0, -2],
           "radius": 0.5,
-          "color": [0.8, 0.3, 0.3],
+          "color": [0.8, 0.8, 0.8],
           "material": {
             "type": "lambertian"
           }
         },
         {
           "type": "sphere",
-          "center": [-1, 0, -1],
+          "center": [0, 0, -2],
           "radius": 0.5,
           "color": [0.8, 0.8, 0.8],
           "material": {
@@ -60,12 +60,21 @@
         },
         {
           "type": "sphere",
-          "center": [0, 0, -1],
+          "center": [1.1, 0, -2],
           "radius": 0.5,
           "color": [0.8, 0.8, 0.8],
           "material": {
             "type": "dielectric",
             "refIdx": 0.1
+          }
+        },
+        {
+          "type": "plane",
+          "pointOnPlane": [0, -0.5, 0],
+          "normal": [0, 1, 0],
+          "color": [0.8, 0.8, 0.8],
+          "material": {
+            "type": "lambertian"
           }
         }
       ]

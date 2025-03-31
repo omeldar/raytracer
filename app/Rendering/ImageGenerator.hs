@@ -23,10 +23,10 @@ import Config
   )
 import qualified Control.Monad
 import Core.Ray as R (Ray (Ray, direction))
-import Core.Vec3 as V (Vec3 (..), add, normalize, randomInUnitSphere, scale, x, y, z)
+import Core.Vec3 as V (Vec3 (..), add, dot, negateV, normalize, randomInUnitSphere, reflect, refract, scale, x, y, z)
 import Data.Typeable (cast)
 import Hittable.BVH (BVHNode, constructBVH)
-import Hittable.Class as H (HitRecord (normal, point), Hittable (hit))
+import Hittable.Class as H (HitRecord (normal, point), Hittable (hit), material)
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
@@ -35,10 +35,10 @@ import ObjParser (loadObjWithOffset)
 import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)
+import Rendering.Material (MaterialType (..))
 import System.Directory (createDirectoryIfMissing)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (clamp, randomDouble)
-import Utils.HitHelpers (closestHit)
 import Utils.Interval (Interval (..))
 import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateMessage, updateProgress)
 
@@ -61,20 +61,21 @@ createPPM config filename = do
     hSetBuffering handle (BlockBuffering (Just (1024 * 512))) -- Enable buffering
     hPutStr handle ("P3\n" ++ show (width (image config)) ++ " " ++ show (height (image config)) ++ "\n255\n") -- Write header
     mapM_ (processRow config progressBar handle world) [0 .. height (image config) - 1]
+    PB.updateMessage progressBar ("Rendering row " ++ show (height (image config)))
 
-processRow :: Config -> PB.ProgressBar -> Handle -> (BVHNode, HittableList) -> Int -> IO ()
+processRow :: Config -> PB.ProgressBar -> Handle -> BVHNode -> Int -> IO ()
 processRow config progressBar handle world j = do
   row <- mapM (\i -> pixelColor config world i (height (image config) - 1 - j)) [0 .. width (image config) - 1]
   hPutStr handle (unlines (map showPixel row) ++ "\n")
   PB.updateMessage progressBar ("Rendering row " ++ show (j + 1))
   PB.updateProgress progressBar (j + 1)
 
-pixelColor :: Config -> (BVHNode, HittableList) -> Int -> Int -> IO Col.Color
+pixelColor :: Config -> BVHNode -> Int -> Int -> IO Col.Color
 pixelColor config world i j = do
   sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world i j)
   return $ averageColor sampledColors
 
-samplePixel :: Config -> (BVHNode, HittableList) -> Int -> Int -> IO Col.Color
+samplePixel :: Config -> BVHNode -> Int -> Int -> IO Col.Color
 samplePixel config world i j = do
   uOffset <- if antialiasing (image config) then randomDouble else return 0.5
   vOffset <- if antialiasing (image config) then randomDouble else return 0.5
@@ -96,58 +97,83 @@ showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (
 averageColor :: [Color] -> Color
 averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
 
-traceRay :: Config -> (BVHNode, HittableList) -> R.Ray -> Int -> IO Col.Color
-traceRay config world@(bvh, hittableList) ray depth
+traceRay :: Config -> BVHNode -> R.Ray -> Int -> IO Col.Color
+traceRay config bvh ray depth
   | depth <= 0 = return (V.Vec3 0 0 0)
   | otherwise = do
       let interval = Interval 0.001 100
+          hitResult = H.hit bvh ray interval
 
-      let bvhHit = H.hit bvh ray interval
-      let listHit = H.hit hittableList ray interval
-
-      case closestHit bvhHit listHit of
+      case hitResult of
         Just hitRecord -> do
-          randomVec <- V.randomInUnitSphere
-          let newDirection = V.add (H.normal hitRecord) randomVec
-              scatteredRay = R.Ray (H.point hitRecord) newDirection
+          let hitmaterial = H.material hitRecord
               sceneLights = map convertLight (lights config)
+              p = H.point hitRecord
+              n = H.normal hitRecord
+              dir = R.direction ray
 
-          directLight <- L.computeLighting hitRecord sceneLights world
+          scatteredRay <- case hitmaterial of
+            Lambertian -> do
+              rand <- V.randomInUnitSphere
+              let target = V.add n rand
+              return $ R.Ray p target
+            Metal hitfuzz -> do
+              rand <- V.randomInUnitSphere
+              let reflected = V.reflect (V.normalize dir) n
+                  scattered = V.add reflected (V.scale hitfuzz rand)
+              return $ R.Ray p scattered
+            Dielectric hitrefIdx -> do
+              let unitDir = V.normalize dir
+                  cosTheta = min 1.0 (V.dot (V.negateV unitDir) n)
+                  sinTheta = sqrt (1.0 - cosTheta * cosTheta)
+                  cannotRefract = hitrefIdx * sinTheta > 1.0
+                  reflectProb = schlick cosTheta hitrefIdx
+              randVal <- randomDouble
+              let raydir =
+                    if cannotRefract || randVal < reflectProb
+                      then V.reflect unitDir n
+                      else V.refract unitDir n (1 / hitrefIdx)
+              return $ R.Ray p raydir
+
+          directLight <- L.computeLighting hitRecord sceneLights bvh
+
           let clampedLight =
                 V.Vec3
                   (clamp (V.x directLight) 0 1)
                   (clamp (V.y directLight) 0 1)
                   (clamp (V.z directLight) 0 1)
 
-          -- Russian Roulette, using adaptive probability
-          let rrSettings = russianRoulette (raytracer config)
-              rrEnabled = enabled rrSettings
-              baseProb = probability rrSettings
-              adaptivity = adaptivityFactor rrSettings
-              adaptiveProb = case adaptiveMethod rrSettings of
-                Linear -> min 1.0 (baseProb * (fromIntegral depth / adaptivity))
+          -- Russian Roulette termination
+          let rr = russianRoulette (raytracer config)
+              baseProb = probability rr
+              adaptivity = adaptivityFactor rr
+              adaptiveProb = case adaptiveMethod rr of
+                Linear -> min 1.0 (baseProb * fromIntegral depth / adaptivity)
                 Exponential -> min 1.0 (1.0 - exp (-fromIntegral depth / adaptivity))
                 Sqrt -> min 1.0 (baseProb * sqrt (fromIntegral depth / adaptivity))
 
           terminate <-
-            if rrEnabled && depth > 5
-              then do
-                randVal <- randomDouble
-                return (randVal < adaptiveProb)
+            if enabled rr && depth > 5
+              then (< adaptiveProb) <$> randomDouble
               else return False
 
           if terminate
             then return clampedLight
             else do
-              bounceColor <- traceRay config (bvh, hittableList) scatteredRay (depth - 1)
+              bounceColor <- traceRay config bvh scatteredRay (depth - 1)
               return $ V.add (V.scale 0.5 bounceColor) clampedLight
         Nothing -> return $ getBackgroundColor ray (background config)
+
+schlick :: Double -> Double -> Double
+schlick cosine refidx =
+  let r0 = ((1 - refidx) / (1 + refidx)) ^ (2 :: Integer)
+   in r0 + (1 - r0) * ((1 - cosine) ** 5)
 
 convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
 convertLight (DirectionalLight dir lIntensity) = L.DirectionalLight dir lIntensity
 
-parseSceneObjects :: SceneSettings -> IO (BVHNode, HittableList)
+parseSceneObjects :: SceneSettings -> IO BVHNode
 parseSceneObjects sceneConfig = do
   let hittables = case objects sceneConfig of
         Just objs -> map toHittable objs
@@ -160,18 +186,14 @@ parseSceneObjects sceneConfig = do
     Nothing -> return []
 
   let configTriangles = extractTriangles hittables
-      otherObjects = HittableList (filter isNotTriangle hittables) -- Keep planes & spheres seperately
       totalTriangles = configTriangles ++ objTriangles
+      triangleObjects = map SomeHittable totalTriangles
+      allObjects = triangleObjects ++ hittables
 
   putStrLn $ "Loaded " ++ show (length totalTriangles) ++ " triangles into BVH."
+  putStrLn $ "Loaded " ++ show (length allObjects - length totalTriangles) ++ " other objects into BVH."
 
-  let bvh = constructBVH (map SomeHittable totalTriangles)
-  return (bvh, otherObjects)
-
-isNotTriangle :: SomeHittable -> Bool
-isNotTriangle (SomeHittable obj) = case cast obj :: Maybe T.Triangle of
-  Just _ -> False
-  Nothing -> True
+  return $ constructBVH allObjects
 
 extractTriangles :: [SomeHittable] -> [T.Triangle]
 extractTriangles [] = []

@@ -7,24 +7,22 @@ import qualified Core.Ray as R
 import Core.Vec3 as V (Vec3 (..), add, dot, normalize, scale, sub, vLength)
 import Hittable.BVH (BVHNode)
 import Hittable.Class as H (HitRecord (normal, point), Hittable (..))
-import Hittable.HittableList (HittableList)
-import Utils.HitHelpers (closestHit)
 import Utils.Interval (Interval (..))
 
 data Light
   = PointLight {position :: V.Vec3, intensity :: V.Vec3}
   | DirectionalLight {direction :: V.Vec3, intensity :: V.Vec3}
 
-computeLighting :: HitRecord -> [Light] -> (BVHNode, HittableList) -> IO V.Vec3
-computeLighting hitRecord lights world = do
+computeLighting :: HitRecord -> [Light] -> BVHNode -> IO V.Vec3
+computeLighting hitRecord lights bvh = do
   let hitPoint = H.point hitRecord
       hitNormal = V.normalize (H.normal hitRecord)
 
-  lightContribs <- mapM (checkLightVisibility hitPoint hitNormal world) lights
-  return $ foldr V.add (Vec3 0 0 0) lightContribs
+  lightContribs <- mapM (checkLightVisibility hitPoint hitNormal bvh) lights
+  return $ foldr V.add (V.Vec3 0 0 0) lightContribs
 
-checkLightVisibility :: Vec3 -> Vec3 -> (BVHNode, HittableList) -> Light -> IO Vec3
-checkLightVisibility origin surfaceNormal world light =
+checkLightVisibility :: Vec3 -> Vec3 -> BVHNode -> Light -> IO Vec3
+checkLightVisibility origin surfaceNormal bvh light =
   case light of
     PointLight pos pLightIntensity -> do
       let toLight = V.sub pos origin
@@ -32,13 +30,10 @@ checkLightVisibility origin surfaceNormal world light =
           plDirection = V.normalize toLight
 
           shadowOrigin = V.add origin (V.scale 0.001 plDirection)
-
           shadowRay = R.Ray shadowOrigin plDirection
-
           shadowInterval = Interval 0.001 (distance - 1e-3)
-          bvhHit = H.hit (fst world) shadowRay shadowInterval
-          listHit = H.hit (snd world) shadowRay shadowInterval
-          shadowHit = closestHit bvhHit listHit
+
+          shadowHit = H.hit bvh shadowRay shadowInterval
 
       return $
         case shadowHit of
@@ -50,15 +45,11 @@ checkLightVisibility origin surfaceNormal world light =
     -- If light is a directional light
     DirectionalLight dir dLightIntensity -> do
       let dlDirection = V.normalize (V.scale (-1) dir)
-
           shadowOrigin = V.add origin (V.scale 0.001 dlDirection)
-
           shadowRay = R.Ray shadowOrigin dlDirection
 
           shadowInterval = Interval 0.001 1.0e30
-          bvhHit = H.hit (fst world) shadowRay shadowInterval
-          listHit = H.hit (snd world) shadowRay shadowInterval
-          shadowHit = closestHit bvhHit listHit
+          shadowHit = H.hit bvh shadowRay shadowInterval
 
       return $
         case shadowHit of
