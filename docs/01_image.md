@@ -16,7 +16,7 @@ type Row = [Pixel]
 type Image = [Row]
 ```
 
-We can then create an image with a hoizontal-red and vertical-blue gradient:
+We can then create an image with a horizontal-red and vertical-blue gradient:
 
 ```haskell
 createPPM :: Int -> Int -> Image
@@ -35,3 +35,5 @@ createPPM width height =
 This will generate a simple image fading from blue (bottom-left) to red (top-right).
 
 ![First generated image in the PPM format](./media/01/first_generated_images.png)
+
+[🔗 Next Chapter - Chapter 2: Progress Bar](./02_progress_bar.md)
