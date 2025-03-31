@@ -68,6 +68,6 @@ We use `▓` for the filled portion and `░` for the unfilled portion. This cre
 ![Progress Bar at 13%](./media/02/progress_bar_13.png)
 
 <div align="center">
-  <a href="./01_image.md">← All Chapters</a>
+  <a href="./01_image.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./03_vec3.md">Next Chapter →</a>
 </div>

@@ -44,6 +44,6 @@ The monkey was rendered at:
 You can learn more about how long that took with and without BVH in the next chapter: [Chapter 20 - BVH](./20_bvh.md)
 
 <div align="center">
-  <a href="./18_optimizations.md">← All Chapters</a>
+  <a href="./18_optimizations.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./20_bvh.md">Next Chapter →</a>
 </div>

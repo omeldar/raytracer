@@ -39,6 +39,6 @@ We parse the `.obj` into a flat list of triangles and insert them into the BVH s
 Even small math optimizations add up in a renderer that runs millions of rays per image.
 
 <div align="center">
-  <a href="./17_config_files.md">← All Chapters</a>
+  <a href="./17_config_files.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./19_monkey_render.md">Next Chapter →</a>
 </div>

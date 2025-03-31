@@ -75,6 +75,6 @@ The image renderer now benefits from variance reduction and smoother color blend
 Anti-aliasing: essential, and now supported.
 
 <div align="center">
-  <a href="./13_front_vs_backfaces.md">← All Chapters</a>
+  <a href="./13_front_vs_backfaces.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./15_diffuse_materials.md">Next Chapter →</a>
 </div>

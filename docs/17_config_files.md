@@ -101,6 +101,6 @@ All previous CLI flags are removed. If the file is missing or invalid, we fail w
 This change simplifies everything going forward. From this point on, any new feature (e.g. materials, lights, animation) can simply extend the config file schema.
 
 <div align="center">
-  <a href="./16_buffered_writing.md">← All Chapters</a>
+  <a href="./16_buffered_writing.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./18_optimizations.md">Next Chapter →</a>
 </div>
