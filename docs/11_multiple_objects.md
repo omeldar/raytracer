@@ -51,3 +51,8 @@ Because of the abstraction we've created, we can easily:
 This is the real power of generalizing ray-object intersection logic.
 
 We now have our first real scene.
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="./10_hittable_abstraction.md">← All Chapters</a>
+  <a href="./12_fixing_perspective.md">Next Chapter →</a>
+</div>

@@ -39,6 +39,7 @@ defaultCamera width height =
 ```
 
 ### Breakdown:
+
 - `focalLength = 5.0` pushes the image plane further away from the camera
 - `cOrigin = (0,0,5)` moves the camera back, so the scene stays visible
 - This setup narrows the field of view and fixes the stretching
@@ -57,3 +58,7 @@ With this camera setup, the rays diverge more slowly. Objects now appear with co
 
 Together, these steps make the perspective feel more realistic and consistent.
 
+<div style="display: flex; justify-content: space-between;">
+  <a href="./11_multiple_objects.md">← All Chapters</a>
+  <a href="./13_front_vs_backfaces.md">Next Chapter →</a>
+</div>

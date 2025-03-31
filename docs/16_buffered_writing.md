@@ -47,3 +47,8 @@ This drastically reduces RAM usage.
 | 1920x1080 / 500 | ~100% RAM / crash | ~1.1% RAM / 603.69s |
 
 Total RAM on the system: 64GB
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="./15_diffuse_materials.md">← All Chapters</a>
+  <a href="./17_config_files.md">Next Chapter →</a>
+</div>

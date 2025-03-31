@@ -25,6 +25,7 @@ This means:
 ## 🚧 Use Case: Differentiating Surface Sides
 
 This is important for:
+
 - **Two-sided materials** (e.g., paper with different text on each side)
 - **Refraction/transparency** (e.g., glass: need to know when we enter vs exit)
 - **Backface culling** in rasterization (which doesn’t apply to raytracing but is conceptually related)
@@ -53,3 +54,8 @@ let frontFace = V.dot ray.direction outwardNormal < 0
 ```
 
 This ensures consistent normal direction relative to the ray.
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="./12_fixing_perspective.md">← All Chapters</a>
+  <a href="./14_anti_aliasing.md">Next Chapter →</a>
+</div>

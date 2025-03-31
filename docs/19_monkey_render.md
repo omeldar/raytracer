@@ -42,3 +42,8 @@ The monkey was rendered at:
 ![Rendering the Blender Monkey](./media/19/monkey.png)
 
 You can learn more about how long that took with and without BVH in the next chapter: [Chapter 20 - BVH](./20_bvh.md)
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="./18_optimizations.md">← All Chapters</a>
+  <a href="./20_bvh.md">Next Chapter →</a>
+</div>

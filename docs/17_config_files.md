@@ -99,3 +99,8 @@ All previous CLI flags are removed. If the file is missing or invalid, we fail w
 - Clean separation between UI and engine
 
 This change simplifies everything going forward. From this point on, any new feature (e.g. materials, lights, animation) can simply extend the config file schema.
+
+<div style="display: flex; justify-content: space-between;">
+  <a href="./16_buffered_writing.md">← All Chapters</a>
+  <a href="./18_optimizations.md">Next Chapter →</a>
+</div>

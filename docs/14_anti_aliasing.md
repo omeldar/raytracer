@@ -8,10 +8,9 @@ To improve this, we now implement **anti-aliasing** by **sampling multiple rays 
 
 This makes the rendered image smoother, less noisy, and more visually realistic.
 
-
 ## 🔢 The Core Idea
 
-Instead of one ray per pixel, we shoot *n* rays per pixel with random offsets:
+Instead of one ray per pixel, we shoot _n_ rays per pixel with random offsets:
 
 ```haskell
 let u = (fromIntegral i + randomDouble) / fromIntegral (width - 1)
@@ -29,7 +28,6 @@ let scale = 1.0 / fromIntegral samplesPerPixel
 
 Gamma correction is also applied before writing the final value.
 
-
 ## 🌍 Configuration
 
 Anti-aliasing is now controlled via the config file:
@@ -44,7 +42,6 @@ Anti-aliasing is now controlled via the config file:
 ```
 
 This allows tuning render quality vs speed.
-
 
 ## 📈 Visual Results
 
@@ -62,7 +59,6 @@ With AA:
 
 Even 10-20 samples per pixel makes a big difference. At 50–500, results become photorealistic depending on lighting and material complexity.
 
-
 ## 🪤 Performance Impact
 
 Anti-aliasing increases render time linearly with the number of samples per pixel. But it also opens the door to more advanced techniques like:
@@ -78,3 +74,7 @@ The image renderer now benefits from variance reduction and smoother color blend
 
 Anti-aliasing: essential, and now supported.
 
+<div style="display: flex; justify-content: space-between;">
+  <a href="./13_front_vs_backfaces.md">← All Chapters</a>
+  <a href="./15_diffuse_materials.md">Next Chapter →</a>
+</div>
