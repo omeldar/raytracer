@@ -1,19 +1,23 @@
 module Hittable.Objects.Plane where
 
 import Core.Ray as R (at, direction, origin)
-import Core.Vec3 as V (Vec3, dot, sub)
+import Core.Vec3 as V (Vec3 (..), dot, sub)
+import Hittable.BoundingBox (AABB (..))
 import Hittable.Class
+import Rendering.Material
 import Utils.Interval (contains)
 
 data Plane = Plane
   { pointOnPlane :: V.Vec3,
     normal :: V.Vec3,
-    color :: V.Vec3
+    color :: V.Vec3,
+    material :: MaterialType
   }
   deriving (Show)
 
 instance Hittable Plane where
-  hit (Plane p n c) ray interval =
+  boundingBox _ = AABB (V.Vec3 (-1e6) (-1e-3) (-1e6)) (V.Vec3 1e6 1e-3 1e6)
+  hit (Plane p n c m) ray interval =
     let denom = V.dot (R.direction ray) n
      in if abs denom > 1e-6
           then
@@ -22,6 +26,6 @@ instance Hittable Plane where
                   then
                     let hitPoint = R.at ray t'
                         (faceNormal, front) = setFaceNormal ray n
-                     in Just $ HitRecord hitPoint faceNormal t' front c -- Store color in HitRecord
+                     in Just $ HitRecord hitPoint faceNormal t' front c m -- Store color in HitRecord
                   else Nothing
           else Nothing

@@ -2,14 +2,16 @@ module ObjParser (loadObjWithOffset) where
 
 import Core.Vec3
 import Data.List (isPrefixOf)
+import Data.Maybe (fromMaybe)
 import Hittable.HittableList
 import Hittable.Objects.Triangle
+import Rendering.Material
 
-parseObj :: String -> ([Vec3], [Triangle])
-parseObj content =
+parseObj :: String -> Vec3 -> MaterialType -> ([Vec3], [Triangle])
+parseObj content inColor inMaterial =
   let ls = lines content
       verts = [parseVertex l | l <- ls, "v " `isPrefixOf` l]
-      faces = [parseFace l verts (Vec3 1.0 1.0 1.0) | l <- ls, "f " `isPrefixOf` l] -- Default white color
+      faces = [parseFace l verts inColor inMaterial | l <- ls, "f " `isPrefixOf` l]
    in (verts, concat faces)
 
 parseVertex :: String -> Vec3
@@ -18,20 +20,21 @@ parseVertex line =
     ["v", vx, vy, vz] -> Vec3 (read vx) (read vy) (read vz)
     _ -> error "Invalid vertex format in .obj file"
 
-parseFace :: String -> [Vec3] -> Vec3 -> [Triangle]
-parseFace line verts inColor =
+parseFace :: String -> [Vec3] -> Vec3 -> MaterialType -> [Triangle]
+parseFace line verts inColor inMaterial =
   case words line of
     ("f" : indices)
       | length indices >= 3 ->
-          let faceVerts = map (read . takeWhile (/= '/')) indices -- Extract vertex indices
+          let faceVerts = map (read . takeWhile (/= '/')) indices
               vertexCount = length faceVerts
            in if vertexCount == 3
                 then
                   [ Triangle
                       (verts !! (head faceVerts - 1))
-                      (verts !! (faceVerts !! 1 - 1)) -- Swapped order
+                      (verts !! (faceVerts !! 1 - 1))
                       (verts !! (faceVerts !! 2 - 1))
-                      inColor -- Swapped order
+                      inColor
+                      inMaterial
                   ]
                 else
                   [ Triangle
@@ -39,21 +42,22 @@ parseFace line verts inColor =
                       (verts !! (faceVerts !! (i + 1) - 1))
                       (verts !! (faceVerts !! i - 1))
                       inColor
+                      inMaterial
                     | i <- [1 .. vertexCount - 2]
                   ]
     _ -> error "Invalid face format in .obj file"
 
-loadObjWithOffset :: FilePath -> Vec3 -> IO HittableList
-loadObjWithOffset path offset = do
+loadObjWithOffset :: FilePath -> Vec3 -> Maybe Vec3 -> Maybe MaterialType -> IO HittableList
+loadObjWithOffset path offset overrideColor overrideMaterial = do
   content <- readFile path
   if null content
     then do
       putStrLn "Error: OBJ file is empty or could not be read."
       return $ HittableList []
     else do
-      let (_, triangles) = parseObj content
-          offsetTriangle (Triangle a b c col) =
-            Triangle (add a offset) (add b offset) (add c offset) col
-          colors = cycle [Vec3 1 0 0, Vec3 0 1 0, Vec3 0 0 1, Vec3 1 1 0, Vec3 1 0 1, Vec3 0 1 1]
-          coloredTriangles = zipWith (\t c -> offsetTriangle t {color = c}) triangles colors
-      return $ HittableList [SomeHittable t | t <- coloredTriangles]
+      let inColor = fromMaybe (Vec3 1 1 1) overrideColor
+          inMaterial = fromMaybe Lambertian overrideMaterial
+          (_, triangles) = parseObj content inColor inMaterial
+          offsetTriangle (Triangle a b c col mat) =
+            Triangle (add a offset) (add b offset) (add c offset) col mat
+      return $ HittableList [SomeHittable t | t <- map offsetTriangle triangles]

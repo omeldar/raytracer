@@ -23,6 +23,7 @@ import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.!=), (.:), (
 import Data.Aeson.Types (withText)
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics (Generic)
+import Rendering.Material
 import System.Directory (doesFileExist)
 import System.IO (hPutStrLn, stderr)
 
@@ -81,31 +82,40 @@ data LightSettings
   deriving (Show, Generic)
 
 data SceneObject
-  = SphereObj Vec3 Double Vec3
-  | PlaneObj Vec3 Vec3 Vec3
-  | TriangleObj Vec3 Vec3 Vec3 Vec3
+  = SphereObj Vec3 Double Vec3 MaterialType
+  | PlaneObj Vec3 Vec3 Vec3 MaterialType
+  | TriangleObj Vec3 Vec3 Vec3 Vec3 MaterialType
   deriving (Show, Generic)
 
 data ObjFileEntry = ObjFileEntry
   { path :: FilePath,
-    objposition :: Vec3
+    objposition :: Vec3,
+    overrideColor :: Maybe Vec3,
+    overrideMaterial :: Maybe MaterialType
   }
   deriving (Show, Generic)
 
-instance FromJSON ObjFileEntry
+instance FromJSON ObjFileEntry where
+  parseJSON = withObject "ObjFileEntry" $ \v -> do
+    ObjFileEntry
+      <$> v .: "path"
+      <*> v .: "objposition"
+      <*> v .:? "overrideColor"
+      <*> v .:? "overrideMaterial"
 
 instance FromJSON SceneObject where
   parseJSON = withObject "SceneObject" $ \v -> do
     objType <- v .: "type"
-    case (objType :: String) of
-      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius" <*> (v .:? "color" .!= Vec3 1 1 1)
-      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal" <*> (v .:? "color" .!= Vec3 1 1 1)
-      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> (v .:? "color" .!= Vec3 1 1 1)
-      _ -> fail $ "Unknown object type: " ++ objType
+    scolor <- v .:? "color" .!= Vec3 1 1 1
+    material <- v .:? "material" .!= Lambertian
+    case objType of
+      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius" <*> pure scolor <*> pure material
+      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal" <*> pure scolor <*> pure material
+      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> pure scolor <*> pure material
+      _ -> fail $ "Unknown scene object type " ++ objType
 
 data SceneSettings = SceneSettings
-  { tag :: String,
-    objects :: Maybe [SceneObject],
+  { objects :: Maybe [SceneObject],
     objFiles :: Maybe [ObjFileEntry]
   }
   deriving (Show, Generic)
@@ -113,8 +123,7 @@ data SceneSettings = SceneSettings
 instance FromJSON SceneSettings where
   parseJSON = withObject "SceneSettings" $ \v ->
     SceneSettings
-      <$> v .: "tag"
-      <*> v .:? "objects"
+      <$> v .:? "objects"
       <*> v .:? "objFiles"
 
 data Config = Config
