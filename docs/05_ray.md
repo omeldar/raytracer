@@ -44,7 +44,7 @@ We now have:
 
 With this, we're ready to actually start shooting rays from our camera into the world.
 
-<div style="display: flex; justify-content: space-between;">
+<div align="center">
   <a href="./04_circle.md">← All Chapters</a>
   <a href="./06_camera.md">Next Chapter →</a>
 </div>

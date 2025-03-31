@@ -124,7 +124,7 @@ Here’s the result:
 
 This also confirms that our rays are behaving as expected — spreading from a single origin, intersecting the image plane, and correctly projecting 3D space into 2D.
 
-<div style="display: flex; justify-content: space-between;">
+<div align="center">
   <a href="./07_sphere.md">← All Chapters</a>
   <a href="./09_simplifications_and_profiling.md">Next Chapter →</a>
 </div>

@@ -141,7 +141,7 @@ This step introduces how rays interact with real objects. Every feature we build
 
 We've now done this for a simple red sphere. The rest of our raytracer will build on this logic.
 
-<div style="display: flex; justify-content: space-between;">
+<div align="center">
   <a href="./06_camera.md">← All Chapters</a>
   <a href="./08_normals_and_perspective.md">Next Chapter →</a>
 </div>

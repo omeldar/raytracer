@@ -55,7 +55,7 @@ let frontFace = V.dot ray.direction outwardNormal < 0
 
 This ensures consistent normal direction relative to the ray.
 
-<div style="display: flex; justify-content: space-between;">
+<div align="center">
   <a href="./12_fixing_perspective.md">← All Chapters</a>
   <a href="./14_anti_aliasing.md">Next Chapter →</a>
 </div>
