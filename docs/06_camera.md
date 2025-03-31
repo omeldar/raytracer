@@ -55,5 +55,5 @@ With this, we've taken a big step forward tracing rays through a scene: the came
 
 <div style="display: flex; justify-content: space-between;">
   <a href="./05_ray.md">← All Chapters</a>
-  <a href="./06_camera.md">Next Chapter →</a>
+  <a href="./07_sphere.md">Next Chapter →</a>
 </div>
