@@ -54,6 +54,6 @@ Here's the resulting image:
 With this, we've taken a big step forward tracing rays through a scene: the camera is generating rays ocrrectly, and we're producing a gradient background based on the ray direction. The next step is to let rays interact with geometry.
 
 <div align="center">
-  <a href="./05_ray.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./05_ray.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./07_sphere.md">Next Chapter →</a>
 </div>

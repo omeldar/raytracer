@@ -59,6 +59,6 @@ With this camera setup, the rays diverge more slowly. Objects now appear with co
 Together, these steps make the perspective feel more realistic and consistent.
 
 <div align="center">
-  <a href="./11_multiple_objects.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./11_multiple_objects.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./13_front_vs_backfaces.md">Next Chapter →</a>
 </div>

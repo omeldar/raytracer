@@ -153,6 +153,6 @@ cabal run raytracer <config-file.json>
 Optimization is only valuable when guided by data. Simplifying the math gave a theoretical improvement, and profiling confirmed where real time was being spent. These tools give you control over both precision and performance — a key skill for writing a performant raytracer.
 
 <div align="center">
-  <a href="./08_normals_and_perspective.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./08_normals_and_perspective.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./10_hittable_abstraction.md">Next Chapter →</a>
 </div>

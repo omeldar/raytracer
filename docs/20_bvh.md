@@ -52,6 +52,6 @@ With BVH enabled, only a fraction of the triangle intersections are tested. Inst
 | 1'000'000'000  | 1'000'000'000   | 29              | 99.999997%   |
 
 <div align="center">
-  <a href="./19_monkey_render.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./19_monkey_render.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="#">Next Chapter (WIP) →</a>
 </div>

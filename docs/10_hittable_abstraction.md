@@ -131,6 +131,6 @@ We now have a unified `Hittable` abstraction:
 From this point on, we can introduce **planes**, **triangles**, **meshes**, and **acceleration structures** without rewriting our core raytracing loop.
 
 <div align="center">
-  <a href="./09_simplifications_and_profiling.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./09_simplifications_and_profiling.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./11_multiple_objects.md">Next Chapter →</a>
 </div>

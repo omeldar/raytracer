@@ -31,6 +31,6 @@ Here's what the rendered circle looks like:
 This might feel very basic, but it's an important foundation. Before diving into the math-heavy 3D ray-sphere intersections, this gives us a first "shape" and lets us think in terms of pixels, colors, and coordinate spaces. It also ties rendering logic to conditions over space, which will be at the heart of every object we render moving forward.
 
 <div align="center">
-  <a href="./03_vec3.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./03_vec3.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./05_ray.md">Next Chapter →</a>
 </div>

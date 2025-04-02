@@ -49,6 +49,6 @@ This drastically reduces RAM usage.
 Total RAM on the system: 64GB
 
 <div align="center">
-  <a href="./15_diffuse_materials.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./15_diffuse_materials.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./17_config_files.md">Next Chapter →</a>
 </div>

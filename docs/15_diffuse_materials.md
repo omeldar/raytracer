@@ -80,6 +80,6 @@ Diffuse shading is our first material. And it already gives a stunning differenc
 With anti-aliasing and recursion in place, scenes start to glow with soft, natural lighting.
 
 <div align="center">
-  <a href="./14_anti_aliasing.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./14_anti_aliasing.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./16_buffered_writing.md">Next Chapter →</a>
 </div>

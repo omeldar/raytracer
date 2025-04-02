@@ -53,6 +53,6 @@ This is the real power of generalizing ray-object intersection logic.
 We now have our first real scene.
 
 <div align="center">
-  <a href="./10_hittable_abstraction.md">← All Chapters</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+  <a href="./10_hittable_abstraction.md">← Previous Chapter</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
   <a href="./12_fixing_perspective.md">Next Chapter →</a>
 </div>
