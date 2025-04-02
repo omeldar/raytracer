@@ -39,8 +39,8 @@
   ],
   "scene": {
       "objects": [
-        { "type": "sphere", "center": [0, 0, -5], "radius": 0.5, "color": [0.9, 0.9, 0.95], "material": { "type": "metal", "fuzz": 0.01 } },
-        { "type": "sphere", "center": [0.3, -0.3, -2.5], "radius": 0.2, "color": [0.9, 0.9, 0.5], "material": { "type": "dielectric", "refIdx": 1.07 } },
+        { "type": "sphere", "center": [0, 0, -5], "radius": 0.5, "color": [0.9, 0.9, 0.9], "material": { "type": "metal", "fuzz": 0.01 } },
+        { "type": "sphere", "center": [0.3, -0.3, -2.5], "radius": 0.2, "color": [0.9, 0.9, 0.9], "material": { "type": "dielectric", "refIdx": 1.07 } },
         { "type": "sphere", "center": [0.3, -0.4, -4], "radius": 0.1, "color": [0.8, 0.1, 0.8], "material": { "type": "lambertian" } },
         { "type": "sphere", "center": [-0.5, -0.25, -4], "radius": 0.25, "color": [0.8, 0.4, 0.4], "material": { "type": "lambertian" } },
         { "type": "plane", "pointOnPlane": [0, -0.5, 0], "normal": [0, 1, 0], "color": [0.95, 0.95, 0.95], "material": { "type": "lambertian" } }
