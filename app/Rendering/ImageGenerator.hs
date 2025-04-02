@@ -113,30 +113,40 @@ traceRay config bvh ray depth
               n = H.normal hitRecord
               dir = R.direction ray
 
-          scatteredRay <- case hitMaterial of
-            Lambertian -> do
-              rand <- V.randomInUnitSphere
-              let target = V.add n rand
-              return $ R.Ray p target
-            Metal hitfuzz -> do
-              rand <- V.randomInUnitSphere
-              let reflected = V.reflect (V.normalize dir) n
-                  scattered = V.add reflected (V.scale hitfuzz rand)
-              return $ R.Ray p scattered
+          -- Scatter returns either a reflected/refracted Ray or a pre-blended Color
+          scatterResult <- case hitMaterial of
+            Lambertian ->
+              V.randomInUnitSphere >>= \rand ->
+                let target = V.add n rand
+                 in return $ Right (R.Ray p target)
+            Metal hitfuzz ->
+              V.randomInUnitSphere >>= \rand ->
+                let reflected = V.reflect (V.normalize dir) n
+                    scattered = V.add reflected (V.scale hitfuzz rand)
+                 in return $ Right (R.Ray p scattered)
             Dielectric hitrefIdx -> do
               let unitDir = V.normalize dir
                   cosTheta = min 1.0 (V.dot (V.negateV unitDir) n)
                   sinTheta = sqrt (1.0 - cosTheta * cosTheta)
                   cannotRefract = hitrefIdx * sinTheta > 1.0
                   reflectProb = schlick cosTheta hitrefIdx
-              randVal <- randomDouble
-              let rayDir =
-                    if cannotRefract || randVal < reflectProb
-                      then V.reflect unitDir n
-                      else V.refract unitDir n (1 / hitrefIdx)
-              return $ R.Ray p rayDir
 
-          -- Compute lighting and tint it with material color
+                  reflectDir = V.reflect unitDir n
+                  refractDir = V.refract unitDir n (1 / hitrefIdx)
+
+                  reflectRay = R.Ray p reflectDir
+                  refractRay = R.Ray p refractDir
+
+              reflectCol <- traceRay config bvh reflectRay (depth - 1)
+              refractCol <-
+                if cannotRefract
+                  then return (V.Vec3 0 0 0)
+                  else traceRay config bvh refractRay (depth - 1)
+
+              let blendedCol = V.add (V.scale reflectProb reflectCol) (V.scale (1 - reflectProb) refractCol)
+              return $ Left blendedCol
+
+          -- Compute lighting and tint with surface color
           directLight <- L.computeLighting hitRecord sceneLights bvh
           let litColor = V.mul directLight surfaceColor
               clampedLight =
@@ -162,8 +172,16 @@ traceRay config bvh ray depth
           if terminate
             then return clampedLight
             else do
-              bounceColor <- traceRay config bvh scatteredRay (depth - 1)
-              let finalColor = V.add (V.scale 0.5 (V.mul surfaceColor bounceColor)) clampedLight
+              bounceColor <- case scatterResult of
+                Right scatteredRay -> traceRay config bvh scatteredRay (depth - 1)
+                Left blended -> return blended
+
+              let baseColor = case scatterResult of
+                    Right _ -> V.scale 0.5 (V.mul surfaceColor bounceColor)
+                    Left blended -> blended
+
+                  finalColor = V.add baseColor clampedLight
+
               return finalColor
         Nothing -> return $ getBackgroundColor ray (background config)
 
