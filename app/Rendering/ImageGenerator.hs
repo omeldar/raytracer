@@ -141,7 +141,17 @@ traceRay config bvh ray depth
               refractCol <-
                 if cannotRefract
                   then return (V.Vec3 0 0 0)
-                  else traceRay config bvh refractRay (depth - 1)
+                  else do
+                    rawRefract <- traceRay config bvh refractRay (depth - 1)
+
+                    let absorption = V.Vec3 0.15 0.15 0.15
+                        distance = 1.0
+                        attenuation =
+                          V.Vec3
+                            (exp (-V.x absorption * distance))
+                            (exp (-V.y absorption * distance))
+                            (exp (-V.z absorption * distance))
+                    return (V.mul attenuation rawRefract)
 
               let blendedCol = V.add (V.scale reflectProb reflectCol) (V.scale (1 - reflectProb) refractCol)
               return $ Left blendedCol
