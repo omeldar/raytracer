@@ -86,11 +86,22 @@ Some of my favorites are:
 
 ### ✨ Materials
 
-- **Reflections (Metallic Surfaces)**  
-  Implement reflective behavior for metallic surfaces using the material system.
-
 - **Refractions (Glass-like Materials)**  
   Add support for transparent, refractive materials with configurable IOR (index of refraction).
 
+- **Configurable absorption for materials**  
+  Implement configurable absorption per object for exponential falloff in dielectric objects.
+
 - **Material Assignment and Parsing**  
   Allow materials to be assigned per object, including support for .mtl file parsing from .obj models. Optionally, override all materials via the config for batch control.
+
+## 📚 Implemented, but missing documentation
+
+- **Lighting system & shadows**  
+  Objects cast shadows onto other objects by checking if light source is blocked.
+
+- **Material system**  
+  Objects can have material which cause them to react differently to light.
+
+- **Reflections (Metallic Surfaces)**  
+  Implement reflective behavior for metallic surfaces using the material system.
