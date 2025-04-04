@@ -73,7 +73,7 @@ Some of my favorites are:
 
 ### 🌆 Lighting & Shadows
 
-- **Soft Shadows via Multi-Light Sampling**
+- **Soft Shadows via Multi-Light Sampling**  
   Implement soft shadows by spawning multiple sample lights per light source. The number of samples will be configurable through the config file.
 
 - **Light Intensity Control**  
@@ -81,29 +81,29 @@ Some of my favorites are:
 
 ### 🔷 Geometry & Shading
 
-- **Smooth Shading for Triangles**
+- **Smooth Shading for Triangles**  
   Add support for smooth shading using vertex normals (3 normals per triangle), enabling smooth transitions between adjacent triangle surfaces.
 
 ### 🚀 Performance
 
-- **Support for Multithreading**
+- **Support for Multithreading**  
   Split scanlines or pixel blocks across threads using Haskell’s parallel strategies or `async`/`parMap`. Improve core utilization.
 
-- **Function Profiling and Optimization**
+- **Function Profiling and Optimization**  
   Use GHC’s profiler (`+RTS -p`) to identify hotspots. Refactor small bottleneck functions (e.g., `dot`, `normalize`, `hit` checks).
 
-- **Memoization of Expensive Calculations**
+- **Memoization of Expensive Calculations**  
   Cache repeated computations like material scattering, vector math, or normalized directions.
 
-- **Adaptive Sampling Improvements**
+- **Adaptive Sampling Improvements**  
   Adjust per-pixel sample count based on variance in early samples to save render time.
 
 ### ✨ Materials
 
-- **Caustics and Colored Shadows**
+- **Caustics and Colored Shadows**  
   Allow materials to bend light causting colored / caustic shadows.
 
-- **Configurable absorption for materials**
+- **Configurable absorption for materials**  
   Implement configurable absorption per object for exponential falloff in dielectric objects.
 
 - **Material Assignment and Parsing**  
@@ -111,16 +111,16 @@ Some of my favorites are:
 
 ### 🖼️ Texture Mapping & Image-Based Assets
 
-- **UV Parsing from OBJ Files**
+- **UV Parsing from OBJ Files**  
   Extend `obj` parser to support `vt` texture coordinates and `f` face triples `(v/vt/vn)`.
 
-- **Textured Triangles**
+- **Textured Triangles**  
   Interpolate UVs using barycentric coordinates per hit. Sample from image texture.
 
-- **Image Texture Loader**
+- **Image Texture Loader**  
   Use `JuicyPixels` to load `.jpg/.png` into a `Texture` data structure.
 
-- **Skydome from Blender**
+- **Skydome from Blender**  
   Import a textured inverted sphere from Blender as a background. Ensure correct UVs are used.
 
 ## 📚 Implemented, but missing documentation
@@ -131,7 +131,7 @@ Some of my favorites are:
 - **Material system**  
   Objects can have material which cause them to react differently to light.
 
-- **Reflections (Metallic Surfaces)**
+- **Reflections (Metallic Surfaces)**  
   Implement reflective behavior for metallic surfaces using the material system.
 
 - **Refractions (Glass-like Materials)**  
