@@ -98,6 +98,20 @@ Some of my favorites are:
 - **Material Assignment and Parsing**  
   Allow materials to be assigned per object, including support for .mtl file parsing from .obj models. Optionally, override all materials via the config for batch control.
 
+### 🖼️ Texture Mapping & Image-Based Assets
+
+- **UV Parsing from OBJ Files**
+  Extend `obj` parser to support `vt` texture coordinates and `f` face triples `(v/vt/vn)`.
+
+- **Textured Triangles**
+  Interpolate UVs using barycentric coordinates per hit. Sample from image texture.
+
+- **Image Texture Loader**
+  Use `JuicyPixels` to load `.jpg/.png` into a `Texture` data structure.
+
+- **Skydome from Blender**
+  Import a textured inverted sphere from Blender as a background. Ensure correct UVs are used.
+
 ## 📚 Implemented, but missing documentation
 
 - **Lighting system & shadows**  
