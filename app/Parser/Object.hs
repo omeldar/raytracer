@@ -1,4 +1,4 @@
-module ObjParser (loadObjWithOffset) where
+module Parser.Object (loadObjWithOffset) where
 
 import Core.Vec3
 import Data.List (isPrefixOf)

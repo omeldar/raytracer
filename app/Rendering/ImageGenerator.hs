@@ -31,7 +31,7 @@ import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (S
 import Hittable.Objects.Plane as P (Plane (Plane))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
 import Hittable.Objects.Triangle as T (Triangle (..))
-import ObjParser (loadObjWithOffset)
+import Parser.Object (loadObjWithOffset)
 import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)

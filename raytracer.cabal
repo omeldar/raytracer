@@ -48,7 +48,8 @@ executable raytracer
         Hittable.Objects.Triangle,
         Hittable.BVH,
         Config,
-        ObjParser
+        Parser.Object,
+        Parser.Material
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
@@ -87,7 +88,8 @@ executable profraytracer
         Hittable.Objects.Triangle,
         Hittable.BVH,
         Config,
-        ObjParser
+        Parser.Object,
+        Parser.Material
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
