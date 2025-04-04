@@ -84,10 +84,21 @@ Some of my favorites are:
 - **Smooth Shading for Triangles**
   Add support for smooth shading using vertex normals (3 normals per triangle), enabling smooth transitions between adjacent triangle surfaces.
 
-### ✨ Materials
+### 🚀 Performance
 
-- **Refractions (Glass-like Materials)**  
-  Add support for transparent, refractive materials with configurable IOR (index of refraction). Make sure when ray enters on 90° to surface it may create weird effects (possible divison by zero)
+- **Support for Multithreading**
+  Split scanlines or pixel blocks across threads using Haskell’s parallel strategies or `async`/`parMap`. Improve core utilization.
+
+- **Function Profiling and Optimization**
+  Use GHC’s profiler (`+RTS -p`) to identify hotspots. Refactor small bottleneck functions (e.g., `dot`, `normalize`, `hit` checks).
+
+- **Memoization of Expensive Calculations**
+  Cache repeated computations like material scattering, vector math, or normalized directions.
+
+- **Adaptive Sampling Improvements**
+  Adjust per-pixel sample count based on variance in early samples to save render time.
+
+### ✨ Materials
 
 - **Caustics and Colored Shadows**
   Allow materials to bend light causting colored / caustic shadows.
@@ -122,3 +133,6 @@ Some of my favorites are:
 
 - **Reflections (Metallic Surfaces)**
   Implement reflective behavior for metallic surfaces using the material system.
+
+- **Refractions (Glass-like Materials)**  
+  Add support for transparent, refractive materials with configurable IOR (index of refraction).
