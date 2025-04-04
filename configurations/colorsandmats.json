@@ -1,8 +1,8 @@
 {
   "image": {
-      "width": 1920,
-      "height": 1080,
-      "samplesPerPixel": 200,
+      "width": 1280,
+      "height": 720,
+      "samplesPerPixel": 10,
       "antialiasing": true
   },
   "background": {
@@ -14,12 +14,12 @@
       "lookFrom": [0, 0, 2],
       "lookAt": [0, 0.0, -1],
       "vUp": [0, 1, 0],
-      "vfov": 20.0,
+      "vfov": 21.0,
       "aperture": 0.0,
       "focusDist": 3.0
   },
   "raytracer": {
-      "maxBounces": 5,
+      "maxBounces": 7,
       "useBVH": true,
       "bvhMaxDepth" : 10,
       "russianRoulette": {
@@ -40,9 +40,8 @@
   "scene": {
       "objects": [
         { "type": "sphere", "center": [0, 0, -5], "radius": 0.5, "color": [0.9, 0.9, 0.9], "material": { "type": "metal", "fuzz": 0.01 } },
-        { "type": "sphere", "center": [0.3, -0.3, -2.5], "radius": 0.2, "color": [0.9, 0.9, 0.9], "material": { "type": "dielectric", "refIdx": 1.07 } },
+        { "type": "sphere", "center": [0.3, -0.3, -2.5], "radius": 0.2, "color": [0.9, 1.0, 1.0], "material": { "type": "dielectric", "refIdx": 2.4 } },
         { "type": "sphere", "center": [0.2, -0.35, -4], "radius": 0.15, "color": [0.8, 0.1, 0.8], "material": { "type": "lambertian" } },
-        { "type": "sphere", "center": [0.45, -0.37, -2], "radius": 0.13, "color": [0.9, 0.7, 0.15], "material": { "type": "lambertian" } },
         { "type": "sphere", "center": [-0.5, -0.25, -4], "radius": 0.25, "color": [0.8, 0.4, 0.4], "material": { "type": "lambertian" } },
         { "type": "plane", "pointOnPlane": [0, -0.5, 0], "normal": [0, 1, 0], "color": [0.95, 0.95, 0.95], "material": { "type": "lambertian" } }
       ]

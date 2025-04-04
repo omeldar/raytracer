@@ -73,7 +73,7 @@ Some of my favorites are:
 
 ### 🌆 Lighting & Shadows
 
-- **Soft Shadows via Multi-Light Sampling**  
+- **Soft Shadows via Multi-Light Sampling**
   Implement soft shadows by spawning multiple sample lights per light source. The number of samples will be configurable through the config file.
 
 - **Light Intensity Control**  
@@ -81,15 +81,18 @@ Some of my favorites are:
 
 ### 🔷 Geometry & Shading
 
-- **Smooth Shading for Triangles**  
+- **Smooth Shading for Triangles**
   Add support for smooth shading using vertex normals (3 normals per triangle), enabling smooth transitions between adjacent triangle surfaces.
 
 ### ✨ Materials
 
 - **Refractions (Glass-like Materials)**  
-  Add support for transparent, refractive materials with configurable IOR (index of refraction).
+  Add support for transparent, refractive materials with configurable IOR (index of refraction). Make sure when ray enters on 90° to surface it may create weird effects (possible divison by zero)
 
-- **Configurable absorption for materials**  
+- **Caustics and Colored Shadows**
+  Allow materials to bend light causting colored / caustic shadows.
+
+- **Configurable absorption for materials**
   Implement configurable absorption per object for exponential falloff in dielectric objects.
 
 - **Material Assignment and Parsing**  
@@ -103,5 +106,5 @@ Some of my favorites are:
 - **Material system**  
   Objects can have material which cause them to react differently to light.
 
-- **Reflections (Metallic Surfaces)**  
+- **Reflections (Metallic Surfaces)**
   Implement reflective behavior for metallic surfaces using the material system.

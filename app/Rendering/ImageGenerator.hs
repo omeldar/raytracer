@@ -22,8 +22,8 @@ import Config
     SceneSettings (..),
   )
 import qualified Control.Monad
-import Core.Ray as R (Ray (Ray, direction))
-import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, x, y, z)
+import Core.Ray as R (Ray (..), origin, direction)
+import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, x, y, z, sub, vLength)
 import Data.Typeable (cast)
 import Hittable.BVH (BVHNode, constructBVH)
 import Hittable.Class as H (HitRecord (normal, point), Hittable (hit), color, material)
@@ -113,22 +113,22 @@ traceRay config bvh ray depth
               n = H.normal hitRecord
               dir = R.direction ray
 
-          -- Scatter returns either a reflected/refracted Ray or a pre-blended Color
+          -- Handle material scattering
           scatterResult <- case hitMaterial of
-            Lambertian ->
-              V.randomInUnitSphere >>= \rand ->
-                let target = V.add n rand
-                 in return $ Right (R.Ray p target)
-            Metal hitfuzz ->
-              V.randomInUnitSphere >>= \rand ->
-                let reflected = V.reflect (V.normalize dir) n
-                    scattered = V.add reflected (V.scale hitfuzz rand)
-                 in return $ Right (R.Ray p scattered)
+            Lambertian -> do
+              rand <- V.randomInUnitSphere
+              let target = V.add n rand
+              return $ Right (R.Ray p target)
+
+            Metal hitfuzz -> do
+              rand <- V.randomInUnitSphere
+              let reflected = V.reflect (V.normalize dir) n
+                  scattered = V.add reflected (V.scale hitfuzz rand)
+              return $ Right (R.Ray p scattered)
+
             Dielectric hitrefIdx -> do
               let unitDir = V.normalize dir
                   cosTheta = min 1.0 (V.dot (V.negateV unitDir) n)
-                  sinTheta = sqrt (1.0 - cosTheta * cosTheta)
-                  cannotRefract = hitrefIdx * sinTheta > 1.0
                   reflectProb = schlick cosTheta hitrefIdx
 
                   reflectDir = V.reflect unitDir n
@@ -138,28 +138,26 @@ traceRay config bvh ray depth
                   refractRay = R.Ray p refractDir
 
               reflectCol <- traceRay config bvh reflectRay (depth - 1)
-              refractCol <-
-                if cannotRefract
-                  then return (V.Vec3 0 0 0)
-                  else do
-                    rawRefract <- traceRay config bvh refractRay (depth - 1)
+              refractCol <- do
+                rawRefract <- traceRay config bvh refractRay (depth - 1)
+                let absorption = V.Vec3 0.02 0.02 0.02
+                    distance = V.vLength (V.sub p (R.origin ray))
+                    attenuation = V.Vec3
+                      (exp (-V.x absorption * distance))
+                      (exp (-V.y absorption * distance))
+                      (exp (-V.z absorption * distance))
+                return (V.mul attenuation rawRefract)
 
-                    let absorption = V.Vec3 0.15 0.15 0.15
-                        distance = 1.0
-                        attenuation =
-                          V.Vec3
-                            (exp (-V.x absorption * distance))
-                            (exp (-V.y absorption * distance))
-                            (exp (-V.z absorption * distance))
-                    return (V.mul attenuation rawRefract)
+              let blended = V.add (V.scale reflectProb reflectCol) (V.scale (1 - reflectProb) refractCol)
+              return $ Left blended
 
-              let blendedCol = V.add (V.scale reflectProb reflectCol) (V.scale (1 - reflectProb) refractCol)
-              return $ Left blendedCol
-
-          -- Compute lighting and tint with surface color
-          directLight <- L.computeLighting hitRecord sceneLights bvh
-          let litColor = V.mul directLight surfaceColor
-              clampedLight =
+          -- Direct lighting (only for non-glass)
+          clampedLight <- case hitMaterial of
+            Dielectric _ -> return (V.Vec3 0 0 0)
+            _ -> do
+              directLight <- L.computeLighting hitRecord sceneLights bvh
+              let litColor = V.mul directLight surfaceColor
+              return $
                 V.Vec3
                   (clamp (V.x litColor) 0 1)
                   (clamp (V.y litColor) 0 1)
@@ -193,6 +191,7 @@ traceRay config bvh ray depth
                   finalColor = V.add baseColor clampedLight
 
               return finalColor
+
         Nothing -> return $ getBackgroundColor ray (background config)
 
 schlick :: Double -> Double -> Double
