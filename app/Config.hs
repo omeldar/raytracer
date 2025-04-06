@@ -82,16 +82,16 @@ data LightSettings
   deriving (Show, Generic)
 
 data SceneObject
-  = SphereObj Vec3 Double Vec3 MaterialType
-  | PlaneObj Vec3 Vec3 Vec3 MaterialType
-  | TriangleObj Vec3 Vec3 Vec3 Vec3 MaterialType
+  = SphereObj Vec3 Double Vec3 Material
+  | PlaneObj Vec3 Vec3 Vec3 Material
+  | TriangleObj Vec3 Vec3 Vec3 Vec3 Material
   deriving (Show, Generic)
 
 data ObjFileEntry = ObjFileEntry
   { path :: FilePath,
     objposition :: Vec3,
     overrideColor :: Maybe Vec3,
-    overrideMaterial :: Maybe MaterialType
+    overrideMaterial :: Maybe Material
   }
   deriving (Show, Generic)
 
@@ -107,7 +107,7 @@ instance FromJSON SceneObject where
   parseJSON = withObject "SceneObject" $ \v -> do
     objType <- v .: "type"
     scolor <- v .:? "color" .!= Vec3 1 1 1
-    material <- v .:? "material" .!= Lambertian
+    material <- v .:? "material" .!= defaultMaterial
     case objType of
       "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius" <*> pure scolor <*> pure material
       "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal" <*> pure scolor <*> pure material

@@ -22,11 +22,11 @@ import Config
     SceneSettings (..),
   )
 import qualified Control.Monad
-import Core.Ray as R (Ray (..), origin, direction)
-import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, x, y, z, sub, vLength)
+import Core.Ray as R (Ray (..), direction, origin)
+import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, sub, vLength, x, y, z)
 import Data.Typeable (cast)
 import Hittable.BVH (BVHNode, constructBVH)
-import Hittable.Class as H (HitRecord (normal, point), Hittable (hit), color, material)
+import Hittable.Class as H (HitRecord (normal, point), Hittable (hit), material)
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
 import Hittable.Objects.Sphere as S (Sphere (Sphere))
@@ -35,7 +35,7 @@ import Parser.Object (loadObjWithOffset)
 import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)
-import Rendering.Material (MaterialType (..))
+import Rendering.Material (Material (..))
 import System.Directory (createDirectoryIfMissing)
 import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (clamp, randomDouble)
@@ -99,104 +99,98 @@ averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.V
 
 traceRay :: Config -> BVHNode -> R.Ray -> Int -> IO Col.Color
 traceRay config bvh ray depth
-  | depth <= 0 = return (V.Vec3 0 0 0)
+  | depth <= 0 = return (Vec3 0 0 0)
   | otherwise = do
       let interval = Interval 0.001 100
           hitResult = H.hit bvh ray interval
 
       case hitResult of
         Just hitRecord -> do
-          let hitMaterial = H.material hitRecord
-              surfaceColor = H.color hitRecord
-              sceneLights = map convertLight (lights config)
+          let mat = H.material hitRecord
+              surfaceColor = diffuseColor mat
               p = H.point hitRecord
               n = H.normal hitRecord
               dir = R.direction ray
+              unitDir = V.normalize dir
+              cosTheta = min 1.0 (V.dot (V.negateV unitDir) n)
+              sceneLights = map convertLight (lights config)
 
-          -- Handle material scattering
-          scatterResult <- case hitMaterial of
-            Lambertian -> do
-              rand <- V.randomInUnitSphere
-              let target = V.add n rand
-              return $ Right (R.Ray p target)
+          -- Compute emission (if any)
+          let emitted = case emissionColor mat of
+                Just e -> e
+                Nothing -> Vec3 0 0 0
 
-            Metal hitfuzz -> do
-              rand <- V.randomInUnitSphere
-              let reflected = V.reflect (V.normalize dir) n
-                  scattered = V.add reflected (V.scale hitfuzz rand)
-              return $ Right (R.Ray p scattered)
+          -- Decide scattering behavior
+          scatterResult <-
+            case ior mat of
+              Just refIdx -> do
+                let reflectDir = V.reflect unitDir n
+                    refractDir = V.refract unitDir n (1 / refIdx)
+                    reflectRay = R.Ray p reflectDir
+                    refractRay = R.Ray p refractDir
+                    rProb = schlick cosTheta refIdx
+                reflectCol <- traceRay config bvh reflectRay (depth - 1)
+                refractCol <- do
+                  raw <- traceRay config bvh refractRay (depth - 1)
+                  let absorption = Vec3 0.02 0.02 0.02
+                      dist = V.vLength (V.sub p (R.origin ray))
+                      atten =
+                        Vec3
+                          (exp (-x absorption * dist))
+                          (exp (-y absorption * dist))
+                          (exp (-z absorption * dist))
+                  return (V.mul atten raw)
+                return $ Left (V.add (V.scale rProb reflectCol) (V.scale (1 - rProb) refractCol))
+              Nothing -> case shininess mat of
+                Just s | s > 100 -> do
+                  -- Metal-like
+                  rand <- V.randomInUnitSphere
+                  let reflected = V.reflect unitDir n
+                      fuzzed = V.add reflected (V.scale 0.05 rand)
+                  return $ Right (R.Ray p fuzzed)
+                _ -> do
+                  -- Lambertian
+                  rand <- V.randomInUnitSphere
+                  let scatterDir = V.add n rand
+                  return $ Right (R.Ray p scatterDir)
 
-            Dielectric hitrefIdx -> do
-              let unitDir = V.normalize dir
-                  cosTheta = min 1.0 (V.dot (V.negateV unitDir) n)
-                  reflectProb = schlick cosTheta hitrefIdx
+          -- Direct lighting (optional)
+          directLight <- L.computeLighting hitRecord sceneLights bvh
+          let litColor = V.mul directLight surfaceColor
+              clampedLight =
+                Vec3
+                  (clamp (x litColor) 0 1)
+                  (clamp (y litColor) 0 1)
+                  (clamp (z litColor) 0 1)
 
-                  reflectDir = V.reflect unitDir n
-                  refractDir = V.refract unitDir n (1 / hitrefIdx)
-
-                  reflectRay = R.Ray p reflectDir
-                  refractRay = R.Ray p refractDir
-
-              reflectCol <- traceRay config bvh reflectRay (depth - 1)
-              refractCol <- do
-                rawRefract <- traceRay config bvh refractRay (depth - 1)
-                let absorption = V.Vec3 0.02 0.02 0.02
-                    distance = V.vLength (V.sub p (R.origin ray))
-                    attenuation = V.Vec3
-                      (exp (-V.x absorption * distance))
-                      (exp (-V.y absorption * distance))
-                      (exp (-V.z absorption * distance))
-                return (V.mul attenuation rawRefract)
-
-              let blended = V.add (V.scale reflectProb reflectCol) (V.scale (1 - reflectProb) refractCol)
-              return $ Left blended
-
-          -- Direct lighting (only for non-glass)
-          clampedLight <- case hitMaterial of
-            Dielectric _ -> return (V.Vec3 0 0 0)
-            _ -> do
-              directLight <- L.computeLighting hitRecord sceneLights bvh
-              let litColor = V.mul directLight surfaceColor
-              return $
-                V.Vec3
-                  (clamp (V.x litColor) 0 1)
-                  (clamp (V.y litColor) 0 1)
-                  (clamp (V.z litColor) 0 1)
-
-          -- Russian Roulette termination
+          -- Russian Roulette
           let rr = russianRoulette (raytracer config)
               baseProb = probability rr
-              adaptivity = adaptivityFactor rr
               adaptiveProb = case adaptiveMethod rr of
-                Linear -> min 1.0 (baseProb * fromIntegral depth / adaptivity)
-                Exponential -> min 1.0 (1.0 - exp (-fromIntegral depth / adaptivity))
-                Sqrt -> min 1.0 (baseProb * sqrt (fromIntegral depth / adaptivity))
-
+                Linear -> min 1.0 (baseProb * fromIntegral depth / adaptivityFactor rr)
+                Exponential -> min 1.0 (1.0 - exp (-fromIntegral depth / adaptivityFactor rr))
+                Sqrt -> min 1.0 (baseProb * sqrt (fromIntegral depth / adaptivityFactor rr))
           terminate <-
             if enabled rr && depth > 5
               then (< adaptiveProb) <$> randomDouble
               else return False
 
           if terminate
-            then return clampedLight
+            then return (V.add emitted clampedLight)
             else do
               bounceColor <- case scatterResult of
-                Right scatteredRay -> traceRay config bvh scatteredRay (depth - 1)
+                Right scattered -> traceRay config bvh scattered (depth - 1)
                 Left blended -> return blended
-
-              let baseColor = case scatterResult of
-                    Right _ -> V.scale 0.5 (V.mul surfaceColor bounceColor)
-                    Left blended -> blended
-
-                  finalColor = V.add baseColor clampedLight
-
-              return finalColor
-
+              let finalColor = case scatterResult of
+                    Right _ -> V.add (V.scale 0.5 (V.mul surfaceColor bounceColor)) clampedLight
+                    Left _ -> V.add bounceColor clampedLight
+              return (V.add finalColor emitted)
         Nothing -> return $ getBackgroundColor ray (background config)
 
+-- Schlick approximation for reflectivity
 schlick :: Double -> Double -> Double
-schlick cosine refidx =
-  let r0 = ((1 - refidx) / (1 + refidx)) ^ (2 :: Integer)
+schlick cosine refIdx =
+  let r0 = ((1 - refIdx) / (1 + refIdx)) ^ (2 :: Integer)
    in r0 + (1 - r0) * ((1 - cosine) ** 5)
 
 convertLight :: LightSettings -> L.Light

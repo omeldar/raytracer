@@ -13,7 +13,7 @@ data Triangle = Triangle
     v1 :: V.Vec3,
     v2 :: V.Vec3,
     color :: V.Vec3,
-    material :: MaterialType
+    material :: Material
   }
   deriving (Show, Typeable)
 

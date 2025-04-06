@@ -11,7 +11,7 @@ data Sphere = Sphere
   { center :: Vec3,
     radius :: Double,
     color :: Vec3,
-    material :: Mat.MaterialType
+    material :: Mat.Material
   }
   deriving (Show)
 

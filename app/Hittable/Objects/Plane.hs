@@ -11,7 +11,7 @@ data Plane = Plane
   { pointOnPlane :: V.Vec3,
     normal :: V.Vec3,
     color :: V.Vec3,
-    material :: MaterialType
+    material :: Material
   }
   deriving (Show)
 

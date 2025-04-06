@@ -12,7 +12,7 @@ data HitRecord = HitRecord
     t :: Double,
     frontFace :: Bool,
     color :: Vec3,
-    material :: MaterialType
+    material :: Material
   }
   deriving (Show)
 
