@@ -28,7 +28,7 @@ import Data.List (isPrefixOf)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Typeable (cast)
-import Hittable.BVH (BVHNode, constructBVH, constructBVHWithLimit)
+import Hittable.BVH (BVHNode, constructBVHWithLimit)
 import Hittable.Class as H (HitRecord (..), Hittable (hit))
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
