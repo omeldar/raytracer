@@ -4,14 +4,13 @@ import Core.Ray as R (at, direction, origin)
 import Core.Vec3 as V (Vec3 (..), dot, sub)
 import Hittable.BoundingBox (AABB (..))
 import Hittable.Class
-import Rendering.Material
 import Utils.Interval (contains)
 
 data Plane = Plane
   { pointOnPlane :: V.Vec3,
     normal :: V.Vec3,
     color :: V.Vec3,
-    material :: Material
+    materialId :: Int
   }
   deriving (Show)
 

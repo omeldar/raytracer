@@ -82,9 +82,9 @@ data LightSettings
   deriving (Show, Generic)
 
 data SceneObject
-  = SphereObj Vec3 Double Vec3 Material
-  | PlaneObj Vec3 Vec3 Vec3 Material
-  | TriangleObj Vec3 Vec3 Vec3 Vec3 Material
+  = SphereObj Vec3 Double Vec3 (Maybe String)
+  | PlaneObj Vec3 Vec3 Vec3 (Maybe String)
+  | TriangleObj Vec3 Vec3 Vec3 Vec3 (Maybe String)
   deriving (Show, Generic)
 
 data ObjFileEntry = ObjFileEntry
@@ -107,16 +107,34 @@ instance FromJSON SceneObject where
   parseJSON = withObject "SceneObject" $ \v -> do
     objType <- v .: "type"
     scolor <- v .:? "color" .!= Vec3 1 1 1
-    material <- v .:? "material" .!= defaultMaterial
+    matName <- v .:? "material" -- Optional, stays as Maybe String
     case objType of
-      "sphere" -> SphereObj <$> v .: "center" <*> v .: "radius" <*> pure scolor <*> pure material
-      "plane" -> PlaneObj <$> v .: "pointOnPlane" <*> v .: "normal" <*> pure scolor <*> pure material
-      "triangle" -> TriangleObj <$> v .: "v0" <*> v .: "v1" <*> v .: "v2" <*> pure scolor <*> pure material
-      _ -> fail $ "Unknown scene object type " ++ objType
+      "sphere" ->
+        SphereObj
+          <$> v .: "center"
+          <*> v .: "radius"
+          <*> pure scolor
+          <*> pure matName
+      "plane" ->
+        PlaneObj
+          <$> v .: "pointOnPlane"
+          <*> v .: "normal"
+          <*> pure scolor
+          <*> pure matName
+      "triangle" ->
+        TriangleObj
+          <$> v .: "v0"
+          <*> v .: "v1"
+          <*> v .: "v2"
+          <*> pure scolor
+          <*> pure matName
+      _ -> fail $ "Unknown scene object type: " ++ objType
 
 data SceneSettings = SceneSettings
   { objects :: Maybe [SceneObject],
-    objFiles :: Maybe [ObjFileEntry]
+    objFiles :: Maybe [ObjFileEntry],
+    lights :: Maybe [LightSettings],
+    materials :: Maybe [(String, Material)]
   }
   deriving (Show, Generic)
 
@@ -125,13 +143,14 @@ instance FromJSON SceneSettings where
     SceneSettings
       <$> v .:? "objects"
       <*> v .:? "objFiles"
+      <*> v .:? "lights"
+      <*> v .:? "materials"
 
 data Config = Config
   { image :: ImageSettings,
     background :: BackgroundSettings,
     camera :: CameraSettings,
     raytracer :: RaytracerSettings,
-    lights :: [LightSettings],
     scene :: SceneSettings
   }
   deriving (Show, Generic)
