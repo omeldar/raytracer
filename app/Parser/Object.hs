@@ -6,6 +6,7 @@ import Data.List (isPrefixOf)
 import Data.Map (Map)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
+import Debug.Trace
 import Hittable.HittableList
   ( HittableList (..),
     SomeHittable (SomeHittable),
@@ -25,7 +26,8 @@ parseObj content overrideColor overrideMaterialId nameToIdMap =
     parseLines (l : ls) verts currentMatName acc =
       case words l of
         ("usemtl" : name : _) ->
-          parseLines ls verts (Just name) acc
+          trace ("Switching material to: " ++ name) $
+            parseLines ls verts (Just name) acc
         ("f" : _) ->
           let matId = fromMaybe 0 $ (currentMatName >>= (`M.lookup` nameToIdMap)) <|> overrideMaterialId
               matColor = fromMaybe (Vec3 1 1 1) overrideColor

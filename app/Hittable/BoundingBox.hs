@@ -3,8 +3,8 @@ module Hittable.BoundingBox (AABB (..), surroundingBox) where
 import Core.Vec3
 
 data AABB = AABB
-  { minBounds :: Vec3,
-    maxBounds :: Vec3
+  { minBounds :: !Vec3,
+    maxBounds :: !Vec3
   }
   deriving (Show)
 

@@ -1,3 +1,5 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Rendering.ImageGenerator
   ( -- types
     Pixel,
@@ -24,7 +26,7 @@ import Config
 import qualified Control.Monad
 import Core.Ray as R (Ray (..), direction, origin)
 import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, sub, vLength, x, y, z)
-import Data.List (isPrefixOf)
+import Data.List (foldl', isPrefixOf)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Typeable (cast)
@@ -79,7 +81,8 @@ processRow config progressBar handle world materialMap j = do
 pixelColor :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
 pixelColor config world materialMap i j = do
   sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap i j)
-  return $ averageColor sampledColors
+  let !avg = averageColor sampledColors
+  return avg
 
 samplePixel :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
 samplePixel config world materialMap i j = do
@@ -101,7 +104,9 @@ showPixel :: Pixel -> String
 showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
 
 averageColor :: [Color] -> Color
-averageColor colors = scale (1.0 / fromIntegral (length colors)) (foldr add (V.Vec3 0 0 0) colors)
+averageColor colors =
+  let !colsum = foldl' add (V.Vec3 0 0 0) colors
+   in V.scale (1.0 / fromIntegral (length colors)) colsum
 
 traceRay :: Config -> BVHNode -> M.Map Int Material -> R.Ray -> Int -> IO Col.Color
 traceRay config bvh materialMap ray depth
