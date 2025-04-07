@@ -28,7 +28,7 @@ import Data.List (isPrefixOf)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Typeable (cast)
-import Hittable.BVH (BVHNode, constructBVH)
+import Hittable.BVH (BVHNode, constructBVH, constructBVHWithLimit)
 import Hittable.Class as H (HitRecord (..), Hittable (hit))
 import Hittable.HittableList as HL (HittableList (HittableList), SomeHittable (SomeHittable))
 import Hittable.Objects.Plane as P (Plane (Plane))
@@ -60,7 +60,7 @@ createPPM config filename = do
   let outputDir = "out/"
   createDirectoryIfMissing True outputDir
 
-  (world, materialMap) <- parseSceneObjects (scene config)
+  (world, materialMap) <- parseSceneObjects config
 
   withFile filename WriteMode $ \handle -> do
     progressBar <- PB.newProgressBar (height (image config))
@@ -198,10 +198,11 @@ convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
 convertLight (DirectionalLight dir lIntensity) = L.DirectionalLight dir lIntensity
 
-parseSceneObjects :: SceneSettings -> IO (BVHNode, M.Map Int Material)
-parseSceneObjects sceneConfig = do
+parseSceneObjects :: Config -> IO (BVHNode, M.Map Int Material)
+parseSceneObjects config = do
   -- Phase 0: Load materials from config (JSON)
-  let (jsonNameToId, jsonIdToMat) = maybe (M.empty, M.empty) assignMaterialIds (materials sceneConfig)
+  let sceneConfig = scene config
+      (jsonNameToId, jsonIdToMat) = maybe (M.empty, M.empty) assignMaterialIds (materials sceneConfig)
 
   -- Phase 1: Parse materials from .mtl files
   (mtlNameToId, mtlIdToMat) <- case objFiles sceneConfig of
@@ -249,7 +250,8 @@ parseSceneObjects sceneConfig = do
   putStrLn $ "Loaded " ++ show (length totalTriangles) ++ " triangles into BVH."
   putStrLn $ "Loaded " ++ show (length allObjects - length totalTriangles) ++ " other objects into BVH."
 
-  return (constructBVH allObjects, idToMatMap)
+  let maxDepth = bvhMaxDepth (raytracer config)
+  return (constructBVHWithLimit maxDepth allObjects, idToMatMap)
 
 -- Attempt to locate and read .mtl file referenced in an .obj file
 tryReadMtlFile :: FilePath -> IO String
@@ -279,12 +281,12 @@ toHittable :: M.Map String Int -> SceneObject -> SomeHittable
 toHittable nameToIdMap (SphereObj center radius sColor mname) =
   let matId = fromMaybe 0 (mname >>= (`M.lookup` nameToIdMap))
    in SomeHittable (S.Sphere center radius sColor matId)
-toHittable nameToIdMap (PlaneObj point normal pColor mname) =
+toHittable nameToIdMap (PlaneObj ppoint pnormal pColor mname) =
   let matId = fromMaybe 0 (mname >>= (`M.lookup` nameToIdMap))
-   in SomeHittable (P.Plane point normal pColor matId)
-toHittable nameToIdMap (TriangleObj v0 v1 v2 tColor mname) =
+   in SomeHittable (P.Plane ppoint pnormal pColor matId)
+toHittable nameToIdMap (TriangleObj tv0 tv1 tv2 tColor mname) =
   let matId = fromMaybe 0 (mname >>= (`M.lookup` nameToIdMap))
-   in SomeHittable (T.Triangle v0 v1 v2 tColor matId)
+   in SomeHittable (T.Triangle tv0 tv1 tv2 tColor matId)
 
 getBackgroundColor :: R.Ray -> BackgroundSettings -> Col.Color
 getBackgroundColor ray (Gradient c1 c2) =
