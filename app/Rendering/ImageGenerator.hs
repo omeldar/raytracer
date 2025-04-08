@@ -1,4 +1,5 @@
 {-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE NumericUnderscores #-}
 
 module Rendering.ImageGenerator
   ( -- types
@@ -23,10 +24,14 @@ import Config
     SceneObject (..),
     SceneSettings (..),
   )
+import Control.Concurrent (forkIO, threadDelay)
+import Control.Concurrent.Async (mapConcurrently)
+import Control.Monad (when)
 import qualified Control.Monad
 import Core.Ray as R (Ray (..), direction, origin)
 import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, sub, vLength, x, y, z)
-import Data.List (foldl', isPrefixOf)
+import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
+import Data.List (foldl', isPrefixOf, sortOn)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Typeable (cast)
@@ -43,9 +48,9 @@ import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)
 import Rendering.Material (Material (..), defaultMaterial)
-import System.Directory (createDirectoryIfMissing, doesFileExist)
+import System.Directory (doesFileExist)
 import System.FilePath (takeDirectory, (</>))
-import System.IO (BufferMode (BlockBuffering), Handle, IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
+import System.IO (BufferMode (BlockBuffering), IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (clamp, randomDouble)
 import Utils.Interval (Interval (..))
 import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateMessage, updateProgress)
@@ -59,24 +64,53 @@ type Image = [Row]
 
 createPPM :: Config -> FilePath -> IO ()
 createPPM config filename = do
-  let outputDir = "out/"
-  createDirectoryIfMissing True outputDir
+  let imgW = width (image config)
+      imgH = height (image config)
 
-  (world, materialMap) <- parseSceneObjects config
+  (bvh, materialMap) <- parseSceneObjects config
+  progressBar <- PB.newProgressBar imgH
+  progressCounter <- newIORef 0
 
+  -- Start progress monitor in background
+  let watchProgress = do
+        let loop = do
+              count <- readIORef progressCounter
+              PB.updateProgress progressBar count
+              PB.updateMessage progressBar ("Rendered rows: " ++ show count ++ "/" ++ show imgH)
+              when (count < imgH) $ do
+                threadDelay 200_000 -- every 200ms
+                loop
+        loop
+  _ <- forkIO watchProgress
+
+  -- Write header and rows
   withFile filename WriteMode $ \handle -> do
-    progressBar <- PB.newProgressBar (height (image config))
-    hSetBuffering handle (BlockBuffering (Just (1024 * 512))) -- Enable buffering
-    hPutStr handle ("P3\n" ++ show (width (image config)) ++ " " ++ show (height (image config)) ++ "\n255\n") -- Write header
-    mapM_ (processRow config progressBar handle world materialMap) [0 .. height (image config) - 1]
-    PB.updateMessage progressBar ("Rendering row " ++ show (height (image config)))
+    hSetBuffering handle (BlockBuffering (Just (1024 * 512)))
+    hPutStr handle ("P3\n" ++ show imgW ++ " " ++ show imgH ++ "\n255\n")
 
-processRow :: Config -> PB.ProgressBar -> Handle -> BVHNode -> M.Map Int Material -> Int -> IO ()
-processRow config progressBar handle world materialMap j = do
-  row <- mapM (\i -> pixelColor config world materialMap i (height (image config) - 1 - j)) [0 .. width (image config) - 1]
-  hPutStr handle (unlines (map showPixel row) ++ "\n")
-  PB.updateMessage progressBar ("Rendering row " ++ show (j + 1))
-  PB.updateProgress progressBar (j + 1)
+    rows <-
+      mapConcurrently
+        (renderRow config bvh materialMap imgW imgH progressCounter)
+        [0 .. imgH - 1]
+
+    let sortedRows = sortOn fst rows
+    mapM_ (hPutStr handle . snd) sortedRows
+
+renderRow ::
+  Config ->
+  BVHNode ->
+  M.Map Int Material ->
+  Int ->
+  Int ->
+  IORef Int ->
+  Int ->
+  IO (Int, String)
+renderRow config bvh materialMap imgW imgH progressCounter j = do
+  let rowIdx = imgH - 1 - j
+  pixels <- mapM (pixelColor config bvh materialMap `flip` rowIdx) [0 .. imgW - 1]
+  let !rowStr = unlines (map showPixel pixels)
+  modifyIORef' progressCounter (+ 1)
+  return (j, rowStr)
 
 pixelColor :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
 pixelColor config world materialMap i j = do
