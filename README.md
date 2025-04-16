@@ -88,9 +88,6 @@ Some of my favorites are:
 
 ### 🚀 Performance
 
-- **Support for Multithreading**  
-  Split scanlines or pixel blocks across threads using Haskell’s parallel strategies or `async`/`parMap`. Improve core utilization.
-
 - **Function Profiling and Optimization**  
   Use GHC’s profiler (`+RTS -p`) to identify hotspots. Refactor small bottleneck functions (e.g., `dot`, `normalize`, `hit` checks).
 
@@ -138,3 +135,6 @@ Some of my favorites are:
 
 - **Refractions (Glass-like Materials)**  
   Add support for transparent, refractive materials with configurable IOR (index of refraction).
+
+- **Support for Multithreading**  
+  Split scanlines or pixel blocks across threads using Haskell’s parallel strategies or `async`/`parMap`. Improve core utilization.
