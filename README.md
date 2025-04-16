@@ -7,15 +7,17 @@ A raytracer built in Haskell.
 Run the raytracer with:
 
 ```bash
-cabal run raytracer <config-file.json>
+cabal run raytracer <config-file.json> +RTS -N24 -qg -A64M -T -RTS
 ```
+
+But CAUTION! You might want to adjust the hardware parameters for multithreading depending on your system's HW.
 
 The config file lets you customize:
 
 - Resolution & sampling
 - Camera & scene setup
 - Lighting
-- Raytracer settings (e.g. BVH, Russian Roulette)
+- Raytracer settings (e.g. BVH)
 
 ## 📚 Chapters
 
