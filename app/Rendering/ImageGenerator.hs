@@ -12,26 +12,32 @@ module Rendering.ImageGenerator
 where
 
 import Config
-  ( AdaptiveMethod (..),
-    BackgroundSettings (..),
+  ( BackgroundSettings (..),
     CameraSettings (..),
     Config (..),
     ImageSettings (..),
     LightSettings (..),
     ObjFileEntry (..),
     RaytracerSettings (..),
-    RussianRouletteSettings (..),
     SceneObject (..),
     SceneSettings (..),
   )
-import Control.Concurrent (forkIO, threadDelay)
-import Control.Concurrent.Async (mapConcurrently)
-import Control.Monad (when)
+import Control.Concurrent (forkIO, newEmptyMVar, putMVar, takeMVar, threadDelay)
+import Control.Concurrent.MVar (MVar)
+import Control.Concurrent.STM
+  ( atomically,
+    newTQueue,
+    tryReadTQueue,
+    writeTQueue,
+  )
+import Control.Concurrent.STM.TQueue (TQueue)
+import Control.Monad (forM_, replicateM_, when)
 import qualified Control.Monad
 import Core.Ray as R (Ray (..), direction, origin)
 import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, sub, vLength, x, y, z)
+import Data.Array.IO (IOArray, newArray_, readArray, writeArray)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
-import Data.List (foldl', isPrefixOf, sortOn)
+import Data.List (foldl', isPrefixOf)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Data.Typeable (cast)
@@ -53,7 +59,7 @@ import System.FilePath (takeDirectory, (</>))
 import System.IO (BufferMode (BlockBuffering), IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
 import Utils.Constants (clamp, randomDouble)
 import Utils.Interval (Interval (..))
-import Utils.ProgressBar as PB (ProgressBar, newProgressBar, updateMessage, updateProgress)
+import Utils.ProgressBar as PB (newProgressBar, updateMessage, updateProgress)
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
@@ -66,45 +72,50 @@ createPPM :: Config -> FilePath -> IO ()
 createPPM config filename = do
   let imgW = width (image config)
       imgH = height (image config)
+      numWorkers = 24
 
   (bvh, materialMap) <- parseSceneObjects config
   progressBar <- PB.newProgressBar imgH
   progressCounter <- newIORef 0
 
-  -- Start progress monitor in background
-  let watchProgress = do
-        let loop = do
-              count <- readIORef progressCounter
-              PB.updateProgress progressBar count
-              PB.updateMessage progressBar ("Rendered rows: " ++ show count ++ "/" ++ show imgH)
-              when (count < imgH) $ do
-                threadDelay 200_000 -- every 200ms
-                loop
-        loop
-  _ <- forkIO watchProgress
+  rowQueue <- atomically newTQueue
+  resultArray <- newArray_ (0, imgH - 1) :: IO (IOArray Int String)
 
-  -- Write header and rows
+  mapM_ (atomically . writeTQueue rowQueue) [0 .. imgH - 1]
+
+  _ <-
+    forkIO $
+      let loop = do
+            count <- readIORef progressCounter
+            PB.updateProgress progressBar count
+            PB.updateMessage progressBar ("Rendered rows: " ++ show count ++ "/" ++ show imgH)
+            when (count < imgH) $ threadDelay 200_000 >> loop
+       in loop
+
+  doneSignal <- newEmptyMVar
+  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap imgW imgH progressCounter doneSignal
+  replicateM_ numWorkers (takeMVar doneSignal)
+
   withFile filename WriteMode $ \handle -> do
     hSetBuffering handle (BlockBuffering (Just (1024 * 512)))
     hPutStr handle ("P3\n" ++ show imgW ++ " " ++ show imgH ++ "\n255\n")
+    forM_ [0 .. imgH - 1] $ \j -> do
+      str <- readArray resultArray j
+      hPutStr handle str
 
-    rows <-
-      mapConcurrently
-        (renderRow config bvh materialMap imgW imgH progressCounter)
-        [0 .. imgH - 1]
+worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> MVar () -> IO ()
+worker queue resultArray config bvh matMap imgW imgH counter doneSignal = do
+  let loop = do
+        mRow <- atomically $ tryReadTQueue queue
+        case mRow of
+          Nothing -> putMVar doneSignal ()
+          Just j -> do
+            row <- renderRow config bvh matMap imgW imgH counter j
+            writeArray resultArray j (snd row)
+            loop
+  loop
 
-    let sortedRows = sortOn fst rows
-    mapM_ (hPutStr handle . snd) sortedRows
-
-renderRow ::
-  Config ->
-  BVHNode ->
-  M.Map Int Material ->
-  Int ->
-  Int ->
-  IORef Int ->
-  Int ->
-  IO (Int, String)
+renderRow :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
 renderRow config bvh materialMap imgW imgH progressCounter j = do
   let rowIdx = imgH - 1 - j
   pixels <- mapM (pixelColor config bvh materialMap `flip` rowIdx) [0 .. imgW - 1]
@@ -203,28 +214,14 @@ traceRay config bvh materialMap ray depth
           let litColor = V.mul directLight surfaceColor
               clampedLight = Vec3 (clamp (x litColor) 0 1) (clamp (y litColor) 0 1) (clamp (z litColor) 0 1)
 
-          -- Russian Roulette
-          let rr = russianRoulette (raytracer config)
-              baseProb = probability rr
-              adaptiveProb = case adaptiveMethod rr of
-                Linear -> min 1.0 (baseProb * fromIntegral depth / adaptivityFactor rr)
-                Exponential -> min 1.0 (1.0 - exp (-fromIntegral depth / adaptivityFactor rr))
-                Sqrt -> min 1.0 (baseProb * sqrt (fromIntegral depth / adaptivityFactor rr))
-          terminate <-
-            if enabled rr && depth > 5
-              then (< adaptiveProb) <$> randomDouble
-              else return False
+          bounceColor <- case scatterResult of
+            Right scattered -> traceRay config bvh materialMap scattered (depth - 1)
+            Left blended -> return blended
 
-          if terminate
-            then return (V.add emitted clampedLight)
-            else do
-              bounceColor <- case scatterResult of
-                Right scattered -> traceRay config bvh materialMap scattered (depth - 1)
-                Left blended -> return blended
-              let finalColor = case scatterResult of
-                    Right _ -> V.add (V.scale 0.5 (V.mul surfaceColor bounceColor)) clampedLight
-                    Left _ -> V.add bounceColor clampedLight
-              return (V.add finalColor emitted)
+          let finalColor = case scatterResult of
+                Right _ -> V.add (V.scale 0.5 (V.mul surfaceColor bounceColor)) clampedLight
+                Left _ -> V.add bounceColor clampedLight
+          return (V.add finalColor emitted)
         Nothing -> return $ getBackgroundColor ray (background config)
 
 -- Schlick approximation for reflectivity

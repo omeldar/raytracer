@@ -3,12 +3,12 @@ module Hittable.BVH where
 import Core.Vec3 (Vec3 (..), x, y, z)
 import qualified Core.Vec3 as V
 import qualified Data.List as List
-import Hittable.BoundingBox (AABB (..), surroundingBox)
+import Hittable.BoundingBox (AABB (..), hitAABB, surroundingBox)
 import Hittable.Class (Hittable (..))
 import Hittable.Helpers (getBox)
 import Hittable.HittableList (SomeHittable (..))
 import Utils.Constants
-import Utils.HitHelpers (closestHit)
+import Utils.HitHelpers (closestHitList)
 
 -- | A node in the Bounding Volume Hierarchy
 data BVHNode
@@ -79,13 +79,16 @@ surroundingBoxList _ [] = error "Cannot compute bounding box of empty list"
 surroundingBoxList getBoxFn (bx : xs) = foldr (surroundingBox . getBoxFn) (getBoxFn bx) xs
 
 instance Hittable BVHNode where
-  hit (BVHLeaf objs _) ray interval = foldr combineHits Nothing objs
-    where
-      combineHits (SomeHittable o) = closestHit (hit o ray interval)
+  hit (BVHLeaf objs _) ray interval =
+    closestHitList (map (\(SomeHittable o) -> hit o ray interval) objs)
   hit (BVHInternal left right _) ray interval =
-    let hitLeft = hit left ray interval
-        hitRight = hit right ray interval
-     in closestHit hitLeft hitRight
+    let hitLeftBox = hitAABB (boundingBox left) ray interval
+        hitRightBox = hitAABB (boundingBox right) ray interval
+     in case (hitLeftBox, hitRightBox) of
+          (True, True) -> closestHitList [hit left ray interval, hit right ray interval]
+          (True, False) -> hit left ray interval
+          (False, True) -> hit right ray interval
+          (False, False) -> Nothing
 
   boundingBox (BVHLeaf _ box) = box
   boundingBox (BVHInternal _ _ box) = box

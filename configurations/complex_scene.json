@@ -1,8 +1,8 @@
 {
     "image": {
-        "width": 32,
-        "height": 18,
-        "samplesPerPixel": 10,
+        "width": 1920,
+        "height": 1080,
+        "samplesPerPixel": 50,
         "antialiasing": true
     },
     "background": {
@@ -32,17 +32,12 @@
     },
     "scene": {
         "materials": [
-            ["glass", { "diffuseColor": [0.9, 0.95, 1.0], "ior": 2.4 }],
-            ["metal", { "diffuseColor": [0.7, 0.6, 0.5], "shininess": 100 }]
         ],
         "lights": [
-            { "tag": "PointLight", "position": [-7, 0.9, 10], "intensity": [0.5, 0.5, 0.5] }
-        ],
-        "objects": [
-            { "type": "sphere", "center": [0, 0, -1], "radius": 0.5, "material": "glass" }
+            { "tag": "PointLight", "position": [-7, 0.9, 10], "intensity": [0.7, 0.7, 0.7] }
         ],
         "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/wmaterial.obj", "objposition": [0, 0, 0] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/wmaterial.obj", "objposition": [0, -1.2, -3] }
         ]
     }
 }
