@@ -3,7 +3,6 @@ module Hittable.Class where
 import Core.Ray
 import Core.Vec3
 import Hittable.BoundingBox (AABB)
-import Rendering.Material
 import Utils.Interval (Interval)
 
 data HitRecord = HitRecord
@@ -12,7 +11,7 @@ data HitRecord = HitRecord
     t :: Double,
     frontFace :: Bool,
     color :: Vec3,
-    material :: MaterialType
+    materialId :: Int
   }
   deriving (Show)
 

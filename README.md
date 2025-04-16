@@ -7,15 +7,17 @@ A raytracer built in Haskell.
 Run the raytracer with:
 
 ```bash
-cabal run raytracer <config-file.json>
+cabal run raytracer <config-file.json> +RTS -N24 -qg -A64M -T -RTS
 ```
+
+But CAUTION! You might want to adjust the hardware parameters for multithreading depending on your system's HW.
 
 The config file lets you customize:
 
 - Resolution & sampling
 - Camera & scene setup
 - Lighting
-- Raytracer settings (e.g. BVH, Russian Roulette)
+- Raytracer settings (e.g. BVH)
 
 ## 📚 Chapters
 
@@ -86,9 +88,6 @@ Some of my favorites are:
 
 ### 🚀 Performance
 
-- **Support for Multithreading**  
-  Split scanlines or pixel blocks across threads using Haskell’s parallel strategies or `async`/`parMap`. Improve core utilization.
-
 - **Function Profiling and Optimization**  
   Use GHC’s profiler (`+RTS -p`) to identify hotspots. Refactor small bottleneck functions (e.g., `dot`, `normalize`, `hit` checks).
 
@@ -136,3 +135,6 @@ Some of my favorites are:
 
 - **Refractions (Glass-like Materials)**  
   Add support for transparent, refractive materials with configurable IOR (index of refraction).
+
+- **Support for Multithreading**  
+  Split scanlines or pixel blocks across threads using Haskell’s parallel strategies or `async`/`parMap`. Improve core utilization.
