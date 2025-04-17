@@ -1,0 +1,70 @@
+{
+    "image": {
+      "width": 1280,
+      "height": 720,
+      "samplesPerPixel": 35,
+      "antialiasing": true
+    },
+    "background": {
+      "tag": "Gradient",
+      "color1": [1.0, 1.0, 1.0],
+      "color2": [0.5, 0.7, 1.0]
+    },
+    "camera": {
+      "lookFrom": [0, 0.8, 2],
+      "lookAt": [0, -0.5, -1],
+      "vUp": [0, 1, 0],
+      "vfov": 20.0,
+      "aperture": 0.0,
+      "focusDist": 3.0
+    },
+    "raytracer": {
+      "maxBounces": 5,
+      "useBVH": true,
+      "bvhMaxDepth": 16,
+      "russianRoulette": {
+        "enabled": false,
+        "probability": 0.05,
+        "adaptive": true,
+        "adaptivityFactor": 2,
+        "adaptiveMethod": "sqrt"
+      }
+    },
+    "scene": {
+      "materials": [
+      [
+        "lambert",
+        {
+          "diffuseColor": [0.8, 0.3, 0.3]
+        }
+      ],
+      [
+        "metal",
+        {
+          "diffuseColor": [0.95, 0.95, 0.95],
+          "specularColor": [1.0, 1.0, 1.0],
+          "shininess": 400
+        }
+      ],
+      [
+        "glass",
+        {
+          "diffuseColor": [1.0, 1.0, 1.0],
+          "ior": 1.5,
+          "shininess": 0
+        }
+      ]
+    ],
+      "lights": [
+        {
+          "tag": "PointLight",
+          "position": [-7, 0.9, 10],
+          "intensity": [0.8, 0.8, 0.8]
+        }
+      ],
+      "objFiles": [
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/ball-in-grass.obj", "objposition": [0, -1.2, -2.2] }
+        ]
+    }
+  }
+  

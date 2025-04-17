@@ -1,49 +1,97 @@
 {
-  "image": {
-      "width": 640,
-      "height": 360,
-      "samplesPerPixel": 10,
+    "image": {
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 50,
       "antialiasing": true
-  },
-  "background": {
+    },
+    "background": {
       "tag": "Gradient",
       "color1": [1.0, 1.0, 1.0],
       "color2": [0.5, 0.7, 1.0]
-  },
-  "camera": {
-      "lookFrom": [0, 0, 2],
+    },
+    "camera": {
+      "lookFrom": [0, 0.5, 2],
       "lookAt": [0, 0.0, -1],
       "vUp": [0, 1, 0],
-      "vfov": 21.0,
+      "vfov": 35.0,
       "aperture": 0.0,
       "focusDist": 3.0
-  },
-  "raytracer": {
+    },
+    "raytracer": {
       "maxBounces": 5,
       "useBVH": true,
-      "bvhMaxDepth" : 10,
+      "bvhMaxDepth": 2,
       "russianRoulette": {
-          "enabled": false,
-          "probability": 0.05,
-          "adaptive": true,
-          "adaptivityFactor": 2,
-          "adaptiveMethod": "sqrt"
+        "enabled": false,
+        "probability": 0.05,
+        "adaptive": true,
+        "adaptivityFactor": 2,
+        "adaptiveMethod": "sqrt"
       }
-  },
-  "lights": [
-      {
-          "tag": "PointLight",
-          "position": [-7, 10, 5],
-          "intensity": [0.35, 0.35, 0.35]
-      }
-  ],
-  "scene": {
-      "objects": [
-        { "type": "sphere", "center": [0, 0, -5], "radius": 0.5, "color": [1.0, 1.0, 1.0], "material": { "type": "metal", "fuzz": 0.01 } },
-        { "type": "sphere", "center": [0.3, -0.3, -2.5], "radius": 0.2, "color": [0.9, 1.0, 1.0], "material": { "type": "dielectric", "refIdx": 2.4 } },
-        { "type": "sphere", "center": [0.2, -0.35, -4], "radius": 0.15, "color": [1.0, 0.1, 1.0], "material": { "type": "lambertian" } },
-        { "type": "sphere", "center": [-0.5, -0.25, -4], "radius": 0.25, "color": [1.0, 0.2, 0.2], "material": { "type": "lambertian" } },
-        { "type": "plane", "pointOnPlane": [0, -0.5, 0], "normal": [0, 1, 0], "color": [0.95, 0.95, 0.95], "material": { "type": "lambertian" } }
+    },
+    "scene": {
+      "materials": [
+      [
+        "lambert",
+        {
+          "diffuseColor": [0.8, 0.3, 0.3]
+        }
+      ],
+      [
+        "metal",
+        {
+          "diffuseColor": [0.95, 0.95, 0.95],
+          "specularColor": [1.0, 1.0, 1.0],
+          "shininess": 400
+        }
+      ],
+      [
+        "glass",
+        {
+          "diffuseColor": [1.0, 1.0, 1.0],
+          "ior": 1.5,
+          "shininess": 0
+        }
       ]
-    }      
-}
+    ],
+      "lights": [
+        {
+          "tag": "PointLight",
+          "position": [-7, 0.9, 10],
+          "intensity": [0.8, 0.8, 0.8]
+        }
+      ],
+      "objects": [
+        {
+          "type": "sphere",
+          "center": [-0.6, -0.3, -2],
+          "radius": 0.3,
+          "color": [0.9, 0.2, 0.2],
+          "material": "lambert"
+        },
+        {
+          "type": "sphere",
+          "center": [0.0, -0.3, -2],
+          "radius": 0.3,
+          "color": [0.95, 0.95, 0.95],
+          "material": "metal"
+        },
+        {
+          "type": "sphere",
+          "center": [0.6, -0.3, -2],
+          "radius": 0.3,
+          "color": [0.95, 1.0, 1.0],
+          "material": "glass"
+        },
+        {
+          "type": "plane",
+          "pointOnPlane": [0, -0.6, 0],
+          "normal": [0, 1, 0],
+          "color": [0.97, 0.97, 0.97],
+          "material": "lambert"
+        }
+      ]
+    }
+  }
+  

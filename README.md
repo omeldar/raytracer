@@ -81,6 +81,9 @@ Some of my favorites are:
 - **Light Intensity Control**  
   Clamp or scale light intensity per light source to avoid overexposed surfaces (e.g., fully white patches).
 
+- **Distance-based lighting**  
+  Light should take less effect when its further away.
+
 ### 🔷 Geometry & Shading
 
 - **Smooth Shading for Triangles**  
@@ -93,6 +96,7 @@ Some of my favorites are:
 
 - **Memoization of Expensive Calculations**  
   Cache repeated computations like material scattering, vector math, or normalized directions.
+  Anti-Aliasing can be improved as well by caching pixels in active computation areas (careful because of RAM).
 
 - **Adaptive Sampling Improvements**  
   Adjust per-pixel sample count based on variance in early samples to save render time.
