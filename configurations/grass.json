@@ -1,8 +1,8 @@
 {
     "image": {
-      "width": 1280,
-      "height": 720,
-      "samplesPerPixel": 35,
+      "width": 160,
+      "height": 90,
+      "samplesPerPixel": 20,
       "antialiasing": true
     },
     "background": {
@@ -63,7 +63,7 @@
         }
       ],
       "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/ball-in-grass.obj", "objposition": [0, -1.2, -2.2] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/ball-in-grass2.obj", "objposition": [0, -1.2, -2.2] }
         ]
     }
   }

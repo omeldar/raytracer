@@ -31,8 +31,7 @@ import Control.Concurrent.STM
     writeTQueue,
   )
 import Control.Concurrent.STM.TQueue (TQueue)
-import Control.Monad (forM_, replicateM_, when)
-import qualified Control.Monad
+import Control.Monad (forM, forM_, replicateM, replicateM_, when, (>=>))
 import Core.Ray as R (Ray (..), direction, origin)
 import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, sub, vLength, x, y, z)
 import Data.Array.IO (IOArray, newArray_, readArray, writeArray)
@@ -50,7 +49,7 @@ import Hittable.Objects.Triangle as T (Triangle (..))
 import Parser.Material (assignMaterialIds)
 import qualified Parser.Material as PM
 import Parser.Object (loadObjWithOffset)
-import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
+import qualified Rendering.Camera as Cam (Camera (..), defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)
 import Rendering.Material (Material (..), defaultMaterial)
@@ -68,90 +67,83 @@ type Row = [Pixel]
 
 type Image = [Row]
 
+type JitterTable = [[[(Double, Double)]]]
+
 createPPM :: Config -> FilePath -> IO ()
 createPPM config filename = do
   let imgW = width (image config)
       imgH = height (image config)
+      spp = samplesPerPixel (image config)
       numWorkers = 24
 
   (bvh, materialMap) <- parseSceneObjects config
   progressBar <- PB.newProgressBar imgH
   progressCounter <- newIORef 0
 
+  let camSettings = camera config
+      aspectRatio = fromIntegral imgW / fromIntegral imgH
+      cam = Cam.defaultCamera (lookFrom camSettings) (lookAt camSettings) (vUp camSettings) (vfov camSettings) aspectRatio (aperture camSettings) (focusDist camSettings)
+
+  jitterTable <- generateJitterTable imgW imgH spp
+
   rowQueue <- atomically newTQueue
   resultArray <- newArray_ (0, imgH - 1) :: IO (IOArray Int String)
-
   mapM_ (atomically . writeTQueue rowQueue) [0 .. imgH - 1]
 
-  _ <-
-    forkIO $
-      let loop = do
-            count <- readIORef progressCounter
-            PB.updateProgress progressBar count
-            PB.updateMessage progressBar ("Rendered rows: " ++ show count ++ "/" ++ show imgH)
-            when (count < imgH) $ threadDelay 200_000 >> loop
-       in loop
+  _ <- forkIO $ do
+    let loop = do
+          count <- readIORef progressCounter
+          PB.updateProgress progressBar count
+          PB.updateMessage progressBar ("Rendered rows: " ++ show count ++ "/" ++ show imgH)
+          when (count < imgH) $ threadDelay 200_000 >> loop
+    loop
 
   doneSignal <- newEmptyMVar
-  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap imgW imgH progressCounter doneSignal
+  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config cam jitterTable bvh materialMap imgW imgH progressCounter doneSignal
   replicateM_ numWorkers (takeMVar doneSignal)
 
   withFile filename WriteMode $ \handle -> do
     hSetBuffering handle (BlockBuffering (Just (1024 * 512)))
     hPutStr handle ("P3\n" ++ show imgW ++ " " ++ show imgH ++ "\n255\n")
-    forM_ [0 .. imgH - 1] $ \j -> do
-      str <- readArray resultArray j
-      hPutStr handle str
+    forM_ [0 .. imgH - 1] (readArray resultArray Control.Monad.>=> hPutStr handle)
 
-worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> MVar () -> IO ()
-worker queue resultArray config bvh matMap imgW imgH counter doneSignal = do
+worker :: TQueue Int -> IOArray Int String -> Config -> Cam.Camera -> JitterTable -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> MVar () -> IO ()
+worker queue resultArray config cam jitTable bvh matMap imgW imgH counter doneSignal = do
   let loop = do
         mRow <- atomically $ tryReadTQueue queue
         case mRow of
           Nothing -> putMVar doneSignal ()
           Just j -> do
-            row <- renderRow config bvh matMap imgW imgH counter j
-            writeArray resultArray j (snd row)
+            rowStr <- renderRow config cam (jitTable !! j) bvh matMap imgW imgH counter j
+            writeArray resultArray j rowStr
             loop
   loop
 
-renderRow :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
-renderRow config bvh materialMap imgW imgH progressCounter j = do
+renderRow :: Config -> Cam.Camera -> [[(Double, Double)]] -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> Int -> IO String
+renderRow config cam pixelOffsets world matMap imgW imgH counter j = do
   let rowIdx = imgH - 1 - j
-  pixels <- mapM (pixelColor config bvh materialMap `flip` rowIdx) [0 .. imgW - 1]
-  let !rowStr = unlines (map showPixel pixels)
-  modifyIORef' progressCounter (+ 1)
-  return (j, rowStr)
+  rowPixels <- mapM (\i -> pixelColor config cam (pixelOffsets !! i) world matMap i rowIdx) [0 .. imgW - 1]
+  modifyIORef' counter (+ 1)
+  return $ unlines (map showPixel rowPixels)
 
-pixelColor :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
-pixelColor config world materialMap i j = do
-  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap i j)
-  let !avg = averageColor sampledColors
-  return avg
+pixelColor :: Config -> Cam.Camera -> [(Double, Double)] -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
+pixelColor config cam offsets world matMap i j = do
+  colors <- mapM (\(u, v) -> samplePixel config cam u v world matMap i j) offsets
+  return $ averageColor colors
 
-samplePixel :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
-samplePixel config world materialMap i j = do
-  uOffset <- if antialiasing (image config) then randomDouble else return 0.5
-  vOffset <- if antialiasing (image config) then randomDouble else return 0.5
-  let cameraObj =
-        Cam.defaultCamera
-          (lookFrom (camera config))
-          (lookAt (camera config))
-          (vUp (camera config))
-          (vfov (camera config))
-          (fromIntegral (width (image config)) / fromIntegral (height (image config)))
-          (aperture (camera config))
-          (focusDist (camera config))
-  ray <- Cam.generateRay cameraObj i j (width (image config)) (height (image config)) uOffset vOffset
-  traceRay config world materialMap ray (maxBounces (raytracer config))
+samplePixel :: Config -> Cam.Camera -> Double -> Double -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
+samplePixel config cam u v world matMap i j = do
+  ray <- Cam.generateRay cam i j (width $ image config) (height $ image config) u v
+  traceRay config world matMap ray (maxBounces $ raytracer config)
 
-showPixel :: Pixel -> String
-showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
+averageColor :: [Col.Color] -> Col.Color
+averageColor cs = let !sumColor = foldl' V.add (Vec3 0 0 0) cs in V.scale (1 / fromIntegral (length cs)) sumColor
 
-averageColor :: [Color] -> Color
-averageColor colors =
-  let !colsum = foldl' add (V.Vec3 0 0 0) colors
-   in V.scale (1.0 / fromIntegral (length colors)) colsum
+showPixel :: V.Vec3 -> String
+showPixel (Vec3 r g b) = unwords $ map (show . floor . (* 255.999)) [r, g, b]
+
+generateJitterTable :: Int -> Int -> Int -> IO JitterTable
+generateJitterTable w h spp = forM [0 .. h - 1] $ \_ -> forM [0 .. w - 1] $ \_ -> replicateM spp ((,) <$> randomDouble <*> randomDouble)
 
 traceRay :: Config -> BVHNode -> M.Map Int Material -> R.Ray -> Int -> IO Col.Color
 traceRay config bvh materialMap ray depth
