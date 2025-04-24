@@ -154,75 +154,71 @@ averageColor colors =
    in V.scale (1.0 / fromIntegral (length colors)) colsum
 
 traceRay :: Config -> BVHNode -> M.Map Int Material -> R.Ray -> Int -> IO Col.Color
-traceRay config bvh materialMap ray depth
-  | depth <= 0 = return (Vec3 0 0 0)
-  | otherwise = do
+traceRay config bvh materialMap ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 1 1)
+  where
+    -- Pre-convert all lights from config
+    sceneLights :: [L.Light]
+    sceneLights = maybe [] (map convertLight) (lights (scene config))
+
+    -- Main ray tracing loop with attenuation
+    traceLoop :: R.Ray -> Int -> Col.Color -> IO Col.Color
+    traceLoop ray 0 attenuation =
+      return $ attenuation `mul` backgroundColorFunc (background config) ray
+    traceLoop ray depth attenuation = do
       let interval = Interval 0.001 100
-          hitResult = H.hit bvh ray interval
-
-      case hitResult of
-        Just hitRecord -> do
-          let matId = H.materialId hitRecord
+      case H.hit bvh ray interval of
+        Nothing ->
+          return $ attenuation `mul` backgroundColorFunc (background config) ray
+        Just rec -> do
+          let matId = H.materialId rec
               mat = fromMaybe defaultMaterial (M.lookup matId materialMap)
+              emitted = fromMaybe (Vec3 0 0 0) (emissionColor mat)
               surfaceColor = diffuseColor mat
-              p = H.point hitRecord
-              n = H.normal hitRecord
-              dir = R.direction ray
-              unitDir = V.normalize dir
-              cosTheta = min 1.0 (V.dot (V.negateV unitDir) n)
-              sceneLights = maybe [] (map convertLight) (lights (scene config))
+              normalVec = H.normal rec
+              unitDir = V.normalize (R.direction ray)
+              hitPoint = H.point rec
 
-          -- Compute emission (if any)
-          let emitted = fromMaybe (Vec3 0 0 0) (emissionColor mat)
+          -- Compute direct lighting contribution
+          directLight <- L.computeLighting rec sceneLights bvh
+          let litColor = V.mul directLight surfaceColor
+              clampedLight =
+                Vec3
+                  (clamp (x litColor) 0 1)
+                  (clamp (y litColor) 0 1)
+                  (clamp (z litColor) 0 1)
 
           -- Decide scattering behavior
-          scatterResult <-
-            case ior mat of
-              Just refIdx -> do
-                let reflectDir = V.reflect unitDir n
-                    refractDir = V.refract unitDir n (1 / refIdx)
-                    reflectRay = R.Ray p reflectDir
-                    refractRay = R.Ray p refractDir
-                    rProb = schlick cosTheta refIdx
-                reflectCol <- traceRay config bvh materialMap reflectRay (depth - 1)
-                refractCol <- do
-                  raw <- traceRay config bvh materialMap refractRay (depth - 1)
-                  let absorption = Vec3 0.02 0.02 0.02
-                      dist = V.vLength (V.sub p (R.origin ray))
-                      atten =
-                        Vec3
-                          (exp (-x absorption * dist))
-                          (exp (-y absorption * dist))
-                          (exp (-z absorption * dist))
-                  return (V.mul atten raw)
-                return $ Left (V.add (V.scale rProb reflectCol) (V.scale (1 - rProb) refractCol))
-              Nothing -> case shininess mat of
-                Just s | s > 100 -> do
-                  -- Metal-like
-                  rand <- V.randomInUnitSphere
-                  let reflected = V.reflect unitDir n
-                      fuzzed = V.add reflected (V.scale 0.05 rand)
-                  return $ Right (R.Ray p fuzzed)
-                _ -> do
-                  -- Lambertian
-                  rand <- V.randomInUnitSphere
-                  let scatterDir = V.add n rand
-                  return $ Right (R.Ray p scatterDir)
+          scatterRay <- case ior mat of
+            Just refIdx -> do
+              let cosTheta = min 1.0 (V.dot (V.negateV unitDir) normalVec)
+                  reflectDir = V.reflect unitDir normalVec
+                  refractDir = V.refract unitDir normalVec (1 / refIdx)
+                  rProb = schlick cosTheta refIdx
+                  blendedDir = V.add (V.scale rProb reflectDir) (V.scale (1 - rProb) refractDir)
+              return $ R.Ray hitPoint blendedDir
+            Nothing -> case shininess mat of
+              Just s | s > 100 -> do
+                rand <- V.randomInUnitSphere
+                let reflected = V.reflect unitDir normalVec
+                    fuzzed = V.add reflected (V.scale 0.05 rand)
+                return $ R.Ray hitPoint fuzzed
+              _ -> do
+                rand <- V.randomInUnitSphere
+                let scatterDir = V.add normalVec rand
+                return $ R.Ray hitPoint scatterDir
 
-          -- Direct lighting (optional)
-          directLight <- L.computeLighting hitRecord sceneLights bvh
-          let litColor = V.mul directLight surfaceColor
-              clampedLight = Vec3 (clamp (x litColor) 0 1) (clamp (y litColor) 0 1) (clamp (z litColor) 0 1)
+          let newAttenuation = attenuation `mul` surfaceColor
+          bounceColor <- traceLoop scatterRay (depth - 1) newAttenuation
 
-          bounceColor <- case scatterResult of
-            Right scattered -> traceRay config bvh materialMap scattered (depth - 1)
-            Left blended -> return blended
+          -- Combine everything: emission + lighting + scattered
+          return $ emitted `add` clampedLight `add` bounceColor
 
-          let finalColor = case scatterResult of
-                Right _ -> V.add (V.scale 0.5 (V.mul surfaceColor bounceColor)) clampedLight
-                Left _ -> V.add bounceColor clampedLight
-          return (V.add finalColor emitted)
-        Nothing -> return $ getBackgroundColor ray (background config)
+backgroundColorFunc :: BackgroundSettings -> R.Ray -> Col.Color
+backgroundColorFunc (SolidColor c) _ = c
+backgroundColorFunc (Gradient top bot) ray =
+  let unitDir = V.normalize (R.direction ray)
+      bgt = 0.5 * (y unitDir + 1.0)
+   in Col.lerp bgt bot top
 
 -- Schlick approximation for reflectivity
 schlick :: Double -> Double -> Double

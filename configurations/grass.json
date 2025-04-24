@@ -1,14 +1,13 @@
 {
     "image": {
-      "width": 1280,
-      "height": 720,
-      "samplesPerPixel": 35,
+      "width": 640,
+      "height": 360,
+      "samplesPerPixel": 5,
       "antialiasing": true
     },
     "background": {
-      "tag": "Gradient",
-      "color1": [1.0, 1.0, 1.0],
-      "color2": [0.5, 0.7, 1.0]
+      "tag": "SolidColor",
+      "color": [1.0, 0.0, 0.0]
     },
     "camera": {
       "lookFrom": [0, 0.8, 2],
@@ -63,7 +62,7 @@
         }
       ],
       "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/ball-in-grass.obj", "objposition": [0, -1.2, -2.2] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/ball-in-grass2.obj", "objposition": [0, -1.2, -2.2] }
         ]
     }
   }
