@@ -134,7 +134,8 @@ data SceneSettings = SceneSettings
   { objects :: Maybe [SceneObject],
     objFiles :: Maybe [ObjFileEntry],
     lights :: Maybe [LightSettings],
-    materials :: Maybe [(String, Material)]
+    materials :: Maybe [(String, Material)],
+    skyTexture :: Maybe FilePath
   }
   deriving (Show, Generic)
 
@@ -145,6 +146,7 @@ instance FromJSON SceneSettings where
       <*> v .:? "objFiles"
       <*> v .:? "lights"
       <*> v .:? "materials"
+      <*> v .:? "skyTexture"
 
 data Config = Config
   { image :: ImageSettings,

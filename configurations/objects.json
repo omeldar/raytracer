@@ -1,8 +1,8 @@
 {
     "image": {
-      "width": 1920,
-      "height": 1080,
-      "samplesPerPixel": 50,
+      "width": 640,
+      "height": 360,
+      "samplesPerPixel": 10,
       "antialiasing": true
     },
     "background": {
@@ -42,7 +42,8 @@
       ],
       "objFiles": [
             { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects2.obj", "objposition": [0, -2.5, 0] }
-        ]
+      ],
+      "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/sky1.hdr"
     }
   }
   

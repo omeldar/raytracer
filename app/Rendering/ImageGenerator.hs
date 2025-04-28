@@ -54,6 +54,7 @@ import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
 import qualified Rendering.Light as L (Light (..), computeLighting)
 import Rendering.Material (Material (..), defaultMaterial)
+import Rendering.SkySphere (SkySphere, loadSkySphere, sampleSkySphere)
 import System.Directory (doesFileExist)
 import System.FilePath (takeDirectory, (</>))
 import System.IO (BufferMode (BlockBuffering), IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
@@ -75,6 +76,11 @@ createPPM config filename = do
       numWorkers = 32
 
   (bvh, materialMap) <- parseSceneObjects config
+
+  skySphere <- case skyTexture (scene config) of
+    Just pathToTexture -> Just <$> loadSkySphere pathToTexture
+    Nothing -> return Nothing
+
   progressBar <- PB.newProgressBar imgH
   progressCounter <- newIORef 0
 
@@ -93,7 +99,7 @@ createPPM config filename = do
        in loop
 
   doneSignal <- newEmptyMVar
-  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap imgW imgH progressCounter doneSignal
+  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap skySphere imgW imgH progressCounter doneSignal
   replicateM_ numWorkers (takeMVar doneSignal)
 
   withFile filename WriteMode $ \handle -> do
@@ -103,34 +109,34 @@ createPPM config filename = do
       str <- readArray resultArray j
       hPutStr handle str
 
-worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> MVar () -> IO ()
-worker queue resultArray config bvh matMap imgW imgH counter doneSignal = do
+worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IORef Int -> MVar () -> IO ()
+worker queue resultArray config bvh matMap skySphere imgW imgH counter doneSignal = do
   let loop = do
         mRow <- atomically $ tryReadTQueue queue
         case mRow of
           Nothing -> putMVar doneSignal ()
           Just j -> do
-            row <- renderRow config bvh matMap imgW imgH counter j
+            row <- renderRow config bvh matMap skySphere imgW imgH counter j
             writeArray resultArray j (snd row)
             loop
   loop
 
-renderRow :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
-renderRow config bvh materialMap imgW imgH progressCounter j = do
+renderRow :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
+renderRow config bvh materialMap skySphere imgW imgH progressCounter j = do
   let rowIdx = imgH - 1 - j
-  pixels <- mapM (pixelColor config bvh materialMap `flip` rowIdx) [0 .. imgW - 1]
+  pixels <- mapM (pixelColor config bvh materialMap skySphere `flip` rowIdx) [0 .. imgW - 1]
   let !rowStr = unlines (map showPixel pixels)
   modifyIORef' progressCounter (+ 1)
   return (j, rowStr)
 
-pixelColor :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
-pixelColor config world materialMap i j = do
-  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap i j)
+pixelColor :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IO Col.Color
+pixelColor config world materialMap skySphere i j = do
+  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap skySphere i j)
   let !avg = averageColor sampledColors
   return avg
 
-samplePixel :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
-samplePixel config world materialMap i j = do
+samplePixel :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IO Col.Color
+samplePixel config world materialMap skySphere i j = do
   uOffset <- if antialiasing (image config) then randomDouble else return 0.5
   vOffset <- if antialiasing (image config) then randomDouble else return 0.5
   let cameraObj =
@@ -143,7 +149,7 @@ samplePixel config world materialMap i j = do
           (aperture (camera config))
           (focusDist (camera config))
   ray <- Cam.generateRay cameraObj i j (width (image config)) (height (image config)) uOffset vOffset
-  traceRay config world materialMap ray (maxBounces (raytracer config))
+  traceRay config world materialMap skySphere ray (maxBounces (raytracer config))
 
 showPixel :: Pixel -> String
 showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
@@ -153,8 +159,8 @@ averageColor colors =
   let !colsum = foldl' add (V.Vec3 0 0 0) colors
    in V.scale (1.0 / fromIntegral (length colors)) colsum
 
-traceRay :: Config -> BVHNode -> M.Map Int Material -> R.Ray -> Int -> IO Col.Color
-traceRay config bvh materialMap ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 1 1)
+traceRay :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> R.Ray -> Int -> IO Col.Color
+traceRay config bvh materialMap skySphere ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 1 1)
   where
     -- Pre-convert all lights from config
     sceneLights :: [L.Light]
@@ -163,12 +169,16 @@ traceRay config bvh materialMap ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 
     -- Main ray tracing loop with attenuation
     traceLoop :: R.Ray -> Int -> Col.Color -> IO Col.Color
     traceLoop ray 0 attenuation =
-      return $ attenuation `mul` backgroundColorFunc (background config) ray
+      case skySphere of
+        Just sky -> return $ attenuation `mul` sampleSkySphere sky (R.direction ray)
+        Nothing -> return $ attenuation `mul` backgroundColorFunc (background config) ray
     traceLoop ray depth attenuation = do
       let interval = Interval 0.001 100
       case H.hit bvh ray interval of
         Nothing ->
-          return $ attenuation `mul` backgroundColorFunc (background config) ray
+          case skySphere of
+            Just sky -> return $ attenuation `mul` sampleSkySphere sky (R.direction ray)
+            Nothing -> return $ attenuation `mul` backgroundColorFunc (background config) ray
         Just rec -> do
           let matId = H.materialId rec
               mat = fromMaybe defaultMaterial (M.lookup matId materialMap)
