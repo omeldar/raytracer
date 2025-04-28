@@ -33,8 +33,8 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.TQueue (TQueue)
 import Control.Monad (forM_, replicateM_, when)
 import qualified Control.Monad
-import Core.Ray as R (Ray (..), direction, origin)
-import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, sub, vLength, x, y, z)
+import Core.Ray as R (Ray (..), direction)
+import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, x, y, z)
 import Data.Array.IO (IOArray, newArray_, readArray, writeArray)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.List (foldl', isPrefixOf)
@@ -72,7 +72,7 @@ createPPM :: Config -> FilePath -> IO ()
 createPPM config filename = do
   let imgW = width (image config)
       imgH = height (image config)
-      numWorkers = 24
+      numWorkers = 32
 
   (bvh, materialMap) <- parseSceneObjects config
   progressBar <- PB.newProgressBar imgH
@@ -175,8 +175,9 @@ traceRay config bvh materialMap ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 
               emitted = fromMaybe (Vec3 0 0 0) (emissionColor mat)
               surfaceColor = diffuseColor mat
               normalVec = H.normal rec
-              unitDir = V.normalize (R.direction ray)
               hitPoint = H.point rec
+              unitDir = V.normalize (R.direction ray)
+              cosTheta = min 1.0 (V.dot (V.negateV unitDir) normalVec)
 
           -- Compute direct lighting contribution
           directLight <- L.computeLighting rec sceneLights bvh
@@ -188,29 +189,42 @@ traceRay config bvh materialMap ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 
                   (clamp (z litColor) 0 1)
 
           -- Decide scattering behavior
-          scatterRay <- case ior mat of
-            Just refIdx -> do
-              let cosTheta = min 1.0 (V.dot (V.negateV unitDir) normalVec)
-                  reflectDir = V.reflect unitDir normalVec
-                  refractDir = V.refract unitDir normalVec (1 / refIdx)
-                  rProb = schlick cosTheta refIdx
-                  blendedDir = V.add (V.scale rProb reflectDir) (V.scale (1 - rProb) refractDir)
-              return $ R.Ray hitPoint blendedDir
-            Nothing -> case shininess mat of
-              Just s | s > 100 -> do
-                rand <- V.randomInUnitSphere
-                let reflected = V.reflect unitDir normalVec
-                    fuzzed = V.add reflected (V.scale 0.05 rand)
-                return $ R.Ray hitPoint fuzzed
-              _ -> do
-                rand <- V.randomInUnitSphere
-                let scatterDir = V.add normalVec rand
-                return $ R.Ray hitPoint scatterDir
+          scatterResult <-
+            case (ior mat, dissolve mat) of
+              (Just refIdx, Just d) | refIdx > 1.1 && d < 1.0 -> -- Refract only if transparent
+                do
+                  let reflectDir = V.reflect unitDir normalVec
+                      refractDir = V.refract unitDir normalVec (1.0 / refIdx)
+                      reflectRay = R.Ray hitPoint reflectDir
+                      refractRay = R.Ray hitPoint refractDir
+                  let rProb = schlick cosTheta refIdx
+                  reflectCol <- traceLoop reflectRay (depth - 1) attenuation
+                  refractCol <- traceLoop refractRay (depth - 1) attenuation
+                  let blended = V.add (V.scale rProb reflectCol) (V.scale (1.0 - rProb) refractCol)
+                  return $ Left blended
+              _ ->
+                case shininess mat of
+                  Just s | s > 100 -> do
+                    -- Metal mirror
+                    rand <- V.randomInUnitSphere
+                    let reflected = V.reflect unitDir normalVec
+                        fuzzed = V.add reflected (V.scale 0.05 rand)
+                        scattered = R.Ray hitPoint fuzzed
+                    return $ Right scattered
+                  _ -> do
+                    -- Pure diffuse
+                    rand <- V.randomInUnitSphere
+                    let scatterDir = V.add normalVec rand
+                        scattered = R.Ray hitPoint scatterDir
+                    return $ Right scattered
 
           let newAttenuation = attenuation `mul` surfaceColor
-          bounceColor <- traceLoop scatterRay (depth - 1) newAttenuation
 
-          -- Combine everything: emission + lighting + scattered
+          bounceColor <- case scatterResult of
+            Left blended -> return blended
+            Right scatterRay -> traceLoop scatterRay (depth - 1) newAttenuation
+
+          -- Combine: emission + lighting + scattered
           return $ emitted `add` clampedLight `add` bounceColor
 
 backgroundColorFunc :: BackgroundSettings -> R.Ray -> Col.Color

@@ -1,8 +1,8 @@
 {
     "image": {
-      "width": 640,
-      "height": 360,
-      "samplesPerPixel": 10,
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 50,
       "antialiasing": true
     },
     "background": {
@@ -11,10 +11,10 @@
       "color2": [0.5, 0.7, 1.0]
     },
     "camera": {
-      "lookFrom": [0, 0.8, 2],
-      "lookAt": [0, -0.2, -1],
+      "lookFrom": [8, 1, 0],
+      "lookAt": [0, 0, 0],
       "vUp": [0, 1, 0],
-      "vfov": 40.0,
+      "vfov": 90.0,
       "aperture": 0.0,
       "focusDist": 3.0
     },
@@ -36,12 +36,12 @@
       "lights": [
         {
           "tag": "PointLight",
-          "position": [-7, 0.9, 10],
-          "intensity": [0.8, 0.8, 0.8]
+          "position": [20, 1.5, 20],
+          "intensity": [0.6, 0.6, 0.6]
         }
       ],
       "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects.obj", "objposition": [0, -2, -8] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects2.obj", "objposition": [0, -2.5, 0] }
         ]
     }
   }
