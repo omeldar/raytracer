@@ -73,7 +73,7 @@ createPPM :: Config -> FilePath -> IO ()
 createPPM config filename = do
   let imgW = width (image config)
       imgH = height (image config)
-      numWorkers = 32
+      numWorkers = 24
 
   (bvh, materialMap) <- parseSceneObjects config
 
