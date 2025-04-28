@@ -50,17 +50,19 @@ import Hittable.Objects.Triangle as T (Triangle (..))
 import Parser.Material (assignMaterialIds)
 import qualified Parser.Material as PM
 import Parser.Object (loadObjWithOffset)
-import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
+import qualified Rendering.Camera as Cam (Camera, defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
+import Rendering.Light (Light)
 import qualified Rendering.Light as L (Light (..), computeLighting)
 import Rendering.Material (Material (..), defaultMaterial)
 import Rendering.SkySphere (SkySphere, loadSkySphere, sampleSkySphere)
 import System.Directory (doesFileExist)
 import System.FilePath (takeDirectory, (</>))
 import System.IO (BufferMode (BlockBuffering), IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
-import Utils.Constants (clamp, randomDouble)
+import Utils.Constants (clamp)
 import Utils.Interval (Interval (..))
 import Utils.ProgressBar as PB (newProgressBar, updateMessage, updateProgress)
+import Utils.RandomHelper (randomDouble)
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
@@ -81,6 +83,17 @@ createPPM config filename = do
     Just pathToTexture -> Just <$> loadSkySphere pathToTexture
     Nothing -> return Nothing
 
+  let cameraObj =
+        Cam.defaultCamera
+          (lookFrom (camera config))
+          (lookAt (camera config))
+          (vUp (camera config))
+          (vfov (camera config))
+          (fromIntegral (width (image config)) / fromIntegral (height (image config)))
+          (aperture (camera config))
+          (focusDist (camera config))
+      sceneLights = maybe [] (map convertLight) (lights (scene config))
+
   progressBar <- PB.newProgressBar imgH
   progressCounter <- newIORef 0
 
@@ -99,7 +112,7 @@ createPPM config filename = do
        in loop
 
   doneSignal <- newEmptyMVar
-  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap skySphere imgW imgH progressCounter doneSignal
+  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap skySphere cameraObj sceneLights imgW imgH progressCounter doneSignal
   replicateM_ numWorkers (takeMVar doneSignal)
 
   withFile filename WriteMode $ \handle -> do
@@ -109,47 +122,39 @@ createPPM config filename = do
       str <- readArray resultArray j
       hPutStr handle str
 
-worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IORef Int -> MVar () -> IO ()
-worker queue resultArray config bvh matMap skySphere imgW imgH counter doneSignal = do
+worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Cam.Camera -> [Light] -> Int -> Int -> IORef Int -> MVar () -> IO ()
+worker queue resultArray config bvh matMap skySphere cameraObj sceneLights imgW imgH counter doneSignal = do
   let loop = do
         mRow <- atomically $ tryReadTQueue queue
         case mRow of
           Nothing -> putMVar doneSignal ()
           Just j -> do
-            row <- renderRow config bvh matMap skySphere imgW imgH counter j
+            row <- renderRow config bvh matMap skySphere cameraObj sceneLights imgW imgH counter j
             writeArray resultArray j (snd row)
             loop
   loop
 
-renderRow :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
-renderRow config bvh materialMap skySphere imgW imgH progressCounter j = do
+renderRow :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Cam.Camera -> [Light] -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
+renderRow config bvh materialMap skySphere camObj sceneLights imgW imgH progressCounter j = do
   let rowIdx = imgH - 1 - j
-  pixels <- mapM (pixelColor config bvh materialMap skySphere `flip` rowIdx) [0 .. imgW - 1]
+  pixels <- mapM (pixelColor config bvh materialMap skySphere camObj sceneLights `flip` rowIdx) [0 .. imgW - 1]
   let !rowStr = unlines (map showPixel pixels)
   modifyIORef' progressCounter (+ 1)
   return (j, rowStr)
 
-pixelColor :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IO Col.Color
-pixelColor config world materialMap skySphere i j = do
-  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap skySphere i j)
+pixelColor :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Cam.Camera -> [Light] -> Int -> Int -> IO Col.Color
+pixelColor config world materialMap skySphere camObj sceneLights i j = do
+  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap skySphere camObj sceneLights i j)
   let !avg = averageColor sampledColors
   return avg
 
-samplePixel :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Int -> Int -> IO Col.Color
-samplePixel config world materialMap skySphere i j = do
+samplePixel :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> Cam.Camera -> [Light] -> Int -> Int -> IO Col.Color
+samplePixel config world materialMap skySphere camObj sceneLights i j = do
   uOffset <- if antialiasing (image config) then randomDouble else return 0.5
   vOffset <- if antialiasing (image config) then randomDouble else return 0.5
-  let cameraObj =
-        Cam.defaultCamera
-          (lookFrom (camera config))
-          (lookAt (camera config))
-          (vUp (camera config))
-          (vfov (camera config))
-          (fromIntegral (width (image config)) / fromIntegral (height (image config)))
-          (aperture (camera config))
-          (focusDist (camera config))
-  ray <- Cam.generateRay cameraObj i j (width (image config)) (height (image config)) uOffset vOffset
-  traceRay config world materialMap skySphere ray (maxBounces (raytracer config))
+
+  ray <- Cam.generateRay camObj i j (width (image config)) (height (image config)) uOffset vOffset
+  traceRay config world materialMap skySphere sceneLights ray (maxBounces (raytracer config))
 
 showPixel :: Pixel -> String
 showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
@@ -159,13 +164,9 @@ averageColor colors =
   let !colsum = foldl' add (V.Vec3 0 0 0) colors
    in V.scale (1.0 / fromIntegral (length colors)) colsum
 
-traceRay :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> R.Ray -> Int -> IO Col.Color
-traceRay config bvh materialMap skySphere ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 1 1)
+traceRay :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> [Light] -> R.Ray -> Int -> IO Col.Color
+traceRay config bvh materialMap skySphere sceneLights ray0 maxDepth = traceLoop ray0 maxDepth (Vec3 1 1 1)
   where
-    -- Pre-convert all lights from config
-    sceneLights :: [L.Light]
-    sceneLights = maybe [] (map convertLight) (lights (scene config))
-
     -- Main ray tracing loop with attenuation
     traceLoop :: R.Ray -> Int -> Col.Color -> IO Col.Color
     traceLoop ray 0 attenuation =
