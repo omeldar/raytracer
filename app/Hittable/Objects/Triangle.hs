@@ -3,10 +3,11 @@
 module Hittable.Objects.Triangle where
 
 import Core.Ray as R (at, direction, origin)
-import Core.Vec3 as V (Vec3, cross, dot, maxVec3, minVec3, normalize, sub)
+import Core.Vec3 as V (Vec3 (..), add, cross, dot, maxVec3, minVec3, normalize, sub)
 import Data.Typeable (Typeable)
 import Hittable.BoundingBox (AABB (..))
 import Hittable.Class as H
+import Utils.Constants (epsilon)
 import Utils.Interval (contains)
 
 data Triangle = Triangle
@@ -23,15 +24,16 @@ instance Hittable Triangle where
   boundingBox (Triangle a b c _ _) =
     let !minB = minVec3 (minVec3 a b) c
         !maxB = maxVec3 (maxVec3 a b) c
-     in AABB minB maxB
+        pad = V.Vec3 epsilon epsilon epsilon
+     in AABB (V.sub minB pad) (V.add maxB pad)
 
   hit (Triangle p0 p1 p2 col matId) ray interval =
-    let epsilon = 1e-8
+    let epsilon' = 1e-8
         !e1 = V.sub p1 p0
         !e2 = V.sub p2 p0
         !h = V.cross (R.direction ray) e2
         !a = V.dot e1 h
-     in if abs a < epsilon
+     in if abs a < epsilon'
           then Nothing
           else
             let !f = 1.0 / a

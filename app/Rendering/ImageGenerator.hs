@@ -31,10 +31,9 @@ import Control.Concurrent.STM
     writeTQueue,
   )
 import Control.Concurrent.STM.TQueue (TQueue)
-import Control.Monad (forM_, replicateM_, when)
-import qualified Control.Monad
-import Core.Ray as R (Ray (..), direction, origin)
-import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, randomInUnitSphere, reflect, refract, scale, sub, vLength, x, y, z)
+import Control.Monad (forM_, replicateM, replicateM_, when)
+import Core.Ray as R (Ray (..), direction)
+import Core.Vec3 as V (Vec3 (..), add, dot, mul, normalize, reflect, refract, scale, y)
 import Data.Array.IO (IOArray, newArray_, readArray, writeArray)
 import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
 import Data.List (foldl', isPrefixOf)
@@ -50,16 +49,20 @@ import Hittable.Objects.Triangle as T (Triangle (..))
 import Parser.Material (assignMaterialIds)
 import qualified Parser.Material as PM
 import Parser.Object (loadObjWithOffset)
-import qualified Rendering.Camera as Cam (defaultCamera, generateRay)
+import qualified Rendering.Camera as Cam (Camera, defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
-import qualified Rendering.Light as L (Light (..), computeLighting)
+import Rendering.Light (lightContribution)
+import qualified Rendering.Light as L (Light (..))
 import Rendering.Material (Material (..), defaultMaterial)
+import Rendering.SkySphere (SkySphere, loadSkySphere, sampleSkySphere)
 import System.Directory (doesFileExist)
 import System.FilePath (takeDirectory, (</>))
 import System.IO (BufferMode (BlockBuffering), IOMode (WriteMode), hPutStr, hSetBuffering, withFile)
-import Utils.Constants (clamp, randomDouble)
+import System.Random (Random (..), StdGen, mkStdGen)
+import qualified System.Random.MWC as MWC
 import Utils.Interval (Interval (..))
 import Utils.ProgressBar as PB (newProgressBar, updateMessage, updateProgress)
+import Utils.RandomHelper (getThreadRNG, randomDouble)
 
 -- Define Pixel as Vec3 (representing RGB color)
 type Pixel = V.Vec3
@@ -75,6 +78,22 @@ createPPM config filename = do
       numWorkers = 24
 
   (bvh, materialMap) <- parseSceneObjects config
+
+  skySphere <- case skyTexture (scene config) of
+    Just pathToTexture -> Just <$> loadSkySphere pathToTexture
+    Nothing -> return Nothing
+
+  let cameraObj =
+        Cam.defaultCamera
+          (lookFrom (camera config))
+          (lookAt (camera config))
+          (vUp (camera config))
+          (vfov (camera config))
+          (fromIntegral (width (image config)) / fromIntegral (height (image config)))
+          (aperture (camera config))
+          (focusDist (camera config))
+      sceneLights = maybe [] (map convertLight) (lights (scene config))
+
   progressBar <- PB.newProgressBar imgH
   progressCounter <- newIORef 0
 
@@ -93,7 +112,10 @@ createPPM config filename = do
        in loop
 
   doneSignal <- newEmptyMVar
-  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap imgW imgH progressCounter doneSignal
+
+  let backgroundFunc = backgroundColor (background config)
+
+  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap skySphere backgroundFunc cameraObj sceneLights imgW imgH progressCounter doneSignal
   replicateM_ numWorkers (takeMVar doneSignal)
 
   withFile filename WriteMode $ \handle -> do
@@ -103,47 +125,53 @@ createPPM config filename = do
       str <- readArray resultArray j
       hPutStr handle str
 
-worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> MVar () -> IO ()
-worker queue resultArray config bvh matMap imgW imgH counter doneSignal = do
+worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> (R.Ray -> Col.Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IORef Int -> MVar () -> IO ()
+worker queue resultArray config bvh matMap skySphere backgroundFunc cameraObj sceneLights imgW imgH counter doneSignal = do
   let loop = do
         mRow <- atomically $ tryReadTQueue queue
         case mRow of
           Nothing -> putMVar doneSignal ()
           Just j -> do
-            row <- renderRow config bvh matMap imgW imgH counter j
+            row <- renderRow config bvh matMap skySphere backgroundFunc cameraObj sceneLights imgW imgH counter j
             writeArray resultArray j (snd row)
             loop
   loop
 
-renderRow :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
-renderRow config bvh materialMap imgW imgH progressCounter j = do
+renderRow :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> (R.Ray -> Col.Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
+renderRow config bvh materialMap skySphere backgroundFunc camObj sceneLights imgW imgH progressCounter j = do
   let rowIdx = imgH - 1 - j
-  pixels <- mapM (pixelColor config bvh materialMap `flip` rowIdx) [0 .. imgW - 1]
+  pixels <- mapM (pixelColor config bvh materialMap skySphere backgroundFunc camObj sceneLights rowIdx) [0 .. imgW - 1]
   let !rowStr = unlines (map showPixel pixels)
   modifyIORef' progressCounter (+ 1)
   return (j, rowStr)
 
-pixelColor :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
-pixelColor config world materialMap i j = do
-  sampledColors <- Control.Monad.replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap i j)
-  let !avg = averageColor sampledColors
-  return avg
+pixelColor :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> (R.Ray -> Col.Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IO Col.Color
+pixelColor config world materialMap skySphere backgroundFunc camObj sceneLights j i = do
+  sampledColors <- replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap skySphere backgroundFunc camObj sceneLights i j)
+  return (averageColor sampledColors)
 
-samplePixel :: Config -> BVHNode -> M.Map Int Material -> Int -> Int -> IO Col.Color
-samplePixel config world materialMap i j = do
-  uOffset <- if antialiasing (image config) then randomDouble else return 0.5
-  vOffset <- if antialiasing (image config) then randomDouble else return 0.5
-  let cameraObj =
-        Cam.defaultCamera
-          (lookFrom (camera config))
-          (lookAt (camera config))
-          (vUp (camera config))
-          (vfov (camera config))
-          (fromIntegral (width (image config)) / fromIntegral (height (image config)))
-          (aperture (camera config))
-          (focusDist (camera config))
-  ray <- Cam.generateRay cameraObj i j (width (image config)) (height (image config)) uOffset vOffset
-  traceRay config world materialMap ray (maxBounces (raytracer config))
+-- Sampling a pixel
+samplePixel ::
+  Config ->
+  BVHNode ->
+  M.Map Int Material ->
+  Maybe SkySphere ->
+  (R.Ray -> Col.Color) ->
+  Cam.Camera ->
+  [L.Light] ->
+  Int ->
+  Int ->
+  IO Col.Color
+samplePixel config world materialMap skySphere backgroundFunc camObj sceneLights i j = do
+  let imgW = fromIntegral (width (image config))
+      imgH = fromIntegral (height (image config))
+  uOffset <- if antialiasing (image config) then randomDouble else pure 0.5
+  vOffset <- if antialiasing (image config) then randomDouble else pure 0.5
+  ray <- Cam.generateRay camObj i j (round imgW) (round imgH) uOffset vOffset
+  gen <- getThreadRNG
+  seed <- MWC.uniform gen :: IO Int
+  let rng = mkStdGen seed
+  return $ traceRay world materialMap skySphere backgroundFunc sceneLights ray (maxBounces (raytracer config)) rng
 
 showPixel :: Pixel -> String
 showPixel (V.Vec3 r g b) = unwords $ map (show . (truncate :: Double -> Int) . (* 255.999)) [r, g, b]
@@ -153,82 +181,88 @@ averageColor colors =
   let !colsum = foldl' add (V.Vec3 0 0 0) colors
    in V.scale (1.0 / fromIntegral (length colors)) colsum
 
-traceRay :: Config -> BVHNode -> M.Map Int Material -> R.Ray -> Int -> IO Col.Color
-traceRay config bvh materialMap ray depth
-  | depth <= 0 = return (Vec3 0 0 0)
-  | otherwise = do
-      let interval = Interval 0.001 100
-          hitResult = H.hit bvh ray interval
-
-      case hitResult of
-        Just hitRecord -> do
-          let matId = H.materialId hitRecord
+-- Pure traceRay using StdGen
+traceRay ::
+  BVHNode ->
+  M.Map Int Material ->
+  Maybe SkySphere ->
+  (R.Ray -> Col.Color) ->
+  [L.Light] ->
+  R.Ray ->
+  Int ->
+  StdGen ->
+  Col.Color
+traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = traceLoop ray0 maxDepth (V.Vec3 1 1 1)
+  where
+    traceLoop _ 0 attenuation _ = backgroundSample attenuation ray0
+    traceLoop ray depth attenuation rng =
+      case H.hit world ray (Interval 0.001 10_000) of
+        Nothing -> backgroundSample attenuation ray
+        Just rec ->
+          let matId = H.materialId rec
               mat = fromMaybe defaultMaterial (M.lookup matId materialMap)
+              emitted = fromMaybe (V.Vec3 0 0 0) (emissionColor mat)
               surfaceColor = diffuseColor mat
-              p = H.point hitRecord
-              n = H.normal hitRecord
-              dir = R.direction ray
-              unitDir = V.normalize dir
-              cosTheta = min 1.0 (V.dot (V.negateV unitDir) n)
-              sceneLights = maybe [] (map convertLight) (lights (scene config))
+              normalVec = H.normal rec
+              unitDir = V.normalize (R.direction ray)
+              hitPoint = H.point rec
 
-          -- Compute emission (if any)
-          let emitted = fromMaybe (Vec3 0 0 0) (emissionColor mat)
+              directLight = foldl V.add (V.Vec3 0 0 0) (map (lightContribution rec) sceneLights)
+              litColor = surfaceColor `V.mul` directLight
 
-          -- Decide scattering behavior
-          scatterResult <-
-            case ior mat of
-              Just refIdx -> do
-                let reflectDir = V.reflect unitDir n
-                    refractDir = V.refract unitDir n (1 / refIdx)
-                    reflectRay = R.Ray p reflectDir
-                    refractRay = R.Ray p refractDir
-                    rProb = schlick cosTheta refIdx
-                reflectCol <- traceRay config bvh materialMap reflectRay (depth - 1)
-                refractCol <- do
-                  raw <- traceRay config bvh materialMap refractRay (depth - 1)
-                  let absorption = Vec3 0.02 0.02 0.02
-                      dist = V.vLength (V.sub p (R.origin ray))
-                      atten =
-                        Vec3
-                          (exp (-x absorption * dist))
-                          (exp (-y absorption * dist))
-                          (exp (-z absorption * dist))
-                  return (V.mul atten raw)
-                return $ Left (V.add (V.scale rProb reflectCol) (V.scale (1 - rProb) refractCol))
-              Nothing -> case shininess mat of
-                Just s | s > 100 -> do
-                  -- Metal-like
-                  rand <- V.randomInUnitSphere
-                  let reflected = V.reflect unitDir n
-                      fuzzed = V.add reflected (V.scale 0.05 rand)
-                  return $ Right (R.Ray p fuzzed)
-                _ -> do
-                  -- Lambertian
-                  rand <- V.randomInUnitSphere
-                  let scatterDir = V.add n rand
-                  return $ Right (R.Ray p scatterDir)
+              (randX, rng1) = randomR (-1.0, 1.0) rng
+              (randY, rng2) = randomR (-1.0, 1.0) rng1
+              (randZ, rng3) = randomR (-1.0, 1.0) rng2
+              (randD, rng4) = randomR (0.0, 1.0) rng3
+              randVec = V.normalize (V.Vec3 randX randY randZ)
 
-          -- Direct lighting (optional)
-          directLight <- L.computeLighting hitRecord sceneLights bvh
-          let litColor = V.mul directLight surfaceColor
-              clampedLight = Vec3 (clamp (x litColor) 0 1) (clamp (y litColor) 0 1) (clamp (z litColor) 0 1)
+              cosTheta = min (negate (V.dot unitDir normalVec)) 1.0
+              sinTheta = sqrt (1.0 - cosTheta * cosTheta)
+              reflectProb = maybe 1.0 (schlick cosTheta) (ior mat)
 
-          bounceColor <- case scatterResult of
-            Right scattered -> traceRay config bvh materialMap scattered (depth - 1)
-            Left blended -> return blended
+              nextRay =
+                case (ior mat, shininess mat) of
+                  (Just refIdx, _)
+                    | dissolve mat < Just 1.0 ->
+                        if randD < reflectProb || (refIdx * sinTheta > 1.0)
+                          then R.Ray hitPoint (V.reflect unitDir normalVec)
+                          else R.Ray hitPoint (V.refract unitDir normalVec (1.0 / refIdx))
+                  (_, Just s)
+                    | s > 100 ->
+                        let reflected = V.reflect unitDir normalVec
+                            fuzzed = V.add reflected (V.scale 0.05 randVec)
+                         in R.Ray hitPoint (V.normalize fuzzed)
+                  _ ->
+                    let scatterDir = V.add normalVec randVec
+                     in R.Ray hitPoint (V.normalize scatterDir)
 
-          let finalColor = case scatterResult of
-                Right _ -> V.add (V.scale 0.5 (V.mul surfaceColor bounceColor)) clampedLight
-                Left _ -> V.add bounceColor clampedLight
-          return (V.add finalColor emitted)
-        Nothing -> return $ getBackgroundColor ray (background config)
+              newAttenuation = attenuation `V.mul` surfaceColor
+              bounceColor = traceLoop nextRay (depth - 1) newAttenuation rng4
+              clampedColor = clamp bounceColor 0 4.0
+           in emitted `V.add` litColor `V.add` clampedColor
 
--- Schlick approximation for reflectivity
-schlick :: Double -> Double -> Double
-schlick cosine refIdx =
-  let r0 = ((1 - refIdx) / (1 + refIdx)) ^ (2 :: Integer)
-   in r0 + (1 - r0) * ((1 - cosine) ** 5)
+    backgroundSample attenuation ray =
+      case skySphere of
+        Just sky -> attenuation `V.mul` sampleSkySphere sky (R.direction ray)
+        Nothing -> attenuation `V.mul` backgroundFunc ray
+
+    schlick cosine refIdx =
+      let r0 = (1 - refIdx) / (1 + refIdx)
+          r0sq = r0 * r0
+       in r0sq + (1 - r0sq) * ((1 - cosine) ** 5)
+
+clamp :: Vec3 -> Double -> Double -> Vec3
+clamp (Vec3 cx cy cz) lo hi = Vec3 (cl cx) (cl cy) (cl cz)
+  where
+    cl v = max lo (min hi v)
+
+-- somewhere at the top of ImageGenerator.hs or in Rendering.Color
+backgroundColor :: BackgroundSettings -> (R.Ray -> Col.Color)
+backgroundColor (SolidColor c) = const c
+backgroundColor (Gradient c1 c2) = \ray ->
+  let unitDir = V.normalize (R.direction ray)
+      tval = 0.5 * (y unitDir + 1.0)
+   in Col.lerp tval c2 c1
 
 convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity

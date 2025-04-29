@@ -1,0 +1,49 @@
+{
+    "image": {
+      "width": 640,
+      "height": 360,
+      "samplesPerPixel": 20,
+      "antialiasing": true
+    },
+    "background": {
+      "tag": "Gradient",
+      "color1": [1.0, 1.0, 1.0],
+      "color2": [0.5, 0.7, 1.0]
+    },
+    "camera": {
+      "lookFrom": [8, 1, 0],
+      "lookAt": [0, 0, 0],
+      "vUp": [0, 1, 0],
+      "vfov": 85.0,
+      "aperture": 0.0,
+      "focusDist": 3.0
+    },
+    "raytracer": {
+      "maxBounces": 5,
+      "useBVH": true,
+      "bvhMaxDepth": 16,
+      "russianRoulette": {
+        "enabled": false,
+        "probability": 0.05,
+        "adaptive": true,
+        "adaptivityFactor": 2,
+        "adaptiveMethod": "sqrt"
+      }
+    },
+    "scene": {
+      "materials": [
+      ],
+      "lights": [
+        {
+          "tag": "PointLight",
+          "position": [20, 3, 20],
+          "intensity": [0.5, 0.5, 0.5]
+        }
+      ],
+      "objFiles": [
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects2.obj", "objposition": [-1, -2.5, 0] }
+      ],
+      "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/sky1.hdr"
+    }
+  }
+  

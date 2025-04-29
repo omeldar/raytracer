@@ -9,6 +9,9 @@ piValue = pi -- Haskell's built-in π
 infinity :: Double
 infinity = 1.0 / 0.0 -- Represents positive infinity
 
+negInfinity :: Double
+negInfinity = -1.0 / 0.0
+
 epsilon :: Double
 epsilon = 1e-8 -- Small value to avoid floating-point errors
 

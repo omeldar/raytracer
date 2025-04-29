@@ -31,6 +31,7 @@ executable raytracer
         Utils.Constants,
         Utils.Interval,
         Utils.HitHelpers,
+        Utils.RandomHelper,
         Core.Ray,
         Core.Vec3,
         Rendering.Camera,
@@ -38,6 +39,7 @@ executable raytracer
         Rendering.ImageGenerator,
         Rendering.Light,
         Rendering.Material,
+        Rendering.SkySphere,
         Hittable.Class,
         Hittable.BoundingBox,
         Hittable.Helpers,
@@ -62,7 +64,10 @@ executable raytracer
         filepath >= 1.4,
         async >= 2.2,
         stm >= 2.5,
-        array
+        array,
+        JuicyPixels,
+        JuicyPixels-extra,
+        mwc-random
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -threaded -rtsopts -with-rtsopts=-N 
@@ -76,6 +81,7 @@ executable profraytracer
         Utils.Constants,
         Utils.Interval,
         Utils.HitHelpers,
+        Utils.RandomHelper,
         Core.Ray,
         Core.Vec3,
         Rendering.Camera,
@@ -83,6 +89,7 @@ executable profraytracer
         Rendering.ImageGenerator,
         Rendering.Light,
         Rendering.Material,
+        Rendering.SkySphere,
         Hittable.Class,
         Hittable.BoundingBox,
         Hittable.Helpers,
@@ -107,7 +114,10 @@ executable profraytracer
         filepath >= 1.4,
         async >= 2.2,
         stm >= 2.5,
-        array
+        array,
+        JuicyPixels,
+        JuicyPixels-extra,
+        mwc-random
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -prof -fprof-auto -fprof-cafs -rtsopts
