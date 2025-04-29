@@ -1,8 +1,8 @@
 {
     "image": {
-      "width": 1920,
-      "height": 1080,
-      "samplesPerPixel": 100,
+      "width": 640,
+      "height": 360,
+      "samplesPerPixel": 10,
       "antialiasing": true
     },
     "background": {
@@ -14,7 +14,7 @@
       "lookFrom": [8, 1, 0],
       "lookAt": [0, 0, 0],
       "vUp": [0, 1, 0],
-      "vfov": 90.0,
+      "vfov": 70.0,
       "aperture": 0.0,
       "focusDist": 3.0
     },
@@ -41,9 +41,9 @@
         }
       ],
       "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects3.obj", "objposition": [-3, -2.5, 0] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects4.obj", "objposition": [-3, -2.5, 0] }
       ],
-      "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/sky1.hdr"
+      "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/bambanani_sunset.hdr"
     }
   }
   
