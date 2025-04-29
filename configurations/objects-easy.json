@@ -2,7 +2,7 @@
     "image": {
       "width": 640,
       "height": 360,
-      "samplesPerPixel": 20,
+      "samplesPerPixel": 5,
       "antialiasing": true
     },
     "background": {
