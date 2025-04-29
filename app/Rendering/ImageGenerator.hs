@@ -163,11 +163,13 @@ samplePixel ::
   Int ->
   IO Col.Color
 samplePixel config world materialMap skySphere backgroundFunc camObj sceneLights i j = do
-  let imgW = fromIntegral (width (image config))
-      imgH = fromIntegral (height (image config))
+  let imgW = fromIntegral (width (image config)) :: Double
+      imgH = fromIntegral (height (image config)) :: Double
   uOffset <- if antialiasing (image config) then randomDouble else pure 0.5
   vOffset <- if antialiasing (image config) then randomDouble else pure 0.5
-  ray <- Cam.generateRay camObj i j (round imgW) (round imgH) uOffset vOffset
+  let imgW' = round imgW :: Int
+      imgH' = round imgH :: Int
+  ray <- Cam.generateRay camObj i j imgW' imgH' uOffset vOffset
   gen <- getThreadRNG
   seed <- MWC.uniform gen :: IO Int
   let rng = mkStdGen seed
@@ -357,10 +359,3 @@ toHittable nameToIdMap (PlaneObj ppoint pnormal pColor mname) =
 toHittable nameToIdMap (TriangleObj tv0 tv1 tv2 tColor mname) =
   let matId = fromMaybe 0 (mname >>= (`M.lookup` nameToIdMap))
    in SomeHittable (T.Triangle tv0 tv1 tv2 tColor matId)
-
-getBackgroundColor :: R.Ray -> BackgroundSettings -> Col.Color
-getBackgroundColor ray (Gradient c1 c2) =
-  let unitDir = V.normalize (R.direction ray)
-      tHit = 0.5 * (V.y unitDir + 1.0)
-   in Col.lerp tHit c1 c2
-getBackgroundColor _ (SolidColor solidColor) = solidColor
