@@ -11,10 +11,10 @@
       "color2": [0.5, 0.7, 1.0]
     },
     "camera": {
-      "lookFrom": [8, 1, 0],
-      "lookAt": [0, 0, 0],
+      "lookFrom": [-8, 3.0, 0],
+      "lookAt": [0, 2.5, 0],
       "vUp": [0, 1, 0],
-      "vfov": 70.0,
+      "vfov": 60.0,
       "aperture": 0.0,
       "focusDist": 3.0
     },
@@ -34,14 +34,10 @@
       "materials": [
       ],
       "lights": [
-        {
-          "tag": "PointLight",
-          "position": [20, 3, 20],
-          "intensity": [0.5, 0.5, 0.5]
-        }
+        
       ],
       "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects4.obj", "objposition": [-3, -2.5, 0] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects5.obj", "objposition": [2, 1.5, 0] }
       ],
       "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/bambanani_sunset.hdr"
     }

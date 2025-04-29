@@ -33,7 +33,7 @@ import Control.Concurrent.STM
 import Control.Concurrent.STM.TQueue (TQueue)
 import Control.Monad (replicateM, replicateM_, when)
 import Core.Ray as R (Ray (..), direction)
-import Core.Vec3 as V (Vec3 (..), add, dot, mul, normalize, reflect, refract, scale, y)
+import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, reflect, refract, scale, y)
 import Data.IORef (IORef, atomicModifyIORef', modifyIORef', newIORef, readIORef)
 import Data.List (foldl', isPrefixOf)
 import qualified Data.Map as M
@@ -51,7 +51,7 @@ import qualified Parser.Material as PM
 import Parser.Object (loadObjWithOffset)
 import qualified Rendering.Camera as Cam (Camera, defaultCamera, generateRay)
 import Rendering.Color as Col (Color, lerp)
-import Rendering.Light (lightContribution)
+import Rendering.Light (computeLighting)
 import qualified Rendering.Light as L (Light (..))
 import Rendering.Material (Material (..), defaultMaterial)
 import Rendering.SkySphere (SkySphere, loadSkySphere, sampleSkySphere)
@@ -191,10 +191,13 @@ renderRow config bvh materialMap skySphere backgroundFunc camObj sceneLights img
   modifyIORef' progressCounter (+ 1)
   return (j, rowStr)
 
-pixelColor :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> (R.Ray -> Col.Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IO Col.Color
+pixelColor :: Config -> BVHNode -> MS.Map Int Material -> Maybe SkySphere -> (Ray -> Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IO Vec3
 pixelColor config world materialMap skySphere backgroundFunc camObj sceneLights j i = do
   sampledColors <- replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap skySphere backgroundFunc camObj sceneLights i j)
-  return (averageColor sampledColors)
+  let averaged = averageColor sampledColors
+      toned = toneMap averaged
+      gammaed = gammaCorrect toned
+  return gammaed
 
 -- Sampling a pixel
 samplePixel ::
@@ -255,7 +258,7 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
               unitDir = V.normalize (R.direction ray)
               hitPoint = H.point rec
 
-              directLight = foldl V.add (V.Vec3 0 0 0) (map (lightContribution rec) sceneLights)
+              directLight = computeLighting rec sceneLights world
               litColor = surfaceColor `V.mul` directLight
 
               (randX, rng1) = randomR (-1.0, 1.0) rng
@@ -264,35 +267,42 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
               (randD, rng4) = randomR (0.0, 1.0) rng3
               randVec = V.normalize (V.Vec3 randX randY randZ)
 
-              cosTheta = min (negate (V.dot unitDir normalVec)) 1.0
-              sinTheta = sqrt (1.0 - cosTheta * cosTheta)
-              reflectProb = maybe 1.0 (schlick cosTheta) (ior mat)
-
               nextRay =
-                case (ior mat, shininess mat) of
-                  (Just refIdx, _)
-                    | dissolve mat < Just 1.0 ->
-                        if randD < reflectProb || (refIdx * sinTheta > 1.0)
-                          then R.Ray hitPoint (V.reflect unitDir normalVec)
-                          else R.Ray hitPoint (V.refract unitDir normalVec (1.0 / refIdx))
-                  (_, Just s)
-                    | s > 100 ->
+                case () of
+                  _
+                    | transmission mat == Just 1.0,
+                      Just refIdx <- ior mat ->
+                        let tfrontFace = V.dot unitDir normalVec < 0
+                            outwardNormal = if tfrontFace then normalVec else V.negateV normalVec
+                            eta = if tfrontFace then 1.0 / refIdx else refIdx
+                            cosTheta = min (negate (V.dot unitDir outwardNormal)) 1.0
+                            sinTheta = sqrt (1.0 - cosTheta * cosTheta)
+                         in if eta * sinTheta > 1.0 || randD < schlick cosTheta eta
+                              then R.Ray hitPoint (V.reflect unitDir outwardNormal)
+                              else R.Ray hitPoint (V.refract unitDir outwardNormal eta)
+                    | Just s <- shininess mat,
+                      s > 100 ->
                         let reflected = V.reflect unitDir normalVec
                             fuzzed = V.add reflected (V.scale 0.05 randVec)
                          in R.Ray hitPoint (V.normalize fuzzed)
-                  _ ->
-                    let scatterDir = V.add normalVec randVec
-                     in R.Ray hitPoint (V.normalize scatterDir)
+                    | otherwise ->
+                        let scatterDir = V.add normalVec randVec
+                         in R.Ray hitPoint (V.normalize scatterDir)
 
-              newAttenuation = attenuation `V.mul` surfaceColor
+              newAttenuation =
+                case transmission mat of
+                  Just 1.0 -> attenuation -- glass: don't multiply by diffuse
+                  _ -> attenuation `V.mul` surfaceColor
               bounceColor = traceLoop nextRay (depth - 1) newAttenuation rng4
               clampedColor = clamp bounceColor 0 4.0
            in emitted `V.add` litColor `V.add` clampedColor
 
     backgroundSample attenuation ray =
       case skySphere of
-        Just sky -> attenuation `V.mul` sampleSkySphere sky (R.direction ray)
-        Nothing -> attenuation `V.mul` backgroundFunc ray
+        Just sky ->
+          attenuation `V.mul` V.scale 0.4 (sampleSkySphere sky (R.direction ray)) -- 🔧 scaled
+        Nothing ->
+          attenuation `V.mul` backgroundFunc ray
 
     schlick cosine refIdx =
       let r0 = (1 - refIdx) / (1 + refIdx)
@@ -311,6 +321,15 @@ backgroundColor (Gradient c1 c2) = \ray ->
   let unitDir = V.normalize (R.direction ray)
       tval = 0.5 * (y unitDir + 1.0)
    in Col.lerp tval c2 c1
+
+toneMap :: Vec3 -> Vec3
+toneMap (Vec3 r g b) =
+  Vec3 (r / (r + 1)) (g / (g + 1)) (b / (b + 1))
+
+gammaCorrect :: Vec3 -> Vec3
+gammaCorrect (Vec3 r g b) =
+  let gExp = 1.0 / 1.5 -- = ~0.666
+   in Vec3 (r ** gExp) (g ** gExp) (b ** gExp)
 
 convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
