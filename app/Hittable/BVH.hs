@@ -24,7 +24,7 @@ constructBVHWithLimit :: Int -> [SomeHittable] -> BVHNode
 constructBVHWithLimit maxDepth objects = buildBVH objects 0
   where
     buildBVH objs depth
-      | length objs <= 2 || depth >= maxDepth =
+      | length objs <= 16 || depth >= maxDepth =
           BVHLeaf objs (surroundingBoxList getBox objs)
       | otherwise =
           let axis = chooseSplitAxis objs

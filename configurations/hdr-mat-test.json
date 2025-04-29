@@ -1,7 +1,7 @@
 {
     "image": {
-      "width": 640,
-      "height": 360,
+      "width": 64,
+      "height": 36,
       "samplesPerPixel": 1,
       "antialiasing": true
     },

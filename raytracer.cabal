@@ -31,6 +31,7 @@ executable raytracer
         Utils.Constants,
         Utils.Interval,
         Utils.HitHelpers,
+        Utils.RandomHelper,
         Core.Ray,
         Core.Vec3,
         Rendering.Camera,
@@ -65,7 +66,8 @@ executable raytracer
         stm >= 2.5,
         array,
         JuicyPixels,
-        JuicyPixels-extra
+        JuicyPixels-extra,
+        mwc-random
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -threaded -rtsopts -with-rtsopts=-N 
@@ -79,6 +81,7 @@ executable profraytracer
         Utils.Constants,
         Utils.Interval,
         Utils.HitHelpers,
+        Utils.RandomHelper,
         Core.Ray,
         Core.Vec3,
         Rendering.Camera,
@@ -113,7 +116,8 @@ executable profraytracer
         stm >= 2.5,
         array,
         JuicyPixels,
-        JuicyPixels-extra
+        JuicyPixels-extra,
+        mwc-random
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -prof -fprof-auto -fprof-cafs -rtsopts
