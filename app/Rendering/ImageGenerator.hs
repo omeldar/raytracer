@@ -31,13 +31,13 @@ import Control.Concurrent.STM
     writeTQueue,
   )
 import Control.Concurrent.STM.TQueue (TQueue)
-import Control.Monad (forM_, replicateM, replicateM_, when)
+import Control.Monad (replicateM, replicateM_, when)
 import Core.Ray as R (Ray (..), direction)
 import Core.Vec3 as V (Vec3 (..), add, dot, mul, normalize, reflect, refract, scale, y)
-import Data.Array.IO (IOArray, newArray_, readArray, writeArray)
-import Data.IORef (IORef, modifyIORef', newIORef, readIORef)
+import Data.IORef (IORef, atomicModifyIORef', modifyIORef', newIORef, readIORef)
 import Data.List (foldl', isPrefixOf)
 import qualified Data.Map as M
+import qualified Data.Map.Strict as MS
 import Data.Maybe (fromMaybe)
 import Data.Typeable (cast)
 import Hittable.BVH (BVHNode, constructBVHWithLimit)
@@ -89,51 +89,97 @@ createPPM config filename = do
           (lookAt (camera config))
           (vUp (camera config))
           (vfov (camera config))
-          (fromIntegral (width (image config)) / fromIntegral (height (image config)))
+          (fromIntegral imgW / fromIntegral imgH)
           (aperture (camera config))
           (focusDist (camera config))
+
       sceneLights = maybe [] (map convertLight) (lights (scene config))
 
   progressBar <- PB.newProgressBar imgH
   progressCounter <- newIORef 0
 
   rowQueue <- atomically newTQueue
-  resultArray <- newArray_ (0, imgH - 1) :: IO (IOArray Int String)
+  rowBuffer <- newIORef M.empty
+  nextRowRef <- newIORef 0
+  doneSignal <- newEmptyMVar
+  writerDoneSignal <- newEmptyMVar -- new
+  let backgroundFunc = backgroundColor (background config)
 
   mapM_ (atomically . writeTQueue rowQueue) [0 .. imgH - 1]
 
-  _ <-
+  replicateM_ numWorkers $
     forkIO $
+      worker
+        rowQueue
+        rowBuffer
+        config
+        bvh
+        materialMap
+        skySphere
+        backgroundFunc
+        cameraObj
+        sceneLights
+        imgW
+        imgH
+        progressCounter
+        doneSignal
+
+  -- Writer thread
+  _ <- forkIO $ do
+    withFile filename WriteMode $ \handle -> do
+      hSetBuffering handle (BlockBuffering (Just (1024 * 512)))
+      hPutStr handle ("P3\n" ++ show imgW ++ " " ++ show imgH ++ "\n255\n")
       let loop = do
-            count <- readIORef progressCounter
-            PB.updateProgress progressBar count
-            PB.updateMessage progressBar ("Rendered rows: " ++ show count ++ "/" ++ show imgH)
-            when (count < imgH) $ threadDelay 200_000 >> loop
-       in loop
+            next <- readIORef nextRowRef
+            buffer <- readIORef rowBuffer
+            if next >= imgH
+              then putMVar writerDoneSignal () -- done writing
+              else case M.lookup next buffer of
+                Just rowStr -> do
+                  hPutStr handle rowStr
+                  atomicModifyIORef' rowBuffer (\m -> (M.delete next m, ()))
+                  atomicModifyIORef' nextRowRef (\n -> (n + 1, ()))
+                  loop
+                Nothing -> do
+                  threadDelay 10_000
+                  loop
+      loop
 
-  doneSignal <- newEmptyMVar
+  -- Progress bar thread
+  _ <- forkIO $ do
+    let loop = do
+          count <- readIORef progressCounter
+          PB.updateProgress progressBar count
+          PB.updateMessage progressBar ("Rendered rows: " ++ show count ++ "/" ++ show imgH)
+          when (count < imgH) $ threadDelay 200_000 >> loop
+    loop
 
-  let backgroundFunc = backgroundColor (background config)
-
-  replicateM_ numWorkers $ forkIO $ worker rowQueue resultArray config bvh materialMap skySphere backgroundFunc cameraObj sceneLights imgW imgH progressCounter doneSignal
   replicateM_ numWorkers (takeMVar doneSignal)
+  takeMVar writerDoneSignal
 
-  withFile filename WriteMode $ \handle -> do
-    hSetBuffering handle (BlockBuffering (Just (1024 * 512)))
-    hPutStr handle ("P3\n" ++ show imgW ++ " " ++ show imgH ++ "\n255\n")
-    forM_ [0 .. imgH - 1] $ \j -> do
-      str <- readArray resultArray j
-      hPutStr handle str
-
-worker :: TQueue Int -> IOArray Int String -> Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> (R.Ray -> Col.Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IORef Int -> MVar () -> IO ()
-worker queue resultArray config bvh matMap skySphere backgroundFunc cameraObj sceneLights imgW imgH counter doneSignal = do
+worker ::
+  TQueue Int ->
+  IORef (M.Map Int String) ->
+  Config ->
+  BVHNode ->
+  M.Map Int Material ->
+  Maybe SkySphere ->
+  (R.Ray -> Col.Color) ->
+  Cam.Camera ->
+  [L.Light] ->
+  Int ->
+  Int ->
+  IORef Int ->
+  MVar () ->
+  IO ()
+worker queue rowBuffer config bvh matMap skySphere backgroundFunc cameraObj sceneLights imgW imgH counter doneSignal = do
   let loop = do
         mRow <- atomically $ tryReadTQueue queue
         case mRow of
           Nothing -> putMVar doneSignal ()
           Just j -> do
-            row <- renderRow config bvh matMap skySphere backgroundFunc cameraObj sceneLights imgW imgH counter j
-            writeArray resultArray j (snd row)
+            (rowIdx, rowStr) <- renderRow config bvh matMap skySphere backgroundFunc cameraObj sceneLights imgW imgH counter j
+            atomicModifyIORef' rowBuffer (\buf -> (MS.insert rowIdx rowStr buf, ()))
             loop
   loop
 
