@@ -2,7 +2,7 @@
 # Script to convert all .ppm files in out/ to .png in docs/media/renders
 
 input_dir="../out"
-output_dir="docs/media/renders"
+output_dir="~/tmp"
 
 # Create output directory if it doesn't exist
 mkdir -p "$output_dir"

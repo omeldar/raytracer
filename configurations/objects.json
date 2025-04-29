@@ -1,8 +1,8 @@
 {
     "image": {
-      "width": 64,
-      "height": 36,
-      "samplesPerPixel": 1,
+      "width": 1920,
+      "height": 1080,
+      "samplesPerPixel": 100,
       "antialiasing": true
     },
     "background": {
@@ -14,12 +14,12 @@
       "lookFrom": [8, 1, 0],
       "lookAt": [0, 0, 0],
       "vUp": [0, 1, 0],
-      "vfov": 85.0,
+      "vfov": 90.0,
       "aperture": 0.0,
       "focusDist": 3.0
     },
     "raytracer": {
-      "maxBounces": 1,
+      "maxBounces": 5,
       "useBVH": true,
       "bvhMaxDepth": 16,
       "russianRoulette": {
@@ -41,7 +41,7 @@
         }
       ],
       "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects3.obj", "objposition": [-1, -2.5, 0] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects3.obj", "objposition": [-3, -2.5, 0] }
       ],
       "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/sky1.hdr"
     }
