@@ -51,7 +51,10 @@ executable raytracer
         Hittable.BVH,
         Config,
         Parser.Object,
-        Parser.Material
+        Parser.Material,
+        Rendering.RenderWorker,
+        Rendering.Trace,
+        Rendering.SceneParser
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
@@ -101,7 +104,10 @@ executable profraytracer
         Hittable.BVH,
         Config,
         Parser.Object,
-        Parser.Material
+        Parser.Material,
+        Rendering.RenderWorker,
+        Rendering.Trace,
+        Rendering.SceneParser
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
