@@ -195,8 +195,8 @@ pixelColor :: Config -> BVHNode -> MS.Map Int Material -> Maybe SkySphere -> (Ra
 pixelColor config world materialMap skySphere backgroundFunc camObj sceneLights j i = do
   sampledColors <- replicateM (samplesPerPixel (image config)) (samplePixel config world materialMap skySphere backgroundFunc camObj sceneLights i j)
   let averaged = averageColor sampledColors
-      toned = toneMap averaged
-      gammaed = gammaCorrect toned
+      toned = toneMap (exposure (image config)) averaged
+      gammaed = gammaCorrect (gamma (image config)) toned
   return gammaed
 
 samplePixel ::
@@ -319,18 +319,16 @@ backgroundColor (Gradient c1 c2) = \ray ->
       tval = 0.5 * (y unitDir + 1.0)
    in Col.lerp tval c2 c1
 
-toneMap :: Vec3 -> Vec3
-toneMap (Vec3 r g b) =
-  let exposure = 1.0 -- tweakable: 1.2 to 1.6 are good values too, make configurable later
-   in Vec3
-        (r * exposure / (r * exposure + 1))
-        (g * exposure / (g * exposure + 1))
-        (b * exposure / (b * exposure + 1))
+toneMap :: Double -> Vec3 -> Vec3
+toneMap toneMapExposure (Vec3 r g b) =
+  Vec3
+    (r * toneMapExposure / (r * toneMapExposure + 1))
+    (g * toneMapExposure / (g * toneMapExposure + 1))
+    (b * toneMapExposure / (b * toneMapExposure + 1))
 
-gammaCorrect :: Vec3 -> Vec3
-gammaCorrect (Vec3 r g b) =
-  let gExp = 0.6
-   in Vec3 (r ** gExp) (g ** gExp) (b ** gExp)
+gammaCorrect :: Double -> Vec3 -> Vec3
+gammaCorrect gExp (Vec3 r g b) =
+  Vec3 (r ** gExp) (g ** gExp) (b ** gExp)
 
 convertLight :: LightSettings -> L.Light
 convertLight (PointLight pos lIntensity) = L.PointLight pos lIntensity
@@ -389,7 +387,7 @@ parseSceneObjects config = do
   putStrLn $ "Loaded " ++ show (length allObjects - length totalTriangles) ++ " other objects into BVH."
 
   let maxDepth = bvhMaxDepth (raytracer config)
-  let bvh = constructBVHWithLimit maxDepth allObjects
+  let bvh = constructBVHWithLimit (leafThreshold (raytracer config)) maxDepth allObjects
   putStrLn "BVH complete"
   return (bvh, idToMatMap)
 

@@ -20,14 +20,12 @@ data BVHNode
 
 -- | Construct a BVH from a list of arbitrary hittables
 constructBVH :: [SomeHittable] -> BVHNode
-constructBVH = constructBVHWithLimit maxBound
+constructBVH = constructBVHWithLimit 2 maxBound
 
 -- | Construct BVH with depth limit
-constructBVHWithLimit :: Int -> [SomeHittable] -> BVHNode
-constructBVHWithLimit maxDepth objects = buildBVH objects 0
+constructBVHWithLimit :: Int -> Int -> [SomeHittable] -> BVHNode
+constructBVHWithLimit leafThreshold maxDepth objects = buildBVH objects 0
   where
-    leafThreshold = 4
-
     buildBVH :: [SomeHittable] -> Int -> BVHNode
     buildBVH !objs !depth
       | objCount <= leafThreshold || depth >= maxDepth =

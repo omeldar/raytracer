@@ -1,6 +1,7 @@
+{-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module Config
   ( Config (..),
@@ -11,35 +12,37 @@ module Config
     SceneSettings (..),
     LightSettings (..),
     SceneObject (..),
-    RussianRouletteSettings (..),
-    AdaptiveMethod (..),
     ObjFileEntry (..),
     loadConfig,
   )
 where
 
 import Core.Vec3 (Vec3 (..))
-import Data.Aeson (FromJSON, eitherDecode, parseJSON, withObject, (.!=), (.:), (.:?))
-import Data.Aeson.Types (withText)
+import Data.Aeson
 import qualified Data.ByteString.Lazy as B
 import GHC.Generics (Generic)
-import Rendering.Material
+import Rendering.Material (Material)
 import System.Directory (doesFileExist)
 import System.IO (hPutStrLn, stderr)
 
+-- Image configuration with new gamma and exposure options
 data ImageSettings = ImageSettings
   { width :: Int,
     height :: Int,
     samplesPerPixel :: Int,
-    antialiasing :: Bool
+    antialiasing :: Bool,
+    gamma :: Double,
+    exposure :: Double
   }
-  deriving (Generic, Show)
+  deriving (Show, Generic)
 
+-- Background can be a gradient or a solid color
 data BackgroundSettings
   = Gradient {color1 :: Vec3, color2 :: Vec3}
   | SolidColor {color :: Vec3}
   deriving (Show, Generic)
 
+-- Camera parameters
 data CameraSettings = CameraSettings
   { lookFrom :: Vec3,
     lookAt :: Vec3,
@@ -48,45 +51,32 @@ data CameraSettings = CameraSettings
     aperture :: Double,
     focusDist :: Double
   }
-  deriving (Generic, Show)
+  deriving (Show, Generic)
 
+-- Raytracer options
+-- Russian roulette removed; leafThreshold added
 data RaytracerSettings = RaytracerSettings
   { maxBounces :: Int,
-    russianRoulette :: RussianRouletteSettings,
     useBVH :: Bool,
-    bvhMaxDepth :: Int
+    bvhMaxDepth :: Int,
+    leafThreshold :: Int
   }
   deriving (Show, Generic)
 
-data AdaptiveMethod = Linear | Exponential | Sqrt deriving (Show, Generic)
-
-instance FromJSON AdaptiveMethod where
-  parseJSON = withText "AdaptiveMethod" $ \case
-    "linear" -> return Linear
-    "exponential" -> return Exponential
-    "sqrt" -> return Sqrt
-    _ -> fail "Unknown adaptive method. Use 'linear', 'exponential', or 'sqrt'."
-
-data RussianRouletteSettings = RussianRouletteSettings
-  { enabled :: Bool,
-    probability :: Double,
-    adaptive :: Bool,
-    adaptivityFactor :: Double,
-    adaptiveMethod :: AdaptiveMethod
-  }
-  deriving (Show, Generic)
-
+-- Light types
 data LightSettings
   = PointLight {position :: Vec3, intensity :: Vec3}
   | DirectionalLight {direction :: Vec3, intensity :: Vec3}
   deriving (Show, Generic)
 
+-- Primitive scene objects with optional material name
 data SceneObject
   = SphereObj Vec3 Double Vec3 (Maybe String)
   | PlaneObj Vec3 Vec3 Vec3 (Maybe String)
   | TriangleObj Vec3 Vec3 Vec3 Vec3 (Maybe String)
   deriving (Show, Generic)
 
+-- Entry for loading .obj files
 data ObjFileEntry = ObjFileEntry
   { path :: FilePath,
     objposition :: Vec3,
@@ -95,41 +85,7 @@ data ObjFileEntry = ObjFileEntry
   }
   deriving (Show, Generic)
 
-instance FromJSON ObjFileEntry where
-  parseJSON = withObject "ObjFileEntry" $ \v -> do
-    ObjFileEntry
-      <$> v .: "path"
-      <*> v .: "objposition"
-      <*> v .:? "overrideColor"
-      <*> v .:? "overrideMaterial"
-
-instance FromJSON SceneObject where
-  parseJSON = withObject "SceneObject" $ \v -> do
-    objType <- v .: "type"
-    scolor <- v .:? "color" .!= Vec3 1 1 1
-    matName <- v .:? "material" -- Optional, stays as Maybe String
-    case objType of
-      "sphere" ->
-        SphereObj
-          <$> v .: "center"
-          <*> v .: "radius"
-          <*> pure scolor
-          <*> pure matName
-      "plane" ->
-        PlaneObj
-          <$> v .: "pointOnPlane"
-          <*> v .: "normal"
-          <*> pure scolor
-          <*> pure matName
-      "triangle" ->
-        TriangleObj
-          <$> v .: "v0"
-          <*> v .: "v1"
-          <*> v .: "v2"
-          <*> pure scolor
-          <*> pure matName
-      _ -> fail $ "Unknown scene object type: " ++ objType
-
+-- Entire scene configuration
 data SceneSettings = SceneSettings
   { objects :: Maybe [SceneObject],
     objFiles :: Maybe [ObjFileEntry],
@@ -139,15 +95,7 @@ data SceneSettings = SceneSettings
   }
   deriving (Show, Generic)
 
-instance FromJSON SceneSettings where
-  parseJSON = withObject "SceneSettings" $ \v ->
-    SceneSettings
-      <$> v .:? "objects"
-      <*> v .:? "objFiles"
-      <*> v .:? "lights"
-      <*> v .:? "materials"
-      <*> v .:? "skyTexture"
-
+-- Top-level config
 data Config = Config
   { image :: ImageSettings,
     background :: BackgroundSettings,
@@ -157,7 +105,8 @@ data Config = Config
   }
   deriving (Show, Generic)
 
-instance FromJSON ImageSettings
+-- JSON parsing instances
+deriving instance FromJSON ImageSettings
 
 instance FromJSON BackgroundSettings
 
@@ -165,9 +114,13 @@ instance FromJSON CameraSettings
 
 instance FromJSON RaytracerSettings
 
-instance FromJSON RussianRouletteSettings
-
 instance FromJSON LightSettings
+
+instance FromJSON SceneObject
+
+instance FromJSON ObjFileEntry
+
+instance FromJSON SceneSettings
 
 instance FromJSON Config
 
