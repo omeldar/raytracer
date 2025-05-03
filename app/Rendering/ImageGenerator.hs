@@ -199,7 +199,6 @@ pixelColor config world materialMap skySphere backgroundFunc camObj sceneLights 
       gammaed = gammaCorrect toned
   return gammaed
 
--- Sampling a pixel
 samplePixel ::
   Config ->
   BVHNode ->
@@ -232,7 +231,6 @@ averageColor colors =
   let !colsum = foldl' add (V.Vec3 0 0 0) colors
    in V.scale (1.0 / fromIntegral (length colors)) colsum
 
--- Pure traceRay using StdGen
 traceRay ::
   BVHNode ->
   M.Map Int Material ->
@@ -300,7 +298,7 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
     backgroundSample attenuation ray =
       case skySphere of
         Just sky ->
-          attenuation `V.mul` V.scale 0.4 (sampleSkySphere sky (R.direction ray)) -- 🔧 scaled
+          attenuation `V.mul` V.scale 0.9 (sampleSkySphere sky (R.direction ray))
         Nothing ->
           attenuation `V.mul` backgroundFunc ray
 
@@ -314,7 +312,6 @@ clamp (Vec3 cx cy cz) lo hi = Vec3 (cl cx) (cl cy) (cl cz)
   where
     cl v = max lo (min hi v)
 
--- somewhere at the top of ImageGenerator.hs or in Rendering.Color
 backgroundColor :: BackgroundSettings -> (R.Ray -> Col.Color)
 backgroundColor (SolidColor c) = const c
 backgroundColor (Gradient c1 c2) = \ray ->
@@ -324,11 +321,15 @@ backgroundColor (Gradient c1 c2) = \ray ->
 
 toneMap :: Vec3 -> Vec3
 toneMap (Vec3 r g b) =
-  Vec3 (r / (r + 1)) (g / (g + 1)) (b / (b + 1))
+  let exposure = 1.0 -- tweakable: 1.2 to 1.6 are good values too, make configurable later
+   in Vec3
+        (r * exposure / (r * exposure + 1))
+        (g * exposure / (g * exposure + 1))
+        (b * exposure / (b * exposure + 1))
 
 gammaCorrect :: Vec3 -> Vec3
 gammaCorrect (Vec3 r g b) =
-  let gExp = 1.0 / 1.5 -- = ~0.666
+  let gExp = 0.6
    in Vec3 (r ** gExp) (g ** gExp) (b ** gExp)
 
 convertLight :: LightSettings -> L.Light
@@ -388,7 +389,9 @@ parseSceneObjects config = do
   putStrLn $ "Loaded " ++ show (length allObjects - length totalTriangles) ++ " other objects into BVH."
 
   let maxDepth = bvhMaxDepth (raytracer config)
-  return (constructBVHWithLimit maxDepth allObjects, idToMatMap)
+  let bvh = constructBVHWithLimit maxDepth allObjects
+  putStrLn "BVH complete"
+  return (bvh, idToMatMap)
 
 -- Attempt to locate and read .mtl file referenced in an .obj file
 tryReadMtlFile :: FilePath -> IO String

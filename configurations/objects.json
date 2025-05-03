@@ -1,8 +1,8 @@
 {
     "image": {
-      "width": 640,
-      "height": 360,
-      "samplesPerPixel": 10,
+      "width": 1080,
+      "height": 720,
+      "samplesPerPixel": 20,
       "antialiasing": true
     },
     "background": {
@@ -21,7 +21,7 @@
     "raytracer": {
       "maxBounces": 5,
       "useBVH": true,
-      "bvhMaxDepth": 16,
+      "bvhMaxDepth": 10,
       "russianRoulette": {
         "enabled": false,
         "probability": 0.05,
@@ -37,7 +37,7 @@
         
       ],
       "objFiles": [
-            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects5.obj", "objposition": [2, 1.5, 0] }
+            { "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects5.obj", "objposition": [2, 1.0, -1.5] }
       ],
       "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/bambanani_sunset.hdr"
     }
