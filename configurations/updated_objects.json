@@ -1,8 +1,8 @@
 {
   "image": {
-    "width": 640,
-    "height": 360,
-    "samplesPerPixel": 10,
+    "width": 1920,
+    "height": 1080,
+    "samplesPerPixel": 200,
     "antialiasing": true,
     "gamma": 1.0,
     "exposure": 0.8
@@ -38,11 +38,7 @@
     "objFiles": [
       {
         "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects5.obj",
-        "objposition": [
-          2,
-          1.0,
-          -1.5
-        ]
+        "objposition": [2, 1.0, -1.5]
       }
     ],
     "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/bambanani_sunset.hdr"
