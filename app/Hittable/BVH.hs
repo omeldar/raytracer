@@ -5,8 +5,10 @@ module Hittable.BVH where
 import Core.Vec3 (Vec3 (..), x, y, z)
 import qualified Core.Vec3 as V
 import qualified Data.List as List
+import qualified Data.Vector as DV
 import Hittable.BoundingBox (AABB (..), hitAABB, surroundingBox)
 import Hittable.Class (HitRecord (t), Hittable (..))
+import qualified Hittable.Class as H
 import Hittable.Helpers (getBox)
 import Hittable.HittableList (SomeHittable (..))
 import Utils.Constants
@@ -15,7 +17,7 @@ import Utils.Interval (Interval (..))
 
 -- | A node in the Bounding Volume Hierarchy
 data BVHNode
-  = BVHLeaf ![SomeHittable] !AABB
+  = BVHLeaf !(DV.Vector SomeHittable) !AABB
   | BVHInternal !BVHNode !BVHNode !AABB
 
 -- | Construct a BVH from a list of arbitrary hittables
@@ -30,7 +32,7 @@ constructBVHWithLimit leafThreshold maxDepth objects = buildBVH objects 0
     buildBVH !objs !depth
       | objCount <= leafThreshold || depth >= maxDepth =
           let !bbox = surroundingBoxList getBox objs
-           in BVHLeaf objs bbox
+           in BVHLeaf (DV.fromList objs) bbox
       | otherwise =
           let !axis = chooseSplitAxis objs
               !sorted = sortByCentroid axis objs
@@ -86,7 +88,7 @@ surroundingBoxList getBoxFn (bx : xs) = foldr (surroundingBox . getBoxFn) (getBo
 
 instance Hittable BVHNode where
   hit (BVHLeaf objs _) ray interval =
-    closestHitList (map (\(SomeHittable o) -> hit o ray interval) objs)
+    closestHitList (DV.toList (DV.map (\(SomeHittable o) -> H.hit o ray interval) objs))
   hit (BVHInternal left right _) ray interval =
     let !hitLeftBox = hitAABB (boundingBox left) ray interval
         !hitRightBox = hitAABB (boundingBox right) ray interval

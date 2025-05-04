@@ -70,7 +70,8 @@ executable raytracer
         array,
         JuicyPixels,
         JuicyPixels-extra,
-        mwc-random
+        mwc-random,
+        vector
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -threaded -rtsopts -with-rtsopts=-N 
@@ -123,7 +124,8 @@ executable profraytracer
         array,
         JuicyPixels,
         JuicyPixels-extra,
-        mwc-random
+        mwc-random,
+        vector
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -prof -fprof-auto -fprof-cafs -rtsopts

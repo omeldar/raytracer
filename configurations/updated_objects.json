@@ -1,8 +1,8 @@
 {
   "image": {
-    "width": 1920,
-    "height": 1080,
-    "samplesPerPixel": 200,
+    "width": 640,
+    "height": 360,
+    "samplesPerPixel": 10,
     "antialiasing": true,
     "gamma": 1.0,
     "exposure": 0.8
