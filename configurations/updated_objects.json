@@ -5,7 +5,7 @@
     "samplesPerPixel": 10,
     "antialiasing": true,
     "gamma": 1.0,
-    "exposure": 0.8
+    "exposure": 0.7
   },
   "background": {
     "tag": "Gradient",
@@ -16,7 +16,7 @@
     "lookFrom": [-8, 3.0, 0],
     "lookAt": [0, 2.5, 0],
     "vUp": [0, 1, 0],
-    "vfov": 60.0,
+    "vfov": 65.0,
     "aperture": 0.0,
     "focusDist": 3.0
   },
@@ -37,7 +37,7 @@
     ],
     "objFiles": [
       {
-        "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects10.obj",
+        "path": "/home/akotami/Source/raytracer/configurations/test-objects/someobjects11.obj",
         "objposition": [2, 0.5, -1.5]
       }
     ],

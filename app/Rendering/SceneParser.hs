@@ -72,12 +72,11 @@ parseSceneObjects config = do
       triangleObjects = map SomeHittable totalTriangles
       allObjects = triangleObjects ++ hittables
 
-  putStrLn $ "Loaded " ++ show (length totalTriangles) ++ " triangles into BVH."
-  putStrLn $ "Loaded " ++ show (length allObjects - length totalTriangles) ++ " other objects into BVH."
+  putStrLn $ "[Scene Info] Scene has " ++ show (length totalTriangles) ++ " triangles."
 
   let maxDepth = bvhMaxDepth (raytracer config)
   let bvh = constructBVHWithLimit (leafThreshold (raytracer config)) maxDepth allObjects
-  putStrLn "BVH complete"
+  putStrLn "[Scene Setup] BVH construction complete."
   return (bvh, idToMatMap)
 
 -- Attempt to locate and read .mtl file referenced in an .obj file

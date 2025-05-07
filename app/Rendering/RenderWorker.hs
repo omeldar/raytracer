@@ -14,7 +14,8 @@ import Control.Concurrent.STM
     tryReadTQueue,
   )
 import Control.Concurrent.STM.TQueue (TQueue)
-import Control.Monad (replicateM)
+import Control.DeepSeq (deepseq)
+import Control.Monad (forM, replicateM)
 import Core.Ray as R (Ray (..))
 import Core.Vec3 as V (Vec3 (..), add, scale)
 import Data.IORef (IORef, atomicModifyIORef', modifyIORef')
@@ -56,14 +57,16 @@ worker queue rowBuffer config bvh matMap skySphere backgroundFunc cameraObj scen
           Nothing -> putMVar doneSignal ()
           Just j -> do
             (rowIdx, rowStr) <- renderRow config bvh matMap skySphere backgroundFunc cameraObj sceneLights imgW imgH counter j
-            atomicModifyIORef' rowBuffer (\buf -> (MS.insert rowIdx rowStr buf, ()))
+            rowStr `deepseq` atomicModifyIORef' rowBuffer (\buf -> (MS.insert rowIdx rowStr buf, ()))
             loop
   loop
 
 renderRow :: Config -> BVHNode -> M.Map Int Material -> Maybe SkySphere -> (R.Ray -> Col.Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IORef Int -> Int -> IO (Int, String)
 renderRow config bvh materialMap skySphere backgroundFunc camObj sceneLights imgW imgH progressCounter j = do
   let rowIdx = imgH - 1 - j
-  pixels <- mapM (pixelColor config bvh materialMap skySphere backgroundFunc camObj sceneLights rowIdx) [0 .. imgW - 1]
+  pixels <- forM [0 .. imgW - 1] $ \i -> do
+    pixel <- pixelColor config bvh materialMap skySphere backgroundFunc camObj sceneLights rowIdx i
+    pixel `seq` return pixel
   let !rowStr = unlines (map showPixel pixels)
   modifyIORef' progressCounter (+ 1)
   return (j, rowStr)

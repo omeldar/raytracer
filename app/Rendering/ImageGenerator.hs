@@ -36,12 +36,17 @@ createPPM config filename = do
       imgH = height (image config)
       numWorkers = 24
 
+  putStrLn "[Scene Setup] Starting scene parsing and BVH construction..."
   (bvh, materialMap) <- parseSceneObjects config
+  putStrLn "[Scene Setup] Scene and BVH complete."
 
+  putStrLn "[Scene Setup] Starting sky sphere loading..."
   skySphere <- case skyTexture (scene config) of
     Just pathToTexture -> Just <$> loadSkySphere pathToTexture
     Nothing -> return Nothing
+  putStrLn "[Scene Setup] Sky sphere loaded."
 
+  putStrLn "[Scene Setup] Starting camera and light setup..."
   let cameraObj =
         Cam.defaultCamera
           (lookFrom (camera config))
@@ -53,10 +58,9 @@ createPPM config filename = do
           (focusDist (camera config))
 
       sceneLights = maybe [] (map convertLight) (lights (scene config))
+  putStrLn "[Scene Setup] Camera created, lights are set up."
 
-  progressBar <- PB.newProgressBar imgH
-  progressCounter <- newIORef 0
-
+  putStrLn "[Rendering] Initializing render queues and worker threads..."
   rowQueue <- atomically newTQueue
   rowBuffer <- newIORef M.empty
   nextRowRef <- newIORef 0
@@ -65,6 +69,12 @@ createPPM config filename = do
   let backgroundFunc = backgroundColor (background config)
 
   mapM_ (atomically . writeTQueue rowQueue) [0 .. imgH - 1]
+  putStrLn "[Rendering] Work queue populated with rows."
+
+  putStrLn "[Rendering] Launching worker threads and initiating progress bar..."
+
+  progressBar <- PB.newProgressBar imgH
+  progressCounter <- newIORef 0
 
   replicateM_ numWorkers $
     forkIO $
@@ -115,6 +125,7 @@ createPPM config filename = do
 
   replicateM_ numWorkers (takeMVar doneSignal)
   takeMVar writerDoneSignal
+  putStrLn "[Done] Raytracing ended. Finishing up..."
 
 backgroundColor :: BackgroundSettings -> (R.Ray -> Col.Color)
 backgroundColor (SolidColor c) = const c

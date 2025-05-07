@@ -12,10 +12,12 @@ import System.Exit (exitFailure)
 
 main :: IO ()
 main = do
+  putStrLn "-----------------------------------------"
+  putStrLn "[Raytracer] Starting Haskell Raytracer..."
   args <- getArgs -- Retrieve command-line args
   case args of
     [configFile] -> do
-      putStrLn $ "Loading config file: " ++ configFile
+      putStrLn $ "[Scene Setup] Loading config file: " ++ configFile
       maybeConfig <- loadConfig configFile
       case maybeConfig of
         Just config -> runRaytracer config
@@ -32,13 +34,16 @@ runRaytracer config = do
       imgHeight = height imgSettings
       imgSamples = samplesPerPixel imgSettings
       imgAA = antialiasing imgSettings
+      imgExposure = exposure imgSettings
+      imgGamma = gamma imgSettings
 
-  putStrLn "---------------------------------"
-  putStrLn "Raytracer"
+  putStrLn $ "[Configuration] Resolution: " ++ show imgWidth ++ "x" ++ show imgHeight
 
   if imgAA
-    then putStrLn $ "Resolution: " ++ show imgWidth ++ "x" ++ show imgHeight ++ ", AASize: " ++ show imgSamples
-    else putStrLn $ "Resolution: " ++ show imgWidth ++ "x" ++ show imgHeight ++ ", AA disabled!"
+    then putStrLn $ "[Configuration] AA-" ++ show imgSamples
+    else putStrLn "[Configuration] No AA"
+
+  putStrLn $ "[Configuration] Exposure: " ++ show imgExposure ++ ", Gamma: " ++ show imgGamma
 
   currentTime <- getCurrentTime
   let timestamp = formatTime defaultTimeLocale "%Y%m%d-%H%M%S" currentTime
