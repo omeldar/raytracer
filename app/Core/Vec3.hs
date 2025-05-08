@@ -96,11 +96,11 @@ reflect v n = sub v (scale (2 * dot v n) n)
 
 {-# INLINE refract #-}
 refract :: Vec3 -> Vec3 -> Double -> Vec3
-refract uv n etaiOverEtat =
-  let cosTheta = min (dot (negateV uv) n) 1.0
-      rOutPerp = scale etaiOverEtat (add uv (scale cosTheta n))
-      rOutParallel = scale (-sqrt (abs (1.0 - vLength rOutPerp ** 2))) n
-   in add rOutPerp rOutParallel
+refract v n eta =
+  let cosTheta = negate (dot v n)
+      rOutPerp = scale eta (v `add` scale cosTheta n)
+      rOutParallel = scale (-sqrt (abs (1.0 - dot rOutPerp rOutPerp))) n
+   in rOutPerp `add` rOutParallel
 
 {-# INLINE lengthSquared #-}
 lengthSquared :: Vec3 -> Double
