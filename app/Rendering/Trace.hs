@@ -6,6 +6,7 @@ import Core.Ray as R (Ray (..), direction)
 import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, reflect, refract, scale)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
+import Debug.Trace (trace)
 import Hittable.BVH (BVHNode)
 import Hittable.Class as H (HitRecord (..), Hittable (hit))
 import Rendering.Color as Col (Color)
@@ -50,35 +51,49 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
               (randD, rng4) = randomR (0.0, 1.0) rng3
               randVec = V.normalize (V.Vec3 randX randY randZ)
 
-              nextRay =
-                case () of
-                  _
-                    | transmission mat == Just 1.0,
-                      Just refIdx <- ior mat ->
-                        let tfrontFace = V.dot unitDir normalVec < 0
-                            outwardNormal = if tfrontFace then normalVec else V.negateV normalVec
-                            eta = if tfrontFace then 1.0 / refIdx else refIdx
-                            cosTheta = min (negate (V.dot unitDir outwardNormal)) 1.0
-                            sinTheta = sqrt (1.0 - cosTheta * cosTheta)
-                         in if eta * sinTheta > 1.0 || randD < schlick cosTheta eta
-                              then R.Ray hitPoint (V.reflect unitDir outwardNormal)
-                              else R.Ray hitPoint (V.refract unitDir outwardNormal eta)
-                    | Just s <- shininess mat,
-                      s > 100 ->
-                        let reflected = V.reflect unitDir normalVec
-                            fuzzed = V.add reflected (V.scale 0.05 randVec)
-                         in R.Ray hitPoint (V.normalize fuzzed)
-                    | otherwise ->
-                        let scatterDir = V.add normalVec randVec
-                         in R.Ray hitPoint (V.normalize scatterDir)
+              tfrontFace = frontFace rec
+              outwardNormal = if tfrontFace then normalVec else V.negateV normalVec
+
+              nextRay = case () of
+                _
+                  | transmission mat == Just 1.0,
+                    Just refIdx <- ior mat ->
+                      let eta = if tfrontFace then 1.0 / refIdx else refIdx
+                          cosTheta = min (negate (V.dot unitDir outwardNormal)) 1.0
+                          sinTheta = sqrt (1.0 - cosTheta * cosTheta)
+                          cannotRefract = eta * sinTheta > 1.0
+                          reflectProb = schlick cosTheta eta
+                          bouncedir
+                            | cannotRefract = V.reflect unitDir outwardNormal
+                            | randD < reflectProb = V.reflect unitDir outwardNormal
+                            | otherwise =
+                                let refractedRay = V.refract unitDir outwardNormal eta
+                                 in trace
+                                      ( "Refraction: unitDir="
+                                          ++ show unitDir
+                                          ++ ", refractedRay="
+                                          ++ show refractedRay
+                                      )
+                                      $ refractedRay
+                       in R.Ray hitPoint bouncedir
+                  | Just s <- shininess mat,
+                    s > 100 ->
+                      let reflected = V.reflect unitDir normalVec
+                          fuzzed = V.add reflected (V.scale 0.05 randVec)
+                       in R.Ray hitPoint (V.normalize fuzzed)
+                  | otherwise ->
+                      let scatterDir = V.add normalVec randVec
+                       in R.Ray hitPoint (V.normalize scatterDir)
 
               newAttenuation =
                 case transmission mat of
-                  Just 1.0 -> attenuation -- glass: don't multiply by diffuse
+                  Just 1.0 -> attenuation `V.mul` Vec3 0.96 0.97 1.0 -- slight blue tint
                   _ -> attenuation `V.mul` surfaceColor
+
               bounceColor = traceLoop nextRay (depth - 1) newAttenuation rng4
               clampedColor = clamp bounceColor 0 4.0
            in emitted `V.add` litColor `V.add` clampedColor
+    -- debugColor
 
     backgroundSample attenuation ray =
       case skySphere of
