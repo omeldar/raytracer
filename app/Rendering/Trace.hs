@@ -6,7 +6,6 @@ import Core.Ray as R (Ray (..), direction)
 import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, reflect, refract, scale)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
-import Debug.Trace (trace)
 import Hittable.BVH (BVHNode)
 import Hittable.Class as H (HitRecord (..), Hittable (hit))
 import Rendering.Color as Col (Color)
@@ -38,7 +37,7 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
               mat = fromMaybe defaultMaterial (M.lookup matId materialMap)
               emitted = fromMaybe (V.Vec3 0 0 0) (emissionColor mat)
               surfaceColor = diffuseColor mat
-              normalVec = H.normal rec
+              outwardNormal = H.normal rec
               unitDir = V.normalize (R.direction ray)
               hitPoint = H.point rec
 
@@ -52,7 +51,6 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
               randVec = V.normalize (V.Vec3 randX randY randZ)
 
               tfrontFace = frontFace rec
-              outwardNormal = if tfrontFace then normalVec else V.negateV normalVec
 
               nextRay = case () of
                 _
@@ -66,23 +64,15 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
                           bouncedir
                             | cannotRefract = V.reflect unitDir outwardNormal
                             | randD < reflectProb = V.reflect unitDir outwardNormal
-                            | otherwise =
-                                let refractedRay = V.refract unitDir outwardNormal eta
-                                 in trace
-                                      ( "Refraction: unitDir="
-                                          ++ show unitDir
-                                          ++ ", refractedRay="
-                                          ++ show refractedRay
-                                      )
-                                      $ refractedRay
+                            | otherwise = V.refract unitDir outwardNormal eta
                        in R.Ray hitPoint bouncedir
                   | Just s <- shininess mat,
                     s > 100 ->
-                      let reflected = V.reflect unitDir normalVec
+                      let reflected = V.reflect unitDir outwardNormal
                           fuzzed = V.add reflected (V.scale 0.05 randVec)
                        in R.Ray hitPoint (V.normalize fuzzed)
                   | otherwise ->
-                      let scatterDir = V.add normalVec randVec
+                      let scatterDir = V.add outwardNormal randVec
                        in R.Ray hitPoint (V.normalize scatterDir)
 
               newAttenuation =
@@ -93,7 +83,6 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
               bounceColor = traceLoop nextRay (depth - 1) newAttenuation rng4
               clampedColor = clamp bounceColor 0 4.0
            in emitted `V.add` litColor `V.add` clampedColor
-    -- debugColor
 
     backgroundSample attenuation ray =
       case skySphere of
