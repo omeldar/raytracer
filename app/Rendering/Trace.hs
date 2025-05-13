@@ -3,7 +3,7 @@
 module Rendering.Trace where
 
 import Core.Ray as R (Ray (..), direction)
-import Core.Vec3 as V (Vec3 (..), add, dot, mul, negateV, normalize, reflect, refract, scale)
+import Core.Vec3 as V (Vec3 (..), add, dot, mul, normalize, reflect, refract, scale)
 import qualified Data.Map as M
 import Data.Maybe (fromMaybe)
 import Hittable.BVH (BVHNode)

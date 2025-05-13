@@ -66,10 +66,12 @@ renderRow config bvh materialMap skySphere backgroundFunc camObj sceneLights img
   let rowIdx = imgH - 1 - j
   pixels <- forM [0 .. imgW - 1] $ \i -> do
     pixel <- pixelColor config bvh materialMap skySphere backgroundFunc camObj sceneLights rowIdx i
-    pixel `seq` return pixel
-  let !rowStr = unlines (map showPixel pixels)
-  modifyIORef' progressCounter (+ 1)
-  return (j, rowStr)
+    pixel `deepseq` return pixel
+
+  pixels `deepseq` do
+    let !rowStr = unlines (map showPixel pixels)
+    modifyIORef' progressCounter (+ 1)
+    return (j, rowStr)
 
 pixelColor :: Config -> BVHNode -> MS.Map Int Material -> Maybe SkySphere -> (Ray -> Color) -> Cam.Camera -> [L.Light] -> Int -> Int -> IO Vec3
 pixelColor config world materialMap skySphere backgroundFunc camObj sceneLights j i = do

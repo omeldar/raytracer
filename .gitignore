@@ -25,3 +25,9 @@ tmp/
 out/
 result*
 .direnv/
+*.obj
+*.mtl
+*.blend1
+*.blend
+scenes/*
+configurations/test-objects/*

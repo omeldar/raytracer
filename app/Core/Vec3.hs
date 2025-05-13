@@ -25,11 +25,15 @@ module Core.Vec3
   )
 where
 
+import Control.DeepSeq (NFData (rnf))
 import Data.Aeson (FromJSON, Value (..), parseJSON, withArray)
 import qualified Data.Foldable as F
 import Utils.Constants (randomDoubleInRange)
 
 data Vec3 = Vec3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double deriving (Show, Eq)
+
+instance NFData Vec3 where
+  rnf (Vec3 dx dy dz) = dx `seq` dy `seq` dz `seq` ()
 
 -- Implement FromJSON instance for Vec3
 instance FromJSON Vec3 where
