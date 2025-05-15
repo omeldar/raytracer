@@ -65,7 +65,7 @@
     ],
     "objFiles": [
       {
-        "path": "/home/akotami/Source/raytracer/configurations/test-objects/comp2v2.obj",
+        "path": "/home/akotami/Source/raytracer/configurations/test-objects/test.obj",
         "objposition": [
           2,
           0.5,
@@ -73,6 +73,6 @@
         ]
       }
     ],
-    "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/bambanani_sunset.hdr"
+    "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/puresky.hdr"
   }
 }

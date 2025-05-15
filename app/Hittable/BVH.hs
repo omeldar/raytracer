@@ -7,7 +7,7 @@ import Core.Vec3 (Vec3 (..), x, y, z)
 import qualified Core.Vec3 as V
 import qualified Data.List as List
 import qualified Data.Vector as DV
-import Hittable.BoundingBox (AABB (..), hitAABB, surroundingBox)
+import Hittable.BoundingBox (AABB (..), hitAABBInterval, surroundingBox)
 import Hittable.Class (HitRecord (t), Hittable (..))
 import qualified Hittable.Class as H
 import Hittable.Helpers (getBox)
@@ -121,30 +121,26 @@ instance Hittable BVHNode where
   hit (BVHLeaf objs _) ray interval =
     closestHitList (DV.toList (DV.map (\(SomeHittable o) -> H.hit o ray interval) objs))
   hit (BVHInternal left right _) ray interval =
-    let !leftBox = boundingBox left
-        !rightBox = boundingBox right
-        !hitLeft = hitAABB leftBox ray interval
-        !hitRight = hitAABB rightBox ray interval
-     in case (hitLeft, hitRight) of
-          (False, False) -> Nothing
-          (True, False) -> hit left ray interval
-          (False, True) -> hit right ray interval
-          (True, True) ->
-            -- Compute which box the ray hits first
-            let !leftDist = entryDistance leftBox ray
-                !rightDist = entryDistance rightBox ray
-                (first, second) =
-                  if leftDist < rightDist
-                    then (left, right)
-                    else (right, left)
-                !firstHit = hit first ray interval
-                !newInterval = maybe interval (Interval (minVal interval) . t) firstHit
-                !secondHit = hit second ray newInterval
-             in case (firstHit, secondHit) of
-                  (Just f, Just s) -> if t f < t s then Just f else Just s
-                  (Just f, Nothing) -> Just f
-                  (Nothing, Just s) -> Just s
-                  _ -> Nothing
+    case (hitAABBInterval (boundingBox left) ray interval, hitAABBInterval (boundingBox right) ray interval) of
+      (Nothing, Nothing) -> Nothing
+      (Just lInt, Nothing) -> hit left ray lInt
+      (Nothing, Just rInt) -> hit right ray rInt
+      (Just lInt, Just rInt) ->
+        let lEnter = minVal lInt
+            rEnter = minVal rInt
+            (first, iFirst, second, iSecond) =
+              if lEnter < rEnter
+                then (left, lInt, right, rInt)
+                else (right, rInt, left, lInt)
+
+            firstHit = hit first ray iFirst
+            newMaxT = maybe (maxVal iSecond) t firstHit
+            tighterSecond = Interval (minVal iSecond) newMaxT
+         in case hit second ray tighterSecond of
+              Just secondHit -> case firstHit of
+                Just firstHit' -> if t firstHit' < t secondHit then Just firstHit' else Just secondHit
+                Nothing -> Just secondHit
+              Nothing -> firstHit
 
   boundingBox (BVHLeaf _ box) = box
   boundingBox (BVHInternal _ _ box) = box
