@@ -16,16 +16,7 @@ import Rendering.SkySphere (SkySphere, sampleSkySphere)
 import System.Random (Random (..), StdGen)
 import Utils.Interval (Interval (..))
 
-traceRay ::
-  BVHNode ->
-  M.Map Int Material ->
-  Maybe SkySphere ->
-  (R.Ray -> Col.Color) ->
-  [L.Light] ->
-  R.Ray ->
-  Int ->
-  StdGen ->
-  Col.Color
+traceRay :: BVHNode -> M.Map Int Material -> Maybe SkySphere -> (R.Ray -> Col.Color) -> [L.Light] -> R.Ray -> Int -> StdGen -> Col.Color
 traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = traceLoop ray0 maxDepth (V.Vec3 1 1 1)
   where
     traceLoop _ 0 attenuation _ = backgroundSample attenuation ray0
@@ -77,17 +68,17 @@ traceRay world materialMap skySphere backgroundFunc sceneLights ray0 maxDepth = 
 
               newAttenuation =
                 case transmission mat of
-                  Just 1.0 -> attenuation `V.mul` Vec3 0.96 0.97 1.0 -- slight blue tint
+                  Just 1.0 -> attenuation
                   _ -> attenuation `V.mul` surfaceColor
 
               bounceColor = traceLoop nextRay (depth - 1) newAttenuation rng4
-              clampedColor = clamp bounceColor 0 4.0
+              clampedColor = clamp bounceColor 0 10.0
            in emitted `V.add` litColor `V.add` clampedColor
 
     backgroundSample attenuation ray =
       case skySphere of
         Just sky ->
-          attenuation `V.mul` V.scale 0.9 (sampleSkySphere sky (R.direction ray))
+          attenuation `V.mul` sampleSkySphere sky (R.direction ray)
         Nothing ->
           attenuation `V.mul` backgroundFunc ray
 
