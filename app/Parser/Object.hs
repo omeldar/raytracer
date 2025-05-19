@@ -49,17 +49,17 @@ parseFace line verts inColor matId =
            in if vertexCount == 3
                 then
                   [ Triangle
-                      (verts !! (head faceVerts - 1))
-                      (verts !! (faceVerts !! 1 - 1))
-                      (verts !! (faceVerts !! 2 - 1))
+                      (verts !! (head faceVerts - 1)) -- v0
+                      (verts !! (faceVerts !! 2 - 1)) -- v2
+                      (verts !! (faceVerts !! 1 - 1)) -- v1 (flipped)
                       inColor
                       matId
                   ]
                 else
                   [ Triangle
-                      (verts !! (head faceVerts - 1))
-                      (verts !! (faceVerts !! (i + 1) - 1))
-                      (verts !! (faceVerts !! i - 1))
+                      (verts !! (head faceVerts - 1)) -- v0
+                      (verts !! (faceVerts !! i - 1)) -- v2
+                      (verts !! (faceVerts !! (i + 1) - 1)) -- v1 (flipped)
                       inColor
                       matId
                     | i <- [1 .. vertexCount - 2]

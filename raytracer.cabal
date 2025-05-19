@@ -51,7 +51,10 @@ executable raytracer
         Hittable.BVH,
         Config,
         Parser.Object,
-        Parser.Material
+        Parser.Material,
+        Rendering.RenderWorker,
+        Rendering.Trace,
+        Rendering.SceneParser
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
@@ -67,7 +70,9 @@ executable raytracer
         array,
         JuicyPixels,
         JuicyPixels-extra,
-        mwc-random
+        mwc-random,
+        vector,
+        deepseq
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -threaded -rtsopts -with-rtsopts=-N 
@@ -101,7 +106,10 @@ executable profraytracer
         Hittable.BVH,
         Config,
         Parser.Object,
-        Parser.Material
+        Parser.Material,
+        Rendering.RenderWorker,
+        Rendering.Trace,
+        Rendering.SceneParser
     build-depends:
         base >=4.17 && <4.20,
         time >=1.12 && <1.13,
@@ -117,7 +125,9 @@ executable profraytracer
         array,
         JuicyPixels,
         JuicyPixels-extra,
-        mwc-random
+        mwc-random,
+        vector,
+        deepseq
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options:      -O2 -prof -fprof-auto -fprof-cafs -rtsopts

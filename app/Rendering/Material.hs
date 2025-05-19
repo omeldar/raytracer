@@ -11,12 +11,13 @@ import Data.Aeson (FromJSON (parseJSON), withObject, (.!=), (.:?))
 
 -- A flexible physical material model
 data Material = Material
-  { diffuseColor :: Vec3, -- Kd
-    specularColor :: Maybe Vec3, -- Ks
-    emissionColor :: Maybe Vec3, -- Ke
-    shininess :: Maybe Double, -- Ns
-    ior :: Maybe Double, -- Ni (index of refraction)
-    dissolve :: Maybe Double -- d (transparency, 1 = opaque)
+  { diffuseColor :: Vec3,
+    specularColor :: Maybe Vec3,
+    emissionColor :: Maybe Vec3,
+    shininess :: Maybe Double,
+    ior :: Maybe Double,
+    dissolve :: Maybe Double,
+    transmission :: Maybe Double
   }
   deriving (Show, Eq)
 
@@ -29,7 +30,8 @@ defaultMaterial =
       emissionColor = Nothing,
       shininess = Nothing,
       ior = Nothing,
-      dissolve = Nothing
+      dissolve = Nothing,
+      transmission = Nothing
     }
 
 instance FromJSON Material where
@@ -41,3 +43,4 @@ instance FromJSON Material where
       <*> v .:? "shininess"
       <*> v .:? "ior"
       <*> v .:? "dissolve"
+      <*> v .:? "transmission"

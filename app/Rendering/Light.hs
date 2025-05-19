@@ -13,50 +13,40 @@ data Light
   = PointLight {position :: V.Vec3, intensity :: V.Vec3}
   | DirectionalLight {direction :: V.Vec3, intensity :: V.Vec3}
 
-computeLighting :: HitRecord -> [Light] -> BVHNode -> IO V.Vec3
-computeLighting hitRecord lights bvh = do
+computeLighting :: HitRecord -> [Light] -> BVHNode -> V.Vec3
+computeLighting hitRecord lights bvh =
   let hitPoint = H.point hitRecord
       hitNormal = V.normalize (H.normal hitRecord)
+      lightContribs = map (checkLightVisibility hitPoint hitNormal bvh) lights
+   in foldr V.add (V.Vec3 0 0 0) lightContribs
 
-  lightContribs <- mapM (checkLightVisibility hitPoint hitNormal bvh) lights
-  return $ foldr V.add (V.Vec3 0 0 0) lightContribs
-
-checkLightVisibility :: Vec3 -> Vec3 -> BVHNode -> Light -> IO Vec3
-checkLightVisibility origin surfaceNormal bvh light =
+checkLightVisibility :: Vec3 -> Vec3 -> BVHNode -> Light -> Vec3
+checkLightVisibility origin lnormal bvh light =
   case light of
-    PointLight pos pLightIntensity -> do
-      let toLight = V.sub pos origin
-          distance = V.vLength toLight
-          plDirection = V.normalize toLight
-
-          shadowOrigin = V.add origin (V.scale 0.001 plDirection)
-          shadowRay = R.Ray shadowOrigin plDirection
-          shadowInterval = Interval 0.001 (distance - 1e-3)
-
-          shadowHit = H.hit bvh shadowRay shadowInterval
-
-      return $
-        case shadowHit of
-          Just _ -> Vec3 0 0 0 -- In shadow
-          Nothing ->
-            let diff = max 0 (V.dot surfaceNormal plDirection)
-             in V.scale diff pLightIntensity
-
-    -- If light is a directional light
-    DirectionalLight dir dLightIntensity -> do
-      let dlDirection = V.normalize (V.scale (-1) dir)
-          shadowOrigin = V.add origin (V.scale 0.001 dlDirection)
-          shadowRay = R.Ray shadowOrigin dlDirection
-
-          shadowInterval = Interval 0.001 1.0e30
-          shadowHit = H.hit bvh shadowRay shadowInterval
-
-      return $
-        case shadowHit of
-          Just _ -> Vec3 0 0 0
-          Nothing ->
-            let diff = max 0 (V.dot surfaceNormal dlDirection)
-             in V.scale diff dLightIntensity
+    PointLight pos pintensity ->
+      let toLight = V.normalize (V.sub pos origin)
+          dist = V.vLength (V.sub pos origin)
+          shadowRay = R.Ray origin toLight
+          isBlocked = case H.hit bvh shadowRay (Interval 0.001 (dist - 0.01)) of
+            Just _ -> True
+            Nothing -> False
+       in if isBlocked
+            then V.Vec3 0 0 0
+            else
+              let lightPower = max 0 (V.dot lnormal toLight)
+                  attenuation = 1 / (dist * dist)
+               in V.scale (lightPower * attenuation) pintensity
+    DirectionalLight dir dintensity ->
+      let toLight = V.normalize (V.scale (-1) dir)
+          shadowRay = R.Ray origin toLight
+          isBlocked = case H.hit bvh shadowRay (Interval 0.001 10000) of
+            Just _ -> True
+            Nothing -> False
+       in if isBlocked
+            then V.Vec3 0 0 0
+            else
+              let lightPower = max 0 (V.dot lnormal toLight)
+               in V.scale lightPower dintensity
 
 orElse :: Maybe a -> Maybe a -> Maybe a
 orElse (Just x) _ = Just x

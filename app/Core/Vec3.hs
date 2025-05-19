@@ -25,11 +25,15 @@ module Core.Vec3
   )
 where
 
+import Control.DeepSeq (NFData (rnf))
 import Data.Aeson (FromJSON, Value (..), parseJSON, withArray)
 import qualified Data.Foldable as F
 import Utils.Constants (randomDoubleInRange)
 
 data Vec3 = Vec3 {-# UNPACK #-} !Double {-# UNPACK #-} !Double {-# UNPACK #-} !Double deriving (Show, Eq)
+
+instance NFData Vec3 where
+  rnf (Vec3 dx dy dz) = dx `seq` dy `seq` dz `seq` ()
 
 -- Implement FromJSON instance for Vec3
 instance FromJSON Vec3 where
@@ -96,11 +100,11 @@ reflect v n = sub v (scale (2 * dot v n) n)
 
 {-# INLINE refract #-}
 refract :: Vec3 -> Vec3 -> Double -> Vec3
-refract uv n etaiOverEtat =
-  let cosTheta = min (dot (negateV uv) n) 1.0
-      rOutPerp = scale etaiOverEtat (add uv (scale cosTheta n))
-      rOutParallel = scale (-sqrt (abs (1.0 - vLength rOutPerp ** 2))) n
-   in add rOutPerp rOutParallel
+refract v n eta =
+  let cosTheta = negate (dot v n)
+      rOutPerp = scale eta (v `add` scale cosTheta n)
+      rOutParallel = scale (-sqrt (abs (1.0 - dot rOutPerp rOutPerp))) n
+   in rOutPerp `add` rOutParallel
 
 {-# INLINE lengthSquared #-}
 lengthSquared :: Vec3 -> Double
