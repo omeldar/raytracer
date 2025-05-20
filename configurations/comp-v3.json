@@ -1,0 +1,78 @@
+{
+    "image": {
+      "width": 3840,
+      "height": 2160,
+      "samplesPerPixel": 500,
+      "antialiasing": true,
+      "gamma": 1.0,
+      "exposure": 1.4
+    },
+    "background": {
+      "tag": "Gradient",
+      "color1": [
+        1.0,
+        1.0,
+        1.0
+      ],
+      "color2": [
+        0.5,
+        0.7,
+        1.0
+      ]
+    },
+    "camera": {
+      "lookFrom": [
+        -8,
+        2.5,
+        0
+      ],
+      "lookAt": [
+        0,
+        2.5,
+        0
+      ],
+      "vUp": [
+        0,
+        1,
+        0
+      ],
+      "vfov": 70.0,
+      "aperture": 0.0,
+      "focusDist": 3.0
+    },
+    "raytracer": {
+      "maxBounces": 5,
+      "useBVH": true,
+      "bvhMaxDepth": 20,
+      "leafThreshold": 4
+    },
+    "scene": {
+      "materials": [],
+      "lights": [
+        {
+          "tag": "PointLight",
+          "position": [
+            40,
+            20,
+            0
+          ],
+          "intensity": [
+            64,
+            47,
+            8.5
+          ]
+        }
+      ],
+      "objFiles": [
+        {
+          "path": "/home/akotami/Source/raytracer/configurations/test-objects/comp-v3.obj",
+          "objposition": [
+            40,
+            -30,
+            0
+          ]
+        }
+      ],
+      "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/lakeside.hdr"
+    }
+  }
