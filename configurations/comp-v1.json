@@ -1,11 +1,11 @@
 {
   "image": {
-    "width": 640,
-    "height": 360,
-    "samplesPerPixel": 10,
+    "width": 1280,
+    "height": 720,
+    "samplesPerPixel": 70,
     "antialiasing": true,
-    "gamma": 0.8,
-    "exposure": 1.5
+    "gamma": 1.0,
+    "exposure": 1.4
   },
   "background": {
     "tag": "Gradient",
@@ -22,13 +22,13 @@
   },
   "camera": {
     "lookFrom": [
-      -5,
-      2.0,
-      -5
+      -8,
+      2.5,
+      0
     ],
     "lookAt": [
       0,
-      2.0,
+      2.5,
       0
     ],
     "vUp": [
@@ -36,14 +36,14 @@
       1,
       0
     ],
-    "vfov": 60.0,
+    "vfov": 70.0,
     "aperture": 0.0,
     "focusDist": 3.0
   },
   "raytracer": {
-    "maxBounces": 5,
+    "maxBounces": 6,
     "useBVH": true,
-    "bvhMaxDepth": 32,
+    "bvhMaxDepth": 20,
     "leafThreshold": 4
   },
   "scene": {
@@ -52,27 +52,27 @@
       {
         "tag": "PointLight",
         "position": [
-          20,
-          3,
-          20
+          -8,
+          5,
+          0
         ],
         "intensity": [
-          0.5,
-          0.5,
-          0.5
+          0.9,
+          0.9,
+          0.9
         ]
       }
     ],
     "objFiles": [
       {
-        "path": "/home/akotami/Source/raytracer/configurations/test-objects/1ball.obj",
+        "path": "/home/akotami/Source/raytracer/configurations/test-objects/comp-i.obj",
         "objposition": [
-          0,
-          2,
+          40,
+          -30,
           0
         ]
       }
     ],
-    "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/bhutan.hdr"
+    "skyTexture": "/home/akotami/Source/raytracer/configurations/test-objects/bambanani_sunset.hdr"
   }
 }
